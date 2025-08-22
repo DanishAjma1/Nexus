@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Users, PieChart, Filter, Search, PlusCircle } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
@@ -7,9 +7,8 @@ import { Input } from '../../components/ui/Input';
 import { Badge } from '../../components/ui/Badge';
 import { EntrepreneurCard } from '../../components/entrepreneur/EntrepreneurCard';
 import { useAuth } from '../../context/AuthContext';
-import { Entrepreneur } from '../../types';
-import { entrepreneurs } from '../../data/users';
 import { getRequestsFromInvestor } from '../../data/collaborationRequests';
+import { getEnterprenuerFromDb } from '../../data/users';
 
 export const InvestorDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -20,26 +19,37 @@ export const InvestorDashboard: React.FC = () => {
   
   // Get collaboration requests sent by this investor
   const sentRequests = getRequestsFromInvestor(user.id);
-  const requestedEntrepreneurIds = sentRequests.map(req => req.entrepreneurId);
-  
+  // const requestedEntrepreneurIds = sentRequests.map(req => req.entrepreneurId);
+  const [entrepreneurs,setEnterprenuers] = useState([{}]);
+
+    useEffect(() => {
+      const fetchData = async()=>{
+      if (user) {
+        const entrepreneurs = getEnterprenuerFromDb();
+        setEnterprenuers(entrepreneurs);
+      }
+      }
+      fetchData();
+    }, []);
   // Filter entrepreneurs based on search and industry filters
-  const filteredEntrepreneurs = entrepreneurs.filter(entrepreneur => {
-    // Search filter
-    const matchesSearch = searchQuery === '' || 
-      entrepreneur.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      entrepreneur.startupName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      entrepreneur.industry.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      entrepreneur.pitchSummary.toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredEntrepreneurs = entrepreneurs;
+  // const filteredEntrepreneurs = entrepreneurs.filter(entrepreneur => {
+  //   // Search filter
+  //   const matchesSearch = searchQuery === '' || 
+  //     entrepreneur.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  //     entrepreneur.startupName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  //     entrepreneur.industry.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  //     entrepreneur.pitchSummary.toLowerCase().includes(searchQuery.toLowerCase());
     
-    // Industry filter
-    const matchesIndustry = selectedIndustries.length === 0 || 
-      selectedIndustries.includes(entrepreneur.industry);
+  //   // Industry filter
+  //   const matchesIndustry = selectedIndustries.length === 0 || 
+  //     selectedIndustries.includes(entrepreneur.industry);
     
-    return matchesSearch && matchesIndustry;
-  });
+  //   return matchesSearch && matchesIndustry;
+  // });
   
   // Get unique industries for filter
-  const industries = Array.from(new Set(entrepreneurs.map(e => e.industry)));
+  const industries = [];
   
   // Toggle industry selection
   const toggleIndustry = (industry: string) => {
@@ -157,12 +167,9 @@ export const InvestorDashboard: React.FC = () => {
           <CardBody>
             {filteredEntrepreneurs.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredEntrepreneurs.map(entrepreneur => (
-                  <EntrepreneurCard
-                    key={entrepreneur.id}
-                    entrepreneur={entrepreneur}
-                  />
-                ))}
+                {/* {filteredEntrepreneurs.map(entrepreneur => (
+                  <div key={entrepreneur.id}></div>
+                ))} */}
               </div>
             ) : (
               <div className="text-center py-8">

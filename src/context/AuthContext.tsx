@@ -1,9 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
 import { User, UserRole, AuthContextType } from "../types";
-import { users } from "../data/users.js";
 import toast from "react-hot-toast";
 import axios from "axios";
-import { jwtDecode } from "jwt-decode";
 
 // Create Auth Context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -12,38 +10,36 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const USER_STORAGE_KEY = "business_nexus_user";
 const RESET_TOKEN_KEY = "business_nexus_reset_token";
 const URL = "http://localhost:5000";
-interface TokenPayload {
-  userId: string;
-  email: string;
-  name: string;
-  exp: number;
-  iat: number;
-}
-// Auth Provider Component
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [userData, setUserData] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Check for stored user on initial load
   useEffect(() => {
+    setIsLoading(true);
     const token = localStorage.getItem("token");
     if (token) {
-      try {
-        const decoded = jwtDecode<TokenPayload>(token);
-        // check expiry
-        if (decoded.exp * 1000 > Date.now()) {
-          setUser({ id: decoded.userId, email: decoded.email, name: decoded.name });
-        } else {
-          localStorage.removeItem("token");
+    axios
+        .get("http://localhost:5000/auth/verify", {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        .then((res) => {
+        const {user} = res.data;
+        if (! (user.exp * 1000 > Date.now())) {
+          localStorage.removeItem("token"); 
         }
-      } catch (err) {
-        console.log("Invalid token", err);
-        localStorage.removeItem("token");
-      }
+        })
+        .catch(() => {
+          localStorage.removeItem("token");
+          setUser(null);
+        })
+        .finally(() => setIsLoading(false));
+    } else {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }, []);
 
   // Mock login function - in a real app, this would make an API call
@@ -71,6 +67,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       localStorage.setItem("token", token);
       setUser(user);
+      setUserData(user);
       toast.success("Successfully logged in!");
       
     } catch (error) {
@@ -106,6 +103,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       );
       if (res.status === 201) {
         toast.success("Account created successfully!");
+        const { token, user } = res.data;
+      localStorage.setItem("token", token);
+        setUserData(user);
+        setUser(user);
       }
     } catch (error) {
       toast.error((error as Error).message);
@@ -116,7 +117,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   // Mock forgot password function
-  const forgotPassword = async (email: string): Promise<void> => {
+  const forgotPassword = async (email: string,role:string): Promise<void> => {
     try {
       // Generate reset token (in a real app, this would be a secure token)
       const resetToken = Math.random().toString(36).substring(2, 15);
@@ -140,14 +141,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const sub = "Password reset instructions";
       const res = await axios.post(
         `${URL}/auth/send-mail`,
-        { email, message, sub },
+        { email, message, sub,role },
         {
           withCredentials: true,
         }
       );
       const {user} = res.data;
       localStorage.setItem("user",JSON.stringify(user));
-      console.log(user);
       toast.success("Password reset instructions sent to your email");
     } catch (error) {
       toast.error((error as Error).message);
@@ -169,7 +169,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       
       await axios.patch(
         `${URL}/auth/update-password/${user._id}`,
-        { newPassword},
+        { newPassword,role:user.role},
         { withCredentials: true }
       );
 
@@ -186,6 +186,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   // Logout function
   const logout = (): void => {
     setUser(null);
+    setUserData(null);
     localStorage.removeItem("token");
     toast.success("Logged out successfully");
   };
@@ -193,36 +194,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   // Update user profile
   const updateProfile = async (
     userId: string,
-    updates: Partial<User>
+    userData: User
   ): Promise<void> => {
-    try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Update user in mock data
-      const userIndex = users.findIndex((u) => u.id === userId);
-      if (userIndex === -1) {
-        throw new Error("User not found");
+      if(userData.location==="" && userData.bio==="" && userData.avatarUrl === ""){
+        console.log(userData);
+        alert("Make changes to update profile..");
+        return;
       }
-
-      const updatedUser = { ...users[userIndex], ...updates };
-      users[userIndex] = updatedUser;
-
-      // Update current user if it's the same user
-      if (user?.id === userId) {
-        setUser(updatedUser);
-        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser));
-      }
-
-      toast.success("Profile updated successfully");
-    } catch (error) {
-      toast.error((error as Error).message);
-      throw error;
-    }
+      const formData = new FormData();
+      formData.append("name", userData.name);
+      formData.append("location", userData.location);
+      formData.append("email", userData.email);
+      formData.append("bio", userData.bio);
+      formData.append("avatarUrl", userData.avatarUrl);
+      console.log(formData);
+  await axios
+    .post(`${URL}/user/update-profile/${userId}`, formData, {
+      withCredentials: true,
+    })
+    .then((res) => {
+      toast.success("profile updated successfully.");
+      const {user} = res.data;
+      setUserData(user);
+    })
+    .catch((err) => {
+      console.log(err);
+    });
   };
 
   const value = {
     user,
+    userData,
     login,
     register,
     logout,

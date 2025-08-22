@@ -2,7 +2,6 @@ import React from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { Message } from '../../types';
 import { Avatar } from '../ui/Avatar';
-import { findUserById } from '../../data/users';
 
 interface ChatMessageProps {
   message: Message;

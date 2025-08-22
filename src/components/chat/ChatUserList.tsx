@@ -4,7 +4,6 @@ import { formatDistanceToNow } from 'date-fns';
 import { ChatConversation } from '../../types';
 import { Avatar } from '../ui/Avatar';
 import { Badge } from '../ui/Badge';
-import { findUserById } from '../../data/users';
 import { useAuth } from '../../context/AuthContext';
 
 interface ChatUserListProps {

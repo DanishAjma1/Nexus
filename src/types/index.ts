@@ -6,6 +6,7 @@ export interface User {
   email: string;
   role: UserRole;
   avatarUrl: string;
+  location:string;
   bio: string;
   isOnline?: boolean;
   createdAt: string;
@@ -17,7 +18,6 @@ export interface Entrepreneur extends User {
   pitchSummary: string;
   fundingNeeded: string;
   industry: string;
-  location: string;
   foundedYear: number;
   teamSize: number;
 }
@@ -70,6 +70,7 @@ export interface Document {
 
 export interface AuthContextType {
   user: User | null;
+  userData:User | null;
   login: (email: string, password: string, role: UserRole) => Promise<void>;
   register: (name: string, email: string, password: string, role: UserRole) => Promise<void>;
   logout: () => void;
