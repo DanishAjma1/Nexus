@@ -140,6 +140,7 @@ export const SettingsPage: React.FC = () => {
                 <Input
                   label="Location"
                   name="location"
+                  value={userData.location}
                   defaultValue="San Francisco, CA"
                   onChange={handleChange}
                 />

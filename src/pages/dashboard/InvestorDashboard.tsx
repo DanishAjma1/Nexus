@@ -25,7 +25,7 @@ export const InvestorDashboard: React.FC = () => {
     useEffect(() => {
       const fetchData = async()=>{
       if (user) {
-        const entrepreneurs = getEnterprenuerFromDb();
+        const entrepreneurs = await getEnterprenuerFromDb();
         setEnterprenuers(entrepreneurs);
       }
       }

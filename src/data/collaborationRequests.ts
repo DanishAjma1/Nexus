@@ -47,7 +47,7 @@ export const collaborationRequests: CollaborationRequest[] = [
 export const getRequestsForEntrepreneur = (entrepreneurId: string): CollaborationRequest[] => {
   return collaborationRequests
     .filter(request => request.entrepreneurId === entrepreneurId)
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    .sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 };
 
 // Helper function to get collaboration requests sent by an investor

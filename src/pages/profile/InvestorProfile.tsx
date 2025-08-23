@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { MessageCircle, Building2, MapPin, UserCircle, BarChart3, Briefcase } from 'lucide-react';
 import { Avatar } from '../../components/ui/Avatar';
@@ -7,14 +7,22 @@ import { Card, CardBody, CardHeader } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { useAuth } from '../../context/AuthContext';
 
+import { getInvestorById } from '../../data/users';
 import { Investor } from '../../types';
 
 export const InvestorProfile: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { user: currentUser } = useAuth();
-  
+  let investor :Investor;
   // Fetch investor data
-  const investor = findUserById(id || '') as Investor | null;
+  useEffect(()=>{
+  const fetchInvestors = async() =>{
+    investor = await getInvestorById(id);
+  }
+  fetchInvestors();
+  },[]);
+  
+  
   
   if (!investor || investor.role !== 'investor') {
     return (

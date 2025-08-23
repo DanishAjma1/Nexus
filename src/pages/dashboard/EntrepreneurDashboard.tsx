@@ -29,6 +29,7 @@ export const EntrepreneurDashboard: React.FC = () => {
     const fetchData = async () => {
       if (user) {
         const investors = await getInvestorsFromDb();
+        console.log(investors);
         setRecommendedInvestors(investors);
 
         const requests = getRequestsForEntrepreneur(user.id);
@@ -203,7 +204,9 @@ export const EntrepreneurDashboard: React.FC = () => {
             <CardBody className="space-y-4">
               {recommendedInvestors && recommendedInvestors.length > 0 ? (
                 recommendedInvestors.map((investor, i) => (
-                  <div key={i}>{investor.name}</div>
+                  <div key={i}>
+                  <InvestorCard investor={investor} />
+                  </div>
                 ))
               ) : (
                 <div>No investors found</div>

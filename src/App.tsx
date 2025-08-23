@@ -97,7 +97,7 @@ function App() {
           <Route path="/" element={<Navigate to="/login" replace />} />
           
           {/* Catch all other routes and redirect to login */}
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          <Route path="/dashboard/entreprenuer" element={<Navigate to="/login" replace />} />
         </Routes>
       </Router>
     </AuthProvider>
