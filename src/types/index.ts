@@ -12,8 +12,6 @@ export interface User {
 }
 
 export interface Entrepreneur extends User {
-  userId:string;
-  role: 'entrepreneur';
   startupName: string;
   pitchSummary: string;
   fundingNeeded: string;

@@ -165,11 +165,14 @@ export const InvestorDashboard: React.FC = () => {
           </CardHeader>
           
           <CardBody>
-            {filteredEntrepreneurs.length > 0 ? (
+            {entrepreneurs.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {/* {filteredEntrepreneurs.map(entrepreneur => (
-                  <div key={entrepreneur.id}></div>
-                ))} */}
+                
+                {entrepreneurs.map(entrepreneur => (
+                  <div key={entrepreneur._id}>
+                    <EntrepreneurCard entrepreneur={entrepreneur} />
+                  </div>
+                ))}
               </div>
             ) : (
               <div className="text-center py-8">

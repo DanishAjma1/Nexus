@@ -44,7 +44,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
         
         <input
           ref={ref}
-          className={`${inputBaseClass} ${adornmentClass} ${widthClass}`}
+          className={`${inputBaseClass} ${adornmentClass} ${widthClass} border-2 rounded-md px-2 py-1 w-full`}
           onChange={onChange}
           {...props}
         />

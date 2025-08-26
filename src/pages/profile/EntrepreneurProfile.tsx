@@ -20,7 +20,7 @@ import {
   createCollaborationRequest,
   getRequestsFromInvestor,
 } from "../../data/collaborationRequests";
-import { getEnterpreneurById } from "../../data/users";
+import { getEnterpreneurById, updateEntrepreneurData } from "../../data/users";
 import { Entrepreneur } from "../../types";
 import { Input } from "../../components/ui/Input";
 
@@ -29,22 +29,34 @@ export const EntrepreneurProfile: React.FC = () => {
   const { user: currentUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [entrepreneur, setEnterpreneur] = useState<Entrepreneur>();
-  const [formData, setFormData] = useState({
-    name: "",
-    bio: "",
-    location: "",
-  });
+  const initalData = {
+    userId: id,
+    startupName: entrepreneur?.startupName,
+    pitchSummary: entrepreneur?.pitchSummary,
+    fundingNeeded: entrepreneur?.fundingNeeded,
+    industry: entrepreneur?.industry,
+    foundedYear: entrepreneur?.foundedYear,
+    teamSize: entrepreneur?.teamSize,
+  };
+  const [formData, setFormData] = useState(initalData);
 
   // Fetch entrepreneur data
   useEffect(() => {
-    const fetchInvestors = async () => {
+    const fetchEntrepreneur = async () => {
       const entrepreneur = await getEnterpreneurById(id);
+      console.log(entrepreneur);
+      console.log(currentUser)
       setEnterpreneur(entrepreneur);
     };
-    fetchInvestors();
+    fetchEntrepreneur();
   }, []);
+
+  useEffect(() => {
+    setFormData(initalData);
+  }, [entrepreneur]);
+
   if (!currentUser) return null;
-  if (!entrepreneur || entrepreneur.role !== "entrepreneur") {
+  if (!entrepreneur) {
     return (
       <div className="text-center py-12">
         <h2 className="text-2xl font-bold text-gray-900">
@@ -87,43 +99,87 @@ export const EntrepreneurProfile: React.FC = () => {
       window.location.reload();
     }
   };
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-  setFormData({ ...formData, [e.target.name]: e.target.value });
-};
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
-  const EditingPopUp = () => {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-20">
-        <div className="bg-white rounded-2xl shadow-lg p-6 w-80">
-          <form>
-            <Input
-              label="Full Name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-            />
-            <div className="flex justify-end mt-4">
-              <Button variant="outline" size="sm" type="submit">
-                Submit
-              </Button>
-            </div>
-          </form>
-        </div>
-      </div>
-    );
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    updateEntrepreneurData(formData);
+    setFormData(initalData);
+    setIsEditing(false);
   };
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {isEditing && <EditingPopUp />}
+      {isEditing && (
+        <div className="fixed inset-0 animate-slide-in animate-slide-out flex items-center justify-center bg-black/40 z-20">
+          <div className="bg-white rounded-2xl shadow-lg p-6 w-1/3 min-w-60 flex-shrink">
+            <form onSubmit={handleSubmit} className="gap-5 flex flex-col">
+              <Input
+                label="Your startup name..?"
+                name="startupName"
+                value={formData.startupName}
+                onChange={handleChange}
+              />
+              <Input
+                label="Summary about your company.."
+                name="pitchSummary"
+                value={formData.pitchSummary}
+                onChange={handleChange}
+              />
+              <Input
+                label="When you company founded..?"
+                name="foundedYear"
+                value={formData.foundedYear}
+                onChange={handleChange}
+              />
+              <Input
+                label="Team Size..?"
+                name="teamSize"
+                value={formData.teamSize}
+                onChange={handleChange}
+              />
+              <Input
+                label="Industry..?"
+                name="industry"
+                value={formData.industry}
+                onChange={handleChange}
+              />
+              <Input
+                label="How much fund you need..?"
+                name="fundingNeeded"
+                value={formData.fundingNeeded}
+                onChange={handleChange}
+              />
+              <div className="flex justify-end mt-4 gap-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setIsEditing(false);
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button variant="outline" size="sm" type="submit">
+                  Submit
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
       {/* Profile header */}
       <Card>
         <CardBody className="sm:flex sm:items-start sm:justify-between p-6">
           <div className="sm:flex sm:space-x-6">
             <Avatar
               src={entrepreneur.avatarUrl}
-              alt={entrepreneur.name}
+              alt={entrepreneur.userId.name}
               size="xl"
               status={entrepreneur.isOnline ? "online" : "offline"}
               className="mx-auto sm:mx-0"
@@ -131,7 +187,7 @@ export const EntrepreneurProfile: React.FC = () => {
 
             <div className="mt-4 sm:mt-0 text-center sm:text-left">
               <h1 className="text-2xl font-bold text-gray-900">
-                {entrepreneur.name}
+                {entrepreneur.userId.name}
               </h1>
               <p className="text-gray-600 flex items-center justify-center sm:justify-start mt-1">
                 <Building2 size={16} className="mr-1" />
@@ -142,7 +198,7 @@ export const EntrepreneurProfile: React.FC = () => {
                 <Badge variant="primary">{entrepreneur.industry}</Badge>
                 <Badge variant="gray">
                   <MapPin size={14} className="mr-1" />
-                  {entrepreneur.location}
+                  {entrepreneur.userId.location}
                 </Badge>
                 <Badge variant="accent">
                   <Calendar size={14} className="mr-1" />
@@ -207,7 +263,7 @@ export const EntrepreneurProfile: React.FC = () => {
               <h2 className="text-lg font-medium text-gray-900">About</h2>
             </CardHeader>
             <CardBody>
-              <p className="text-gray-700">{entrepreneur.bio}</p>
+              <p className="text-gray-700">{entrepreneur.userId.bio}</p>
             </CardBody>
           </Card>
 

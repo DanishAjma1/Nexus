@@ -9,18 +9,19 @@ import { useAuth } from "../../context/AuthContext";
 import { Navigate } from "react-router-dom";
 
 export const SettingsPage: React.FC = () => {
-  const { user,updateProfile,userData } = useAuth();
+  const { user, updateProfile, userData } = useAuth();
 
   if (!user || !userData) return null;
-  console.log(userData)
-  const [userDetails, setUserDetails] = useState({
+
+  const initialValues = {
     name: userData.name,
     email: userData.email,
     role: userData.role,
     bio: userData.bio || "",
     location: userData.location || "",
     avatarUrl: userData.avatarUrl || "",
-  });
+  };
+  const [userDetails, setUserDetails] = useState(initialValues);
   const [isFileUploaded, setIsFileUploaded] = useState(false);
   const handleChange = (e: Event) => {
     const { name, value, files } = e.target;
@@ -31,10 +32,14 @@ export const SettingsPage: React.FC = () => {
       setUserDetails({ ...userDetails, [name]: value });
     }
   };
-  const handleSubmit = async (e:Event) => {
+  const handleSubmit = async (e: Event) => {
     e.preventDefault();
-    
-    updateProfile(userData.userId,userDetails);
+
+    updateProfile(userData.userId, userDetails);
+  };
+  const handleCancel = (e) => {
+    e.preventDefault();
+    setUserDetails(initialValues);
   };
   return (
     <div className="space-y-6 animate-fade-in">
@@ -50,9 +55,12 @@ export const SettingsPage: React.FC = () => {
         <Card className="lg:col-span-1">
           <CardBody className="p-2">
             <nav className="space-y-1">
-              <button className="flex items-center w-full px-3 py-2 text-sm font-medium text-primary-700 bg-primary-50 rounded-md" onClick={(e)=>{
-                <Navigate to={"/profile"} replace />
-              }}>
+              <button
+                className="flex items-center w-full px-3 py-2 text-sm font-medium text-primary-700 bg-primary-50 rounded-md"
+                onClick={(e) => {
+                  <Navigate to={"/profile"} replace />;
+                }}
+              >
                 <User size={18} className="mr-3" />
                 Profile
               </button>
@@ -124,26 +132,19 @@ export const SettingsPage: React.FC = () => {
                 <Input
                   label="Full Name"
                   name="name"
-                  defaultValue={userDetails.name}
+                  value={userDetails.name}
                   onChange={handleChange}
                 />
 
+                <Input label="Email" value={userDetails.email} disabled />
                 <Input
-                  label="Email"
-                  type="email"
+                  label="Location"
                   onChange={handleChange}
-                  defaultValue={userDetails.email}
+                  name="location"
+                  value={userDetails.location}
                 />
 
                 <Input label="Role" value={userDetails.role} disabled />
-
-                <Input
-                  label="Location"
-                  name="location"
-                  value={userData.location}
-                  defaultValue="San Francisco, CA"
-                  onChange={handleChange}
-                />
               </div>
 
               <div>
@@ -155,12 +156,14 @@ export const SettingsPage: React.FC = () => {
                   rows={4}
                   name="bio"
                   onChange={handleChange}
-                  defaultValue={userDetails.bio}
+                  value={userDetails.bio}
                 ></textarea>
               </div>
 
               <div className="flex justify-end gap-3">
-                <Button variant="outline">Cancel</Button>
+                <Button variant="outline" onClick={handleCancel}>
+                  Cancel
+                </Button>
                 <Button onClick={handleSubmit}>Save Changes</Button>
               </div>
             </CardBody>

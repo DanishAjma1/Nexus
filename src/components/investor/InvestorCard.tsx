@@ -19,7 +19,7 @@ export const InvestorCard: React.FC<InvestorCardProps> = ({
   const navigate = useNavigate();
 
   const handleViewProfile = () => {
-    navigate(`/profile/investor/${investor.id}`);
+    navigate(`/profile/investor/${investor._id}`);
   };
 
   const handleMessage = (e: React.MouseEvent) => {
@@ -52,7 +52,7 @@ export const InvestorCard: React.FC<InvestorCardProps> = ({
             </p>
 
             <div className="flex flex-wrap gap-2 mb-3">
-              {investor.investmentStage.map((stage, index) => (
+              {investor.investmentStage && investor.investmentStage.map((stage, index) => (
                 <Badge key={index} variant="secondary" size="sm">
                   {stage}
                 </Badge>

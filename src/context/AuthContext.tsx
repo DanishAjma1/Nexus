@@ -22,15 +22,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setIsLoading(true);
     const token = localStorage.getItem("token");
     if (token) {
-    axios
+      axios
         .get("http://localhost:5000/auth/verify", {
           headers: { Authorization: `Bearer ${token}` },
         })
         .then((res) => {
-        const {user} = res.data;
-        if (! (user.exp * 1000 > Date.now())) {
-          localStorage.removeItem("token"); 
-        }
+          const { user } = res.data;
+          if (!(user.exp * 1000 > Date.now())) {
+            localStorage.removeItem("token");
+          }
         })
         .catch(() => {
           localStorage.removeItem("token");
@@ -69,7 +69,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setUser(user);
       setUserData(user);
       toast.success("Successfully logged in!");
-      
     } catch (error) {
       toast.error((error as Error).message);
       throw error;
@@ -104,7 +103,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       if (res.status === 201) {
         toast.success("Account created successfully!");
         const { token, user } = res.data;
-      localStorage.setItem("token", token);
+        localStorage.setItem("token", token);
         setUserData(user);
         setUser(user);
       }
@@ -117,7 +116,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   // Mock forgot password function
-  const forgotPassword = async (email: string,role:string): Promise<void> => {
+  const forgotPassword = async (email: string, role: string): Promise<void> => {
     try {
       // Generate reset token (in a real app, this would be a secure token)
       const resetToken = Math.random().toString(36).substring(2, 15);
@@ -141,13 +140,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const sub = "Password reset instructions";
       const res = await axios.post(
         `${URL}/auth/send-mail`,
-        { email, message, sub,role },
+        { email, message, sub, role },
         {
           withCredentials: true,
         }
       );
-      const {user} = res.data;
-      localStorage.setItem("user",JSON.stringify(user));
+      const { user } = res.data;
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
       toast.success("Password reset instructions sent to your email");
     } catch (error) {
       toast.error((error as Error).message);
@@ -165,11 +164,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       if (token !== storedToken) {
         throw new Error("Invalid or expired reset token");
       }
-      const user = JSON.parse(localStorage.getItem("user"));
-      
+      const user = localStorage.getItem(USER_STORAGE_KEY);
+
       await axios.patch(
         `${URL}/auth/update-password/${user._id}`,
-        { newPassword,role:user.role},
+        { newPassword, role: user.role },
         { withCredentials: true }
       );
 
@@ -196,30 +195,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     userId: string,
     userData: User
   ): Promise<void> => {
-      if(userData.location==="" && userData.bio==="" && userData.avatarUrl === ""){
-        console.log(userData);
-        alert("Make changes to update profile..");
-        return;
-      }
-      const formData = new FormData();
-      formData.append("name", userData.name);
-      formData.append("location", userData.location);
-      formData.append("email", userData.email);
-      formData.append("bio", userData.bio);
-      formData.append("avatarUrl", userData.avatarUrl);
-      console.log(formData);
-  await axios
-    .post(`${URL}/user/update-profile/${userId}`, formData, {
-      withCredentials: true,
-    })
-    .then((res) => {
-      toast.success("profile updated successfully.");
-      const {user} = res.data;
-      setUserData(user);
-    })
-    .catch((err) => {
-      console.log(err);
-    });
+    if (
+      userData.location === "" &&
+      userData.bio === "" &&
+      userData.avatarUrl === ""
+    ) {
+      console.log(userData);
+      alert("Make changes to update profile..");
+      return;
+    }
+    const formData = new FormData();
+    formData.append("name", userData.name);
+    formData.append("location", userData.location);
+    formData.append("email", userData.email);
+    formData.append("bio", userData.bio);
+    formData.append("avatarUrl", userData.avatarUrl);
+    console.log(formData);
+    await axios
+      .post(`${URL}/user/update-profile/${userId}`, formData, {
+        withCredentials: true,
+      })
+      .then((res) => {
+        toast.success("profile updated successfully.");
+        const { user } = res.data;
+        setUserData(user);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   };
 
   const value = {
