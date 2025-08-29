@@ -8,8 +8,8 @@ export const getInvestorsFromDb = async () => {
     const res = await axios.get(URL + "/investor/get-investors", {
       withCredentials: true,
     });
-    const { users } = res.data;
-    return users;
+    const { investors } = res.data;
+    return investors;
   } catch (err) {
     console.log(err);
   }
@@ -20,9 +20,8 @@ export const getInvestorById = async (id) => {
     const res = await axios.get(URL + "/investor/get-investor-by-id/" + id, {
       withCredentials: true,
     });
-    const { user } = res.data;
-    const filteredUser = filterInvestor(user);
-    return filteredUser;
+    const { investor } = res.data;
+    return investor;
   } catch (err) {
     console.log(err);
   }
@@ -33,8 +32,8 @@ export const getEnterprenuerFromDb = async () => {
     const res = await axios.get(URL + "/entrepreneur/get-entrepreneurs", {
       withCredentials: true,
     });
-    const { users } = res.data;
-    return users;
+    const { entrepreneurs } = res.data;
+    return entrepreneurs;
   } catch (err) {
     console.log(err);
   }
@@ -48,14 +47,15 @@ export const getEnterpreneurById = async (id) => {
         withCredentials: true,
       }
     );
-    const { entrepreneur } = res.data;
+    const {entrepreneur}  = res.data;
+    console.log(entrepreneur);
     return entrepreneur;
   } catch (err) {
     console.log(err);
   }
 };
 
-export const updateEntrepreneurData = async (formData: Entrepreneur) => {
+export const updateEntrepreneurData = async (formData: any) => {
   try {
     await axios.put(
       `${URL}/entrepreneur/update-profile/${formData.userId}`,
@@ -69,68 +69,18 @@ export const updateEntrepreneurData = async (formData: Entrepreneur) => {
     console.log(err);
   }
 };
-function filterInvestor(obj: Investor): Investor {
-  const {
-    userId,
-    name,
-    bio,
-    role,
-    location,
-    email,
-    avatarUrl,
-    investmentInterests,
-    investmentStage,
-    portfolioCompanies,
-    totalInvestments,
-    minimumInvestment,
-    maximumInvestment,
-  } = obj;
-  return {
-    userId,
-    name,
-    bio,
-    role,
-    email,
-    location,
-    avatarUrl,
-    investmentInterests,
-    investmentStage,
-    portfolioCompanies,
-    totalInvestments,
-    minimumInvestment,
-    maximumInvestment,
-  };
-}
 
-function filterEntrepreneur(obj: Entrepreneur): Entrepreneur {
-  const {
-    userId,
-    name,
-    bio,
-    role,
-    startupName,
-    pitchSummary,
-    fundingNeeded,
-    industry,
-    teamSize,
-    location,
-    foundedYear,
-    email,
-    avatarUrl,
-  } = obj;
-  return {
-    userId,
-    name,
-    bio,
-    role,
-    foundedYear,
-    email,
-    startupName,
-    pitchSummary,
-    fundingNeeded,
-    industry,
-    teamSize,
-    location,
-    avatarUrl,
-  };
-}
+export const updateInvestorData = async (formData: any) => {
+  try {
+    await axios.put(
+      `${URL}/investor/update-profile/${formData.userId}`,
+      formData,
+      {
+        withCredentials: true,
+      }
+    );
+    toast.success("User data updated successfully.");
+  } catch (err) {
+    console.log(err);
+  }
+};

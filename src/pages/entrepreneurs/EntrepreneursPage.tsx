@@ -1,16 +1,30 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Search, Filter, MapPin } from 'lucide-react';
 import { Input } from '../../components/ui/Input';
 import { Card, CardHeader, CardBody } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { EntrepreneurCard } from '../../components/entrepreneur/EntrepreneurCard';
+import { useAuth } from '../../context/AuthContext';
+import { getEnterprenuerFromDb } from '../../data/users';
+import { Entrepreneur } from '../../types';
 
 export const EntrepreneursPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIndustries, setSelectedIndustries] = useState<string[]>([]);
   const [selectedFundingRange, setSelectedFundingRange] = useState<string[]>([]);
-  
+  const {user} =useAuth();
   // Get unique industries and funding ranges
+  const [entrepreneurs,setEnterprenuers] = useState<Entrepreneur>([]);
+  
+      useEffect(() => {
+        const fetchData = async()=>{
+        if (user) {
+          const entrepreneurs = await getEnterprenuerFromDb();
+          setEnterprenuers(entrepreneurs);
+        }
+        }
+        fetchData();
+      }, []);
   const allIndustries = Array.from(new Set(entrepreneurs.map(e => e.industry)));
   const fundingRanges = ['< $500K', '$500K - $1M', '$1M - $5M', '> $5M'];
   
@@ -153,7 +167,7 @@ export const EntrepreneursPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {filteredEntrepreneurs.map(entrepreneur => (
               <EntrepreneurCard
-                key={entrepreneur.id}
+                key={entrepreneur._id}
                 entrepreneur={entrepreneur}
               />
             ))}

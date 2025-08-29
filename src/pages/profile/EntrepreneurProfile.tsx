@@ -29,7 +29,7 @@ export const EntrepreneurProfile: React.FC = () => {
   const { user: currentUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [entrepreneur, setEnterpreneur] = useState<Entrepreneur>();
-  const initalData = {
+  const initialData = {
     userId: id,
     startupName: entrepreneur?.startupName,
     pitchSummary: entrepreneur?.pitchSummary,
@@ -37,26 +37,28 @@ export const EntrepreneurProfile: React.FC = () => {
     industry: entrepreneur?.industry,
     foundedYear: entrepreneur?.foundedYear,
     teamSize: entrepreneur?.teamSize,
+    minValuation: entrepreneur?.minValuation,
+    maxValuation: entrepreneur?.maxValuation,
+    marketOpportunity: entrepreneur?.marketOpportunity,
+    advantage: entrepreneur?.advantage,
   };
-  const [formData, setFormData] = useState(initalData);
+  const [formData, setFormData] = useState(initialData);
 
   // Fetch entrepreneur data
   useEffect(() => {
     const fetchEntrepreneur = async () => {
       const entrepreneur = await getEnterpreneurById(id);
-      console.log(entrepreneur);
-      console.log(currentUser)
       setEnterpreneur(entrepreneur);
     };
     fetchEntrepreneur();
   }, []);
 
   useEffect(() => {
-    setFormData(initalData);
+    setFormData(initialData);
   }, [entrepreneur]);
 
   if (!currentUser) return null;
-  if (!entrepreneur) {
+  if (!entrepreneur || entrepreneur.role !== "entrepreneur") {
     return (
       <div className="text-center py-12">
         <h2 className="text-2xl font-bold text-gray-900">
@@ -75,7 +77,8 @@ export const EntrepreneurProfile: React.FC = () => {
     );
   }
 
-  const isCurrentUser = currentUser?.userId === entrepreneur.userId;
+  const isCurrentUser =
+    currentUser?.userId === (entrepreneur.userId || entrepreneur._id);
   const isInvestor = currentUser?.role === "investor";
 
   // Check if the current investor has already sent a request to this entrepreneur
@@ -93,10 +96,6 @@ export const EntrepreneurProfile: React.FC = () => {
         id,
         `I'm interested in learning more about ${entrepreneur.startupName} and would like to explore potential investment opportunities.`
       );
-
-      // In a real app, we would refresh the data or update state
-      // For this demo, we'll force a page reload
-      window.location.reload();
     }
   };
 
@@ -108,7 +107,32 @@ export const EntrepreneurProfile: React.FC = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     updateEntrepreneurData(formData);
-    setFormData(initalData);
+    const {
+      startupName,
+      pitchSummary,
+      fundingNeeded,
+      industry,
+      foundedYear,
+      teamSize,
+      marketOpportunity,
+      advantage,
+      minValuation,
+      maxValuation,
+    } = formData;
+    setEnterpreneur({
+      ...entrepreneur,
+      startupName,
+      pitchSummary,
+      fundingNeeded,
+      industry,
+      foundedYear,
+      teamSize,
+      marketOpportunity,
+      advantage,
+      minValuation,
+      maxValuation,
+    });
+    setFormData(initialData);
     setIsEditing(false);
   };
 
@@ -116,44 +140,81 @@ export const EntrepreneurProfile: React.FC = () => {
     <div className="space-y-6 animate-fade-in">
       {isEditing && (
         <div className="fixed inset-0 animate-slide-in animate-slide-out flex items-center justify-center bg-black/40 z-20">
-          <div className="bg-white rounded-2xl shadow-lg p-6 w-1/3 min-w-60 flex-shrink">
-            <form onSubmit={handleSubmit} className="gap-5 flex flex-col">
-              <Input
-                label="Your startup name..?"
-                name="startupName"
-                value={formData.startupName}
-                onChange={handleChange}
-              />
-              <Input
-                label="Summary about your company.."
-                name="pitchSummary"
-                value={formData.pitchSummary}
-                onChange={handleChange}
-              />
-              <Input
-                label="When you company founded..?"
-                name="foundedYear"
-                value={formData.foundedYear}
-                onChange={handleChange}
-              />
-              <Input
-                label="Team Size..?"
-                name="teamSize"
-                value={formData.teamSize}
-                onChange={handleChange}
-              />
-              <Input
-                label="Industry..?"
-                name="industry"
-                value={formData.industry}
-                onChange={handleChange}
-              />
-              <Input
-                label="How much fund you need..?"
-                name="fundingNeeded"
-                value={formData.fundingNeeded}
-                onChange={handleChange}
-              />
+          <div className="bg-white rounded-2xl shadow-lg p-6 max-h-3/6 overflow-y-scroll w-4/5 flex flex-col min-w-60 flex-shrink">
+            <h2 className="text-xl font-medium my-5 underline underline-offset-4 flex justify-center">
+              Profile Update
+            </h2>
+            <form
+              onSubmit={handleSubmit}
+              className="gap-5 flex flex-col text-sm justify-center items-center"
+            >
+              <div className="flex flex-row w-3/4 gap-5">
+              <div className="flex gap-2 flex-col w-1/2">
+                <Input
+                  label="Your startup name..?"
+                  name="startupName"
+                  value={formData.startupName}
+                  onChange={handleChange}
+                />
+                <Input
+                  label="Summary about your company.."
+                  name="pitchSummary"
+                  value={formData.pitchSummary}
+                  onChange={handleChange}
+                />
+                <Input
+                  label="When you company founded..?"
+                  name="foundedYear"
+                  value={formData.foundedYear}
+                  onChange={handleChange}
+                />
+              
+                <Input
+                  label="Team Size..?"
+                  name="teamSize"
+                  value={formData.teamSize}
+                  onChange={handleChange}
+                />
+                <Input
+                  label="Industry..?"
+                  name="industry"
+                  value={formData.industry}
+                  onChange={handleChange}
+                />
+                </div>
+              <div className="flex gap-2 flex-col w-1/2">
+                <Input
+                  label="How much fund you need..?"
+                  name="fundingNeeded"
+                  value={formData.fundingNeeded}
+                  onChange={handleChange}
+                />
+                <Input
+                  label="Market opporunity..?"
+                  name="marketOpportunity"
+                  value={formData.marketOpportunity}
+                  onChange={handleChange}
+                />
+                <Input
+                  label="Advantage..?"
+                  name="advantage"
+                  value={formData.advantage}
+                  onChange={handleChange}
+                />
+                <Input
+                  label="Minimum valuation..?"
+                  name="minValuation"
+                  value={formData.minValuation}
+                  onChange={handleChange}
+                />
+                <Input
+                  label="Maximum valuation..?"
+                  name="maxValuation"
+                  value={formData.maxValuation}
+                  onChange={handleChange}
+                />
+              </div>
+              </div>
               <div className="flex justify-end mt-4 gap-3">
                 <Button
                   variant="outline"
@@ -179,7 +240,7 @@ export const EntrepreneurProfile: React.FC = () => {
           <div className="sm:flex sm:space-x-6">
             <Avatar
               src={entrepreneur.avatarUrl}
-              alt={entrepreneur.userId.name}
+              alt={entrepreneur.name}
               size="xl"
               status={entrepreneur.isOnline ? "online" : "offline"}
               className="mx-auto sm:mx-0"
@@ -187,7 +248,7 @@ export const EntrepreneurProfile: React.FC = () => {
 
             <div className="mt-4 sm:mt-0 text-center sm:text-left">
               <h1 className="text-2xl font-bold text-gray-900">
-                {entrepreneur.userId.name}
+                {entrepreneur.name}
               </h1>
               <p className="text-gray-600 flex items-center justify-center sm:justify-start mt-1">
                 <Building2 size={16} className="mr-1" />
@@ -198,7 +259,7 @@ export const EntrepreneurProfile: React.FC = () => {
                 <Badge variant="primary">{entrepreneur.industry}</Badge>
                 <Badge variant="gray">
                   <MapPin size={14} className="mr-1" />
-                  {entrepreneur.userId.location}
+                  {entrepreneur.location}
                 </Badge>
                 <Badge variant="accent">
                   <Calendar size={14} className="mr-1" />
@@ -263,7 +324,7 @@ export const EntrepreneurProfile: React.FC = () => {
               <h2 className="text-lg font-medium text-gray-900">About</h2>
             </CardHeader>
             <CardBody>
-              <p className="text-gray-700">{entrepreneur.userId.bio}</p>
+              <p className="text-gray-700">{entrepreneur.bio}</p>
             </CardBody>
           </Card>
 
@@ -299,10 +360,7 @@ export const EntrepreneurProfile: React.FC = () => {
                     Market Opportunity
                   </h3>
                   <p className="text-gray-700 mt-1">
-                    The {entrepreneur.industry} market is experiencing
-                    significant growth, with a projected CAGR of 14.5% through
-                    2027. Our solution addresses key pain points in this
-                    expanding market.
+                    {entrepreneur.marketOpportunity}
                   </p>
                 </div>
 
@@ -310,11 +368,7 @@ export const EntrepreneurProfile: React.FC = () => {
                   <h3 className="text-md font-medium text-gray-900">
                     Competitive Advantage
                   </h3>
-                  <p className="text-gray-700 mt-1">
-                    Unlike our competitors, we offer a unique approach that
-                    combines innovative technology with deep industry expertise,
-                    resulting in superior outcomes for our customers.
-                  </p>
+                  <p className="text-gray-700 mt-1">{entrepreneur.advantage}</p>
                 </div>
               </div>
             </CardBody>
@@ -409,7 +463,7 @@ export const EntrepreneurProfile: React.FC = () => {
                 <div>
                   <span className="text-sm text-gray-500">Valuation</span>
                   <p className="text-md font-medium text-gray-900">
-                    $8M - $12M
+                    ${entrepreneur.minValuation} - ${entrepreneur.maxValuation}
                   </p>
                 </div>
 

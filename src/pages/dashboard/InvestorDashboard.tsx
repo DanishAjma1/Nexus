@@ -20,13 +20,18 @@ export const InvestorDashboard: React.FC = () => {
   // Get collaboration requests sent by this investor
   const sentRequests = getRequestsFromInvestor(user.id);
   // const requestedEntrepreneurIds = sentRequests.map(req => req.entrepreneurId);
-  const [entrepreneurs,setEnterprenuers] = useState([{}]);
+  const [entrepreneurs,setEnterprenuers] = useState([]);
 
+  const industries = [];
     useEffect(() => {
       const fetchData = async()=>{
       if (user) {
         const entrepreneurs = await getEnterprenuerFromDb();
         setEnterprenuers(entrepreneurs);
+        entrepreneurs.map(e=>{
+          industries.push(e.industry);
+        });
+        console.log(industries);
       }
       }
       fetchData();
@@ -49,7 +54,6 @@ export const InvestorDashboard: React.FC = () => {
   // });
   
   // Get unique industries for filter
-  const industries = [];
   
   // Toggle industry selection
   const toggleIndustry = (industry: string) => {
@@ -120,7 +124,7 @@ export const InvestorDashboard: React.FC = () => {
               </div>
               <div>
                 <p className="text-sm font-medium text-primary-700">Total Startups</p>
-                <h3 className="text-xl font-semibold text-primary-900">{entrepreneurs.length}</h3>
+                <h3 className="text-xl font-semibold text-primary-900">{entrepreneurs && entrepreneurs.length}</h3>
               </div>
             </div>
           </CardBody>
@@ -165,10 +169,10 @@ export const InvestorDashboard: React.FC = () => {
           </CardHeader>
           
           <CardBody>
-            {entrepreneurs.length > 0 ? (
+            {entrepreneurs && entrepreneurs.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 
-                {entrepreneurs.map(entrepreneur => (
+                {entrepreneurs && entrepreneurs.map(entrepreneur => (
                   <div key={entrepreneur._id}>
                     <EntrepreneurCard entrepreneur={entrepreneur} />
                   </div>
