@@ -1,5 +1,4 @@
 import axios from "axios";
-import { Entrepreneur, Investor } from "../types";
 import toast from "react-hot-toast";
 const URL = "http://localhost:5000";
 
@@ -47,7 +46,7 @@ export const getEnterpreneurById = async (id) => {
         withCredentials: true,
       }
     );
-    const {entrepreneur}  = res.data;
+    const { entrepreneur } = res.data;
     console.log(entrepreneur);
     return entrepreneur;
   } catch (err) {
@@ -80,6 +79,16 @@ export const updateInvestorData = async (formData: any) => {
       }
     );
     toast.success("User data updated successfully.");
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+export const getUserFromDb = async (id) => {
+  try {
+    const res = await axios.get(`${URL}/user/get-user-by-id/${id}`);
+    const { user } = res.data;
+    return user;
   } catch (err) {
     console.log(err);
   }

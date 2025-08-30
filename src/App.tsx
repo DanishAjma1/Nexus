@@ -89,7 +89,6 @@ function App() {
           
           {/* Chat Routes */}
           <Route path="/chat" element={<DashboardLayout />}>
-            <Route index element={<ChatPage />} />
             <Route path=":userId" element={<ChatPage />} />
           </Route>
           

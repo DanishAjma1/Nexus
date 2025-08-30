@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { Message, ChatConversation } from '../types';
 
 export const messages: Message[] = [
@@ -88,41 +89,29 @@ export const messages: Message[] = [
   }
 ];
 
+const URL = "http://localhost:5000";
 // Helper function to get messages between two users
-export const getMessagesBetweenUsers = (user1Id: string, user2Id: string): Message[] => {
-  return messages.filter(
-    message => 
-      (message.senderId === user1Id && message.receiverId === user2Id) || 
-      (message.senderId === user2Id && message.receiverId === user1Id)
-  ).sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+export const getMessagesBetweenUsers = async(user1Id: string, user2Id: string): Message[] => {
+  const res = await axios.get(`${URL}/message/get-message-btw-users/sender?=${user1Id}receiver?=${user2Id}`,{
+    withCredentials:true
+  });
+  const {messages} = res.data;
+  return messages;
 };
 
-// Helper function to get conversations for a user
-export const getConversationsForUser = (userId: string): ChatConversation[] => {
-  // Get unique conversation partners
-  const conversationPartners = new Set<string>();
-  
-  messages.forEach(message => {
-    if (message.senderId === userId) {
-      conversationPartners.add(message.receiverId);
-    }
-    if (message.receiverId === userId) {
-      conversationPartners.add(message.senderId);
-    }
+export const saveMessagesBetweenUsers = async(messages:Any)=> {
+  await axios.post(`${URL}/message/save-message-btw-users`,messages,{
+    withCredentials:true
   });
-  
-  // Create conversation objects
-  return Array.from(conversationPartners).map(partnerId => {
-    const conversationMessages = getMessagesBetweenUsers(userId, partnerId);
-    const lastMessage = conversationMessages[conversationMessages.length - 1];
-    
-    return {
-      id: `conv-${userId}-${partnerId}`,
-      participants: [userId, partnerId],
-      lastMessage,
-      updatedAt: lastMessage?.timestamp || new Date().toISOString()
-    };
-  }).sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+};
+// Helper function to get conversations for a user
+export const getConversationsForUser = async(userId: string): ChatConversation[] => {
+  // Get unique conversation partners
+  const res = await axios.get(`${URL}/conversation/get-conversations-for-user/${userId}`,{
+    withCredentials:true
+  });
+  const {conversation} = res.data;
+  return conversation;
 };
 
 // Helper function to send a new message
