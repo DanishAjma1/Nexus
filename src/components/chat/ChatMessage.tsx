@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { Message } from '../../types';
+import { Message, User } from '../../types';
 import { Avatar } from '../ui/Avatar';
+import { getUserFromDb } from '../../data/users';
 
 interface ChatMessageProps {
   message: Message;
@@ -9,7 +10,15 @@ interface ChatMessageProps {
 }
 
 export const ChatMessage: React.FC<ChatMessageProps> = ({ message, isCurrentUser }) => {
-  const user = findUserById(message.senderId);
+  const [user, setUser] = useState<User | null>(null);
+    useEffect(() => {
+      // Load partner Data
+      const fetchUserData = async () => {
+        const user = await getUserFromDb(message.senderId);
+        setUser(user || null);
+      };
+      fetchUserData();
+    }, []);
   
   if (!user) return null;
   
@@ -38,7 +47,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, isCurrentUser
         </div>
         
         <span className="text-xs text-gray-500 mt-1">
-          {formatDistanceToNow(new Date(message.timestamp), { addSuffix: true })}
+          {formatDistanceToNow(new Date(message.time), { addSuffix: true })}
         </span>
       </div>
       

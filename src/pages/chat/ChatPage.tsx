@@ -10,11 +10,12 @@ import { useAuth } from "../../context/AuthContext";
 import { Message, User } from "../../types";
 import {
   getMessagesBetweenUsers,
-  sendMessage,
   getConversationsForUser,
+  saveMessagesBetweenUsers,
 } from "../../data/messages";
 import { MessageCircle } from "lucide-react";
 import { getUserFromDb } from "../../data/users";
+import { io } from "socket.io-client";
 
 export const ChatPage: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
@@ -24,49 +25,114 @@ export const ChatPage: React.FC = () => {
   const [conversations, setConversations] = useState<any[]>([]);
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
   const [chatPartner, setChatPartner] = useState<User | null>(null);
+  const socket = useRef<any>();
 
   useEffect(() => {
-    // Load user Data
+    // Load partner Data
     const fetchUserData = async () => {
       const Partner = await getUserFromDb(userId);
       setChatPartner(Partner || null);
     };
     fetchUserData();
 
-    // Load conversations
-    if (currentUser) {
-      setConversations(getConversationsForUser(currentUser.userId));
-    }
-  }, [currentUser]);
+    //  Load messages
+    const fetchMessages = async () => {
+      if (currentUser && userId) {
+        const messages = await getMessagesBetweenUsers(
+          currentUser?.userId,
+          userId
+        );
+        setMessages(messages.length > 0 ? messages : []);
+      }
+    };
+    fetchMessages();
+  }, []);
 
+  // Load conversations
   useEffect(() => {
-    // Load messages between users
-    if (currentUser && userId) {
-      setMessages(getMessagesBetweenUsers(currentUser.userId, userId));
-    }
-  }, [currentUser, userId]);
+    const fetchConversations = async () => {
+      if (currentUser) {
+        const conversations = getConversationsForUser(currentUser.userId);
+        setConversations(conversations.length > 0 ? conversations : []);
+      }
+    };
+    fetchConversations();
+  }, [currentUser?.userId]);
+
+  // Load messages between users
+  // useEffect(() => {
+  //   const fetchMessages = async () => {
+  //     if (currentUser && userId) {
+  //       const messages = await getMessagesBetweenUsers(
+  //         currentUser?.userId,
+  //         userId
+  //       );
+  //       setMessages(messages.length > 0 ? messages : []);
+  //     }
+  //   };
+  //   fetchMessages();
+  // },[]);
+
+  // connect socket.io client
+  useEffect(() => {
+    socket.current = io("http://localhost:5000", {
+      withCredentials: true,
+    });
+
+    const handleConnect = () => {
+      socket.current.emit("join", currentUser?.userId);
+    };
+
+    //  connect user
+    socket.current.on("connect", handleConnect);
+
+    // when user receive message
+    socket.current.on("received-message", (message) => {
+      console.log(message);
+      console.log(messages);
+      setMessages((prev) => [...prev, message]);
+    });
+
+    //   when user got hi
+    socket.current.on("hi", () => {
+      alert("hi");
+    });
+
+    return () => {
+      if (socket.current) {
+        socket.current.off("connect", handleConnect);
+        socket.current.off("hi");
+        socket.current.disconnect();
+      }
+    };
+  }, [currentUser?.userId]);
 
   useEffect(() => {
     // Scroll to bottom of messages
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  //  Hanlde send message
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!newMessage.trim() || !currentUser || !userId) return;
 
-    const message = sendMessage({
+    const message = {
       senderId: currentUser.userId,
       receiverId: userId,
       content: newMessage,
-    });
+      isRead: false,
+    };
+    const msg = await saveMessagesBetweenUsers(message);
+    socket.current.emit("send-message", msg);
+    setMessages((prev) => [...prev, msg]);
 
-    setMessages([...messages, message]);
     setNewMessage("");
 
     // Update conversations
-    setConversations(getConversationsForUser(currentUser.userId));
+    const conversations = getConversationsForUser(currentUser.userId);
+    setConversations(conversations.length > 0 ? conversations : []);
   };
 
   if (!currentUser) return null;
@@ -139,7 +205,7 @@ export const ChatPage: React.FC = () => {
                 <div className="space-y-4">
                   {messages.map((message) => (
                     <ChatMessage
-                      key={message.id}
+                      key={message._id}
                       message={message}
                       isCurrentUser={message.senderId === currentUser.userId}
                     />
