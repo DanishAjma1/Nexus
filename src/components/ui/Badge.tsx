@@ -18,7 +18,7 @@ export const Badge: React.FC<BadgeProps> = ({
   size = 'md',
   rounded = false,
   className = '',
-  onClick={},
+  onClick,
 }) => {
   const variantClasses = {
     primary: 'bg-primary-100 text-primary-800',

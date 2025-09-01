@@ -137,7 +137,21 @@ export const getConversationsForUser = async (userId: string): any[] => {
       withCredentials: true,
     }
   );
-  const { conversations } = res.data;
-  return conversations;
+  const { conversation } = res.data;
+  console.log(conversation)
+  return conversation;
 };
 
+export const addConversationsForUser = async (con: object): any[] => {
+  // Get unique conversation partners
+  const res = await axios.post(
+    `${URL}/conversation/add-conversations-for-user`,
+    con,
+    {
+      withCredentials: true,
+    }
+  );
+  const { conversation } = res.data;
+  console.log(conversation)
+  return conversation;
+};

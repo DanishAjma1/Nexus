@@ -12,6 +12,7 @@ import {
   getMessagesBetweenUsers,
   getConversationsForUser,
   saveMessagesBetweenUsers,
+  addConversationsForUser,
 } from "../../data/messages";
 import { MessageCircle } from "lucide-react";
 import { getUserFromDb } from "../../data/users";
@@ -22,21 +23,24 @@ export const ChatPage: React.FC = () => {
   const { user: currentUser } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
-  const [conversations, setConversations] = useState<any[]>([]);
+  const [conversation, setConversation] = useState<any | null>();
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
   const [chatPartner, setChatPartner] = useState<User | null>(null);
   const socket = useRef<any>();
 
   useEffect(() => {
-    // Load partner Data
     const fetchUserData = async () => {
+      // Load conversations
+      const conv = await getConversationsForUser(currentUser?.userId);
+      if (conv) {
+        setConversation(conv);
+      }
+
+      // Load partner Data
       const Partner = await getUserFromDb(userId);
       setChatPartner(Partner || null);
-    };
-    fetchUserData();
 
-    //  Load messages
-    const fetchMessages = async () => {
+      //  Load messages
       if (currentUser && userId) {
         const messages = await getMessagesBetweenUsers(
           currentUser?.userId,
@@ -45,33 +49,9 @@ export const ChatPage: React.FC = () => {
         setMessages(messages.length > 0 ? messages : []);
       }
     };
-    fetchMessages();
-  }, []);
+    fetchUserData();
+  }, [userId]);
 
-  // Load conversations
-  useEffect(() => {
-    const fetchConversations = async () => {
-      if (currentUser) {
-        const conversations = getConversationsForUser(currentUser.userId);
-        setConversations(conversations.length > 0 ? conversations : []);
-      }
-    };
-    fetchConversations();
-  }, [currentUser?.userId]);
-
-  // Load messages between users
-  // useEffect(() => {
-  //   const fetchMessages = async () => {
-  //     if (currentUser && userId) {
-  //       const messages = await getMessagesBetweenUsers(
-  //         currentUser?.userId,
-  //         userId
-  //       );
-  //       setMessages(messages.length > 0 ? messages : []);
-  //     }
-  //   };
-  //   fetchMessages();
-  // },[]);
 
   // connect socket.io client
   useEffect(() => {
@@ -88,8 +68,6 @@ export const ChatPage: React.FC = () => {
 
     // when user receive message
     socket.current.on("received-message", (message) => {
-      console.log(message);
-      console.log(messages);
       setMessages((prev) => [...prev, message]);
     });
 
@@ -124,15 +102,41 @@ export const ChatPage: React.FC = () => {
       content: newMessage,
       isRead: false,
     };
+
     const msg = await saveMessagesBetweenUsers(message);
     socket.current.emit("send-message", msg);
     setMessages((prev) => [...prev, msg]);
-
     setNewMessage("");
 
-    // Update conversations
-    const conversations = getConversationsForUser(currentUser.userId);
-    setConversations(conversations.length > 0 ? conversations : []);
+    // Update conversation
+    try {
+      let updatedConv: any;
+
+      if (conversation && conversation.participants?.length > 0) {
+        for (const partner of conversation.participants) {
+          if (partner.userId !== userId) {
+            const updatedConv = await addConversationsForUser({
+              senderId: currentUser?.userId,
+              receiverId: chatPartner?._id,
+              lastMessage: msg,
+            });
+            setConversation(updatedConv);
+          }
+        }
+      } else {
+        updatedConv = await addConversationsForUser({
+          senderId: currentUser.userId,
+          receiverId: chatPartner?._id,
+          lastMessage: msg,
+        });
+      }
+      console.log(updatedConv)
+      if (updatedConv) {
+        setConversation(updatedConv);
+      }
+    } catch (err) {
+      console.error("Failed to update conversation", err);
+    }
   };
 
   if (!currentUser) return null;
@@ -141,7 +145,7 @@ export const ChatPage: React.FC = () => {
     <div className="flex h-[calc(100vh-4rem)] bg-white border border-gray-200 rounded-lg overflow-hidden animate-fade-in">
       {/* Conversations sidebar */}
       <div className="hidden md:block w-1/3 lg:w-1/4 border-r border-gray-200">
-        <ChatUserList conversations={conversations} />
+        <ChatUserList conversation={conversation || null} />
       </div>
 
       {/* Main chat area */}
