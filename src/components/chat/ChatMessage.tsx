@@ -2,24 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { Message, User } from '../../types';
 import { Avatar } from '../ui/Avatar';
-import { getUserFromDb } from '../../data/users';
 
 interface ChatMessageProps {
   message: Message;
+  user:User | undefined
   isCurrentUser: boolean;
 }
 
-export const ChatMessage: React.FC<ChatMessageProps> = ({ message, isCurrentUser }) => {
-  const [user, setUser] = useState<User | null>(null);
-    useEffect(() => {
-      // Load partner Data
-      const fetchUserData = async () => {
-        const user = await getUserFromDb(message.senderId);
-        setUser(user || null);
-      };
-      fetchUserData();
-    }, []);
-  
+export const ChatMessage: React.FC<ChatMessageProps> = ({ message,user, isCurrentUser }) => {
   if (!user) return null;
   
   return (

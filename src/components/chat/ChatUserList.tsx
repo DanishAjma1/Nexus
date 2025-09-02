@@ -17,27 +17,34 @@ export const ChatUserList: React.FC<ChatUserListProps> = ({ conversation }) => {
   const { user: currentUser } = useAuth();
 
   const [participants, setParticipants] = useState<User[]>([]);
+  const [lastMessage, setLastMessage] = useState({});
 
   useEffect(() => {
     const fetchParticipants = async () => {
       if (!conversation?.participants) return;
 
-      // filter out current user
-      const otherIds = conversation.participants.filter(
-        (id) => id !== currentUser?.userId
+      const allIds = Array.from(
+        new Set(conversation.participants.flatMap((i) => i.receiverId || ""))
       );
 
+      console.log(allIds);
       // fetch all users in parallel
       const users = await Promise.all(
-        otherIds.map(async (id) => await getUserFromDb(id))
+        allIds.map(async (id) => await getUserFromDb(id))
       );
 
       // filter nulls (if any user not found)
       setParticipants(users.filter(Boolean) as User[]);
+
+      const lastMessageIndex = conversation.participants.findIndex((part)=>{
+        return part.receiverId === activeUserId
+      });
+      
+      setLastMessage({...conversation.participants[lastMessageIndex].lastMessage});
     };
 
     fetchParticipants();
-  }, [conversation, currentUser]);
+  }, [conversation, currentUser,activeUserId]);
 
   if (conversation === null) return;
   if (!currentUser) return null;
@@ -55,7 +62,6 @@ export const ChatUserList: React.FC<ChatUserListProps> = ({ conversation }) => {
         <div className="space-y-1">
           {participants.length > 0 ? (
             participants.map((user) => {
-              const lastMessage = conversation.lastMessage;
               const isActive = user._id === activeUserId; // highlight current open chat
 
               return (
@@ -79,7 +85,8 @@ export const ChatUserList: React.FC<ChatUserListProps> = ({ conversation }) => {
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-baseline">
                       <h3 className="text-sm font-medium text-gray-900 truncate">
-                        {user.name}
+                        {user.name.slice(0, 5)}
+                        {"..."}
                       </h3>
 
                       {lastMessage && (

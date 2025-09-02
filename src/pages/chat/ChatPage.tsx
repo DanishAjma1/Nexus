@@ -12,7 +12,7 @@ import {
   getMessagesBetweenUsers,
   getConversationsForUser,
   saveMessagesBetweenUsers,
-  addConversationsForUser,
+  updateConversationsForUser,
 } from "../../data/messages";
 import { MessageCircle } from "lucide-react";
 import { getUserFromDb } from "../../data/users";
@@ -26,32 +26,58 @@ export const ChatPage: React.FC = () => {
   const [conversation, setConversation] = useState<any | null>();
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
   const [chatPartner, setChatPartner] = useState<User | null>(null);
+  const [users, setUsers] = useState<[string , User][]>([]);
   const socket = useRef<any>();
 
+  useEffect(()=>{
+    const fetchConversation = async()=>{
+        // Load conversations
+        const conv = await getConversationsForUser(currentUser?.userId);
+        if (conv) setConversation(conv);
+    }
+    fetchConversation();
+  },[userId,currentUser?.userId,messages])
+
   useEffect(() => {
+    if (!currentUser?.userId || !userId) return; // guard clause
     const fetchUserData = async () => {
-      // Load conversations
-      const conv = await getConversationsForUser(currentUser?.userId);
-      if (conv) {
-        setConversation(conv);
-      }
+      try {
+      
+        // Load partner Data
+        const partner = await getUserFromDb(userId);
+        setChatPartner(partner || null);
 
-      // Load partner Data
-      const Partner = await getUserFromDb(userId);
-      setChatPartner(Partner || null);
-
-      //  Load messages
-      if (currentUser && userId) {
+        // Load messages
         const messages = await getMessagesBetweenUsers(
-          currentUser?.userId,
+          currentUser.userId,
           userId
         );
         setMessages(messages.length > 0 ? messages : []);
+      } catch (err) {
+        console.error("Error fetching user data:", err);
       }
     };
-    fetchUserData();
-  }, [userId]);
 
+    fetchUserData();
+  }, [currentUser?.userId, userId]);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      const uniqueIds = Array.from(new Set(messages.map((m) => m.senderId)));
+      const usersData = await Promise.all(
+        uniqueIds.map(async (id) => {
+          const user = await getUserFromDb(id);
+          return [id, user] as [string, User];
+        })
+      );
+
+      setUsers(Object.fromEntries(usersData));
+    };
+
+    if (messages.length > 0) {
+      fetchUsers();
+    }
+  }, [messages]);
 
   // connect socket.io client
   useEffect(() => {
@@ -110,27 +136,13 @@ export const ChatPage: React.FC = () => {
 
     // Update conversation
     try {
-      let updatedConv: any;
-
-      if (conversation && conversation.participants?.length > 0) {
-        for (const partner of conversation.participants) {
-          if (partner.userId !== userId) {
-            const updatedConv = await addConversationsForUser({
-              senderId: currentUser?.userId,
-              receiverId: chatPartner?._id,
-              lastMessage: msg,
-            });
-            setConversation(updatedConv);
-          }
-        }
-      } else {
-        updatedConv = await addConversationsForUser({
-          senderId: currentUser.userId,
-          receiverId: chatPartner?._id,
-          lastMessage: msg,
-        });
+      const con = {
+        senderId:currentUser?.userId,
+        receiverId:userId,
+        lastMessage:{...msg}
       }
-      console.log(updatedConv)
+      const updatedConv = await updateConversationsForUser(con);
+      console.log(updatedConv);
       if (updatedConv) {
         setConversation(updatedConv);
       }
@@ -207,11 +219,12 @@ export const ChatPage: React.FC = () => {
             <div className="flex-1 p-4 overflow-y-auto bg-gray-50">
               {messages.length > 0 ? (
                 <div className="space-y-4">
-                  {messages.map((message) => (
+                  {messages.map((msg) => (
                     <ChatMessage
-                      key={message._id}
-                      message={message}
-                      isCurrentUser={message.senderId === currentUser.userId}
+                      key={msg._id}
+                      message={msg}
+                      user={users[msg.senderId]}
+                      isCurrentUser={msg.senderId === currentUser?.userId}
                     />
                   ))}
                   <div ref={messagesEndRef} />

@@ -129,7 +129,7 @@ export const saveMessagesBetweenUsers = async (newMessage: Any) => {
   }
 };
 // Helper function to get conversations for a user
-export const getConversationsForUser = async (userId: string): any[] => {
+export const getConversationsForUser = async (userId: string | undefined) => {
   // Get unique conversation partners
   const res = await axios.get(
     `${URL}/conversation/get-conversations-for-user/${userId}`,
@@ -151,7 +151,22 @@ export const addConversationsForUser = async (con: object): any[] => {
       withCredentials: true,
     }
   );
-  const { conversation } = res.data;
-  console.log(conversation)
-  return conversation;
+  const { conversationForSender } = res.data;
+  console.log(conversationForSender)
+  return conversationForSender;
+};
+
+
+export const updateConversationsForUser = async (con: object): any[] => {
+  // Get unique conversation partners
+  const res = await axios.post(
+    `${URL}/conversation/update-conversations-for-user`,
+    con,
+    {
+      withCredentials: true,
+    }
+  );
+  const { conversationForSender } = res.data;
+  console.log(conversationForSender)
+  return conversationForSender;
 };
