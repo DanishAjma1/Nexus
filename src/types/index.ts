@@ -38,10 +38,11 @@ export interface Investor extends User {
 }
 
 export interface Message {
-  senderId: string;
-  receiverId: string;
+  sender: string;
+  receiver: string;
   content: string;
   isRead: boolean;
+  time:Date,
 }
 
 export interface ChatConversation {

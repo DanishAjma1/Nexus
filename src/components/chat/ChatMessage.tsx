@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { Message, User } from '../../types';
 import { Avatar } from '../ui/Avatar';

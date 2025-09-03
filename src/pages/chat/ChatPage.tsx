@@ -23,26 +23,27 @@ export const ChatPage: React.FC = () => {
   const { user: currentUser } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+  const [checkStatus, setCheckStatus] = useState(false);
   const [conversation, setConversation] = useState<any | null>();
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
   const [chatPartner, setChatPartner] = useState<User | null>(null);
-  const [users, setUsers] = useState<[string , User][]>([]);
+  const [users, setUsers] = useState<[string, User][]>([]);
   const socket = useRef<any>();
 
-  useEffect(()=>{
-    const fetchConversation = async()=>{
-        // Load conversations
-        const conv = await getConversationsForUser(currentUser?.userId);
-        if (conv) setConversation(conv);
-    }
+  useEffect(() => {
+    const fetchConversation = async () => {
+      // Load conversations
+      const conv = await getConversationsForUser(currentUser?.userId,userId);
+      if (conv) setConversation(conv);
+    };
     fetchConversation();
-  },[userId,currentUser?.userId,messages])
+  }, [userId, currentUser?.userId, messages]);
 
   useEffect(() => {
     if (!currentUser?.userId || !userId) return; // guard clause
     const fetchUserData = async () => {
       try {
-      
         // Load partner Data
         const partner = await getUserFromDb(userId);
         setChatPartner(partner || null);
@@ -97,11 +98,23 @@ export const ChatPage: React.FC = () => {
       setMessages((prev) => [...prev, message]);
     });
 
+    //  when user get typing
+    socket.current.on("is-typing", () => {
+      setIsTyping(true);
+      setTimeout(() => {
+        setIsTyping(false);
+      }, 2000);
+    });
+
     //   when user got hi
     socket.current.on("hi", () => {
       alert("hi");
     });
-
+    
+    //  when user offline or status changed
+    socket.current.on("check-user-status",()=>{
+      setCheckStatus(!checkStatus);
+    })
     return () => {
       if (socket.current) {
         socket.current.off("connect", handleConnect);
@@ -137,12 +150,11 @@ export const ChatPage: React.FC = () => {
     // Update conversation
     try {
       const con = {
-        senderId:currentUser?.userId,
-        receiverId:userId,
-        lastMessage:{...msg}
-      }
+        sender: currentUser?.userId,
+        receiver: userId,
+        lastMessage: { ...msg },
+      };
       const updatedConv = await updateConversationsForUser(con);
-      console.log(updatedConv);
       if (updatedConv) {
         setConversation(updatedConv);
       }
@@ -179,8 +191,16 @@ export const ChatPage: React.FC = () => {
                   <h2 className="text-lg font-medium text-gray-900">
                     {chatPartner.name}
                   </h2>
-                  <p className="text-sm text-gray-500">
-                    {chatPartner.isOnline ? "Online" : "Last seen recently"}
+                  <p
+                    className={`text-sm ${
+                      isTyping || chatPartner.isOnline? "text-green-500" : "text-gray-500"
+                    }`}
+                  >
+                    {isTyping
+                      ? "is typing"
+                      : chatPartner.isOnline
+                      ? "online"
+                      : "Last seen recently"}
                   </p>
                 </div>
               </div>
@@ -261,7 +281,11 @@ export const ChatPage: React.FC = () => {
                   type="text"
                   placeholder="Type a message..."
                   value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
+                  onChange={(e) => {
+                    e.preventDefault();
+                    socket.current.emit("typing", chatPartner._id);
+                    setNewMessage(e.target.value);
+                  }}
                   fullWidth
                   className="flex-1"
                 />

@@ -16,8 +16,7 @@ export const ChatUserList: React.FC<ChatUserListProps> = ({ conversation }) => {
   const { userId: activeUserId } = useParams<{ userId: string }>();
   const { user: currentUser } = useAuth();
 
-  const [participants, setParticipants] = useState<User[]>([]);
-  const [lastMessage, setLastMessage] = useState({});
+  const [chatPartners, setChatPartners] = useState<User[]>([]);
 
   useEffect(() => {
     const fetchParticipants = async () => {
@@ -27,27 +26,23 @@ export const ChatUserList: React.FC<ChatUserListProps> = ({ conversation }) => {
         new Set(conversation.participants.flatMap((i) => i.receiverId || ""))
       );
 
-      console.log(allIds);
-      // fetch all users in parallel
       const users = await Promise.all(
         allIds.map(async (id) => await getUserFromDb(id))
       );
 
       // filter nulls (if any user not found)
-      setParticipants(users.filter(Boolean) as User[]);
+      setChatPartners(users.filter(Boolean) as User[]);
 
-      const lastMessageIndex = conversation.participants.findIndex((part)=>{
-        return part.receiverId === activeUserId
-      });
-      
-      setLastMessage({...conversation.participants[lastMessageIndex].lastMessage});
+      //  find the index of active user last message
     };
 
     fetchParticipants();
-  }, [conversation, currentUser,activeUserId]);
+  }, [conversation, currentUser, activeUserId]);
 
   if (conversation === null) return;
+
   if (!currentUser) return null;
+
   const handleSelectUser = (userId: string) => {
     navigate(`/chat/${userId}`);
   };
@@ -60,9 +55,22 @@ export const ChatUserList: React.FC<ChatUserListProps> = ({ conversation }) => {
         </h2>
 
         <div className="space-y-1">
-          {participants.length > 0 ? (
-            participants.map((user) => {
+          {chatPartners.length > 0 ? (
+            chatPartners.map((user) => {
               const isActive = user._id === activeUserId; // highlight current open chat
+              let lastMessage;
+              const lastMessageIndex = conversation.participants.findIndex(
+                (part) => {
+                  return part.receiverId === user._id;
+                }
+              );
+              if (lastMessageIndex === -1) {
+                return;
+              } else {
+                lastMessage = {
+                  ...conversation.participants[lastMessageIndex].lastMessage,
+                };
+              }
 
               return (
                 <div
@@ -89,10 +97,10 @@ export const ChatUserList: React.FC<ChatUserListProps> = ({ conversation }) => {
                         {"..."}
                       </h3>
 
-                      {lastMessage && (
+                      {Object.keys(lastMessage).length !== 0 && (
                         <span className="text-xs text-gray-500">
                           {formatDistanceToNow(
-                            new Date(conversation?.lastModified),
+                            new Date(lastMessage.time || "Text first"),
                             { addSuffix: false }
                           )}
                         </span>
