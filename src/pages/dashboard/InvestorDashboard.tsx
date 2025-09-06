@@ -14,11 +14,11 @@ export const InvestorDashboard: React.FC = () => {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIndustries, setSelectedIndustries] = useState<string[]>([]);
-  
+  console.log(user);
   if (!user) return null;
   
   // Get collaboration requests sent by this investor
-  const sentRequests = getRequestsFromInvestor(user.id);
+  const sentRequests = getRequestsFromInvestor(user.userId);
   // const requestedEntrepreneurIds = sentRequests.map(req => req.entrepreneurId);
   const [entrepreneurs,setEnterprenuers] = useState([]);
 

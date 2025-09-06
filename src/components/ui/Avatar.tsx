@@ -7,7 +7,7 @@ interface AvatarProps {
   alt: string;
   size?: AvatarSize;
   className?: string;
-  status?: 'online' | 'offline' | 'away' | 'busy';
+  status?: "online" | "offline";
 }
 
 export const Avatar: React.FC<AvatarProps> = ({
@@ -28,8 +28,6 @@ export const Avatar: React.FC<AvatarProps> = ({
   const statusColors = {
     online: 'bg-success-500',
     offline: 'bg-gray-400',
-    away: 'bg-warning-500',
-    busy: 'bg-error-500',
   };
   
   const statusSizes = {

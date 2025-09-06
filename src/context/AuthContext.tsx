@@ -14,7 +14,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [userData, setUserData] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Check for stored user on initial load
@@ -66,8 +65,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const { token, user } = res.data;
 
       localStorage.setItem("token", token);
-      setUser(user);
-      setUserData(user);
+      setUser({...user,isOnline:true});
       toast.success("Successfully logged in!");
     } catch (error) {
       toast.error((error as Error).message);
@@ -104,7 +102,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         toast.success("Account created successfully!");
         const { token, user } = res.data;
         localStorage.setItem("token", token);
-        setUserData(user);
         setUser(user);
       }
     } catch (error) {
@@ -185,7 +182,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   // Logout function
   const logout = (): void => {
     setUser(null);
-    setUserData(null);
     localStorage.removeItem("token");
     toast.success("Logged out successfully");
   };
@@ -218,7 +214,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       .then((res) => {
         toast.success("profile updated successfully.");
         const { user } = res.data;
-        setUserData(user);
+        setUser(user);
       })
       .catch((err) => {
         console.log(err);
@@ -227,7 +223,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const value = {
     user,
-    userData,
     login,
     register,
     logout,

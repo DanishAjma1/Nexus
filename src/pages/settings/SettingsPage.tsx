@@ -9,17 +9,17 @@ import { useAuth } from "../../context/AuthContext";
 import { Navigate } from "react-router-dom";
 
 export const SettingsPage: React.FC = () => {
-  const { user, updateProfile, userData } = useAuth();
+  const { user, updateProfile} = useAuth();
 
-  if (!user || !userData) return null;
+  if (!user ) return null;
 
   const initialValues = {
-    name: userData.name,
-    email: userData.email,
-    role: userData.role,
-    bio: userData.bio || "",
-    location: userData.location || "",
-    avatarUrl: userData.avatarUrl || "",
+    name: user?.name,
+    email: user?.email,
+    role: user?.role,
+    bio: user?.bio || "",
+    location: user?.location || "",
+    avatarUrl: user?.avatarUrl || "",
   };
   const [userDetails, setUserDetails] = useState(initialValues);
   const [isFileUploaded, setIsFileUploaded] = useState(false);
@@ -35,7 +35,7 @@ export const SettingsPage: React.FC = () => {
   const handleSubmit = async (e: Event) => {
     e.preventDefault();
 
-    updateProfile(userData.userId, userDetails);
+    updateProfile(user?.userId, userDetails);
   };
   const handleCancel = (e) => {
     e.preventDefault();

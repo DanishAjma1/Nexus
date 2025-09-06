@@ -7,6 +7,7 @@ import { Button } from '../ui/Button';
 
 export const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   
@@ -26,7 +27,7 @@ export const Navbar: React.FC = () => {
   
   // User profile route based on role and ID
   const profileRoute = user 
-    ? `/profile/${user.role}/${user.id}` 
+    ? `/profile/${user.role}/${user.userId}` 
     : '/login';
   
   const navLinks = [

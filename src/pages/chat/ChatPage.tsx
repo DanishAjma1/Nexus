@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Send, Phone, Video, Info, Smile } from "lucide-react";
 import { Avatar } from "../../components/ui/Avatar";
 import { Button } from "../../components/ui/Button";
@@ -16,7 +16,8 @@ import {
 } from "../../data/messages";
 import { MessageCircle } from "lucide-react";
 import { getUserFromDb } from "../../data/users";
-import { io } from "socket.io-client";
+import { useSocket } from "../../context/SocketContext";
+import IncomingCallModal from "../../components/webrtc/IncomingCallModal";
 
 export const ChatPage: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
@@ -29,17 +30,41 @@ export const ChatPage: React.FC = () => {
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
   const [chatPartner, setChatPartner] = useState<User | null>(null);
   const [users, setUsers] = useState<[string, User][]>([]);
-  const socket = useRef<any>();
+  const { socket } = useSocket();
 
+  const [incomingCall, setIncomingCall] = useState<{
+    from: string;
+    roomId: string;
+  } | null>(null);
+  const navigate = useNavigate();
+
+  const acceptCall = () => {
+    if (incomingCall) {
+      socket?.emit("accept-call", {
+        from: incomingCall.from,
+      });
+      navigate(`video-call/${incomingCall.roomId}`);
+      setIncomingCall(null);
+    }
+  };
+
+  const rejectCall = () => {
+    if (incomingCall) {
+      socket?.emit("reject-call", { from: incomingCall.from });
+      setIncomingCall(null);
+    }
+  };
+
+  // Load conversations
   useEffect(() => {
     const fetchConversation = async () => {
-      // Load conversations
-      const conv = await getConversationsForUser(currentUser?.userId,userId);
+      const conv = await getConversationsForUser(currentUser?.userId, userId);
       if (conv) setConversation(conv);
     };
     fetchConversation();
   }, [userId, currentUser?.userId, messages]);
 
+  //  Fetch Partner Data, messages
   useEffect(() => {
     if (!currentUser?.userId || !userId) return; // guard clause
     const fetchUserData = async () => {
@@ -62,6 +87,7 @@ export const ChatPage: React.FC = () => {
     fetchUserData();
   }, [currentUser?.userId, userId]);
 
+  //  Set Last messages for each conversation
   useEffect(() => {
     const fetchUsers = async () => {
       const uniqueIds = Array.from(new Set(messages.map((m) => m.senderId)));
@@ -80,47 +106,35 @@ export const ChatPage: React.FC = () => {
     }
   }, [messages]);
 
-  // connect socket.io client
+  // Connect socket.io client
   useEffect(() => {
-    socket.current = io("http://localhost:5000", {
-      withCredentials: true,
+    socket?.on("incoming-call", ({ from, roomId }) => {
+      setIncomingCall({ from, roomId });
     });
 
-    const handleConnect = () => {
-      socket.current.emit("join", currentUser?.userId);
-    };
-
-    //  connect user
-    socket.current.on("connect", handleConnect);
-
     // when user receive message
-    socket.current.on("received-message", (message) => {
+    socket?.on("received-message", (message) => {
       setMessages((prev) => [...prev, message]);
     });
 
     //  when user get typing
-    socket.current.on("is-typing", () => {
+    socket?.on("is-typing", () => {
       setIsTyping(true);
       setTimeout(() => {
         setIsTyping(false);
       }, 2000);
     });
 
-    //   when user got hi
-    socket.current.on("hi", () => {
-      alert("hi");
-    });
-    
     //  when user offline or status changed
-    socket.current.on("check-user-status",()=>{
+    socket?.on("check-user-status", () => {
       setCheckStatus(!checkStatus);
-    })
+    });
     return () => {
-      if (socket.current) {
-        socket.current.off("connect", handleConnect);
-        socket.current.off("hi");
-        socket.current.disconnect();
-      }
+      socket?.off("send-messsage");
+      socket?.off("received-messsage");
+      socket?.off("incoming-call");
+      socket?.off("accept-call");
+      socket?.off("reject-call");
     };
   }, [currentUser?.userId]);
 
@@ -143,7 +157,7 @@ export const ChatPage: React.FC = () => {
     };
 
     const msg = await saveMessagesBetweenUsers(message);
-    socket.current.emit("send-message", msg);
+    socket?.emit("send-message", msg);
     setMessages((prev) => [...prev, msg]);
     setNewMessage("");
 
@@ -167,6 +181,19 @@ export const ChatPage: React.FC = () => {
 
   return (
     <div className="flex h-[calc(100vh-4rem)] bg-white border border-gray-200 rounded-lg overflow-hidden animate-fade-in">
+      {incomingCall && (
+        <div>
+          {/* Chat UI */}
+          <h1>Chat & Calls</h1>
+
+          <IncomingCallModal
+            from={incomingCall.from}
+            roomId={incomingCall.roomId}
+            onAccept={acceptCall}
+            onReject={rejectCall}
+          />
+        </div>
+      )}
       {/* Conversations sidebar */}
       <div className="hidden md:block w-1/3 lg:w-1/4 border-r border-gray-200">
         <ChatUserList conversation={conversation || null} />
@@ -193,7 +220,9 @@ export const ChatPage: React.FC = () => {
                   </h2>
                   <p
                     className={`text-sm ${
-                      isTyping || chatPartner.isOnline? "text-green-500" : "text-gray-500"
+                      isTyping || chatPartner.isOnline
+                        ? "text-green-500"
+                        : "text-gray-500"
                     }`}
                   >
                     {isTyping
@@ -211,6 +240,15 @@ export const ChatPage: React.FC = () => {
                   size="sm"
                   className="rounded-full p-2"
                   aria-label="Voice call"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate(
+                      `audio-call/${currentUser?.userId.slice(
+                        0,
+                        5
+                      )}&${chatPartner?._id.slice(0, 5)}`
+                    );
+                  }}
                 >
                   <Phone size={18} />
                 </Button>
@@ -220,6 +258,15 @@ export const ChatPage: React.FC = () => {
                   size="sm"
                   className="rounded-full p-2"
                   aria-label="Video call"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate(
+                      `video-call/${currentUser?.userId.slice(
+                        0,
+                        5
+                      )}&${chatPartner?._id.slice(0, 5)}`
+                    );
+                  }}
                 >
                   <Video size={18} />
                 </Button>
@@ -283,7 +330,7 @@ export const ChatPage: React.FC = () => {
                   value={newMessage}
                   onChange={(e) => {
                     e.preventDefault();
-                    socket.current.emit("typing", chatPartner._id);
+                    socket?.emit("typing", chatPartner._id);
                     setNewMessage(e.target.value);
                   }}
                   fullWidth

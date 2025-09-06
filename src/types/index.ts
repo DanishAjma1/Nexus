@@ -89,3 +89,7 @@ export interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
 }
+
+export interface Socketcontext{
+  socket:string | null;
+}
