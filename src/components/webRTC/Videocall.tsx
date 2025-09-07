@@ -1,22 +1,21 @@
-// client/src/components/VideoCall.js
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useSocket } from "../../context/SocketContext";
 import toast from "react-hot-toast";
 
-
 export const VideoCall: React.FC = () => {
   const { roomId, userId } = useParams();
-
-  const {socket} = useSocket();
+  const { socket } = useSocket();
   const { user } = useAuth();
-  const localVideoRef = useRef(null);
-  const remoteVideoRef = useRef(null);
-  const pcRef = useRef(null);
+
+  const localVideoRef = useRef<HTMLVideoElement>(null);
+  const remoteVideoRef = useRef<HTMLVideoElement>(null);
+  const pcRef = useRef<RTCPeerConnection | null>(null);
   const navigate = useNavigate();
 
   const [joined, setJoined] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
 
   useEffect(() => {
     pcRef.current = new RTCPeerConnection();
@@ -28,73 +27,78 @@ export const VideoCall: React.FC = () => {
       }
     };
 
-    //  Connect user
-    if (!joined) {
-      joinRoom();
-    }
-
-    // Send ICE candidates to peer
+    // ICE candidates → send to other peer
     pcRef.current.onicecandidate = (event) => {
       if (event.candidate) {
         socket?.emit("ice-candidate", { roomId, candidate: event.candidate });
       }
     };
 
-                                  // *****Socket listeners*****
+    // ===== SOCKET LISTENERS =====
     socket?.on("offer", async ({ offer }) => {
-      if (pcRef.current) {
-        await pcRef.current.setRemoteDescription(
+      try {
+        await pcRef.current?.setRemoteDescription(
           new RTCSessionDescription(offer)
         );
-        const answer = await pcRef.current.createAnswer();
-        await pcRef.current.setLocalDescription(answer);
-        socket?.emit("answer", { roomId, answer });
+        // Create answer
+        const answer = await pcRef.current?.createAnswer();
+        await pcRef.current?.setLocalDescription(answer);
+        socket.emit("answer", { roomId, answer });
+      } catch (err) {
+        console.error("Error handling offer:", err);
       }
     });
 
-    //  Offer Answer
     socket?.on("answer", async ({ answer }) => {
-      if (pcRef.current) {
-        await pcRef.current.setRemoteDescription(
-          new RTCSessionDescription(answer)
-        );
+      try {
+        if (pcRef.current && !pcRef.current.remoteDescription) {
+          await pcRef.current.setRemoteDescription(
+            new RTCSessionDescription(answer)
+          );
+        }
+      } catch (err) {
+        console.error("Error setting remote description:", err);
       }
     });
 
-    //  receiver ICE
     socket?.on("ice-candidate", async ({ candidate }) => {
       try {
-        await pcRef.current.addIceCandidate(new RTCIceCandidate(candidate));
+        if (pcRef.current?.remoteDescription) {
+          await pcRef.current.addIceCandidate(new RTCIceCandidate(candidate));
+        }
       } catch (err) {
         console.error("Error adding ICE candidate:", err);
       }
     });
 
-    //  Accepted call
     socket?.on("call-accepted", () => {
-      toast.success("user joined");
+      toast.success("Call accepted");
     });
 
-    //  Call ended
     socket?.on("call-ended", () => {
-      toast.success("call ended");
+      toast.success("Call ended");
       navigate(`/chat/${userId}`);
     });
 
-//  Call rejected
     socket?.on("call-rejected", () => {
-      console.log("uff");
-      toast.error("Your call was rejected.");
+      toast.error("Your call is declined.");
       navigate(`/chat/${userId}`);
     });
 
+    socket?.on("receiver-offline", () => {
+      toast.error("The receiver is offline.");
+      navigate(`/chat/${userId}`);
+    });
+
+    if (!joined) joinRoom();
 
     return () => {
       socket?.off("offer");
-      socket?.off("call-rejected");
-      socket?.off("call-accepted");
       socket?.off("answer");
       socket?.off("ice-candidate");
+      socket?.off("call-accepted");
+      socket?.off("call-rejected");
+      socket?.off("call-ended");
     };
   }, [roomId]);
 
@@ -106,32 +110,29 @@ export const VideoCall: React.FC = () => {
       // Get media
       const stream = await navigator.mediaDevices.getUserMedia({
         video: true,
+        audio: true,
       });
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = stream;
       }
 
-      // Add tracks to connection
-      stream.getTracks().forEach((track) => {
-        if (pcRef.current) {
-          pcRef.current.addTrack(track, stream);
-        }
-      });
-
-      // Create offer
-      if (pcRef.current) {
-        const offer = await pcRef.current.createOffer();
-        await pcRef.current.setLocalDescription(offer);
-        socket?.emit("offer", { roomId, offer });
+      // Add tracks
+      if (pcRef.current?.getSenders().length === 0) {
+        stream
+          .getTracks()
+          .forEach((track) => pcRef.current?.addTrack(track, stream));
       }
 
-      socket?.emit("start-call", {
-        from: user?.userId,
-        to: userId,
-        roomId: roomId,
-      });
+      // Caller creates offer
+      if (user?.userId !== userId) {
+        // Only caller
+        const offer = await pcRef.current?.createOffer();
+        await pcRef.current?.setLocalDescription(offer);
+        socket?.emit("offer", { roomId, offer });
+        socket?.emit("start-call", { from: user?.userId, to: userId, roomId });
+      }
     } catch (error) {
-      console.log("video call error : " + error);
+      console.log("Video call error:", error);
     }
   };
 
@@ -139,49 +140,101 @@ export const VideoCall: React.FC = () => {
     <div className="flex flex-col w-full h-screen bg-slate-900 text-white">
       {/* Video Area */}
       <div className="flex flex-1 items-center justify-center gap-4 p-4">
-        {/* Local Video (small in corner) */}
-        <div className="relative w-1/3 h-2/3 bg-black rounded-2xl overflow-hidden shadow-lg border border-gray-700">
+        {/* Local Video */}
+        <div
+          className={`relative w-1/3 h-2/3 bg-black rounded-2xl overflow-hidden shadow-lg border-2  ${
+            isMuted ? "border-red-700" : "border-gray-700"
+          }`}
+        >
           <video
             ref={localVideoRef}
             autoPlay
             playsInline
             muted
-            className="w-full h-full object-cover"
+            className={`w-full h-full object-cover`}
           />
           <span className="absolute bottom-2 left-2 text-xs bg-black/50 px-2 py-1 rounded-md">
             You
           </span>
         </div>
 
-        {/* Remote Video (big) */}
+        {/* Remote Video */}
         <div className="relative flex-1 h-5/6 bg-black rounded-2xl overflow-hidden shadow-lg border border-gray-700 flex items-center justify-center">
-          {remoteVideoRef.current !== null ? (
-            <video
-              ref={remoteVideoRef}
-              autoPlay
-              playsInline
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <span className="text-gray-400">Waiting for participant...</span>
-          )}
+          <video
+            ref={remoteVideoRef}
+            autoPlay
+            playsInline
+            muted
+            className="w-full h-full object-cover"
+          />
         </div>
       </div>
 
       {/* Control Bar */}
       <div className="h-20 bg-slate-800 flex items-center justify-center gap-6 border-t border-slate-700">
-        <button className="w-12 h-12 flex items-center justify-center rounded-full bg-red-600 hover:bg-red-700 shadow-lg" onClick={(e)=>{
-          e.preventDefault();
-          socket?.emit("end-call",{roomId});
-          navigate(`/chat/${userId}`);
-        }}>
+        <button
+          className="w-12 h-12 flex items-center justify-center rounded-full bg-red-600 hover:bg-red-700 shadow-lg"
+          onClick={(e) => {
+            e.preventDefault();
+            socket?.emit("end-call", { to: userId, roomId });
+          }}
+        >
           📞
         </button>
-        <button className="w-12 h-12 flex items-center justify-center rounded-full bg-slate-600 hover:bg-slate-700 shadow-lg">
-          🎤
+        {/* Mic Toggle */}
+        <button
+          className="w-12 h-12 flex items-center justify-center rounded-full bg-slate-600 hover:bg-slate-700 shadow-lg"
+          onClick={(e) => {
+            e.preventDefault();
+            setIsMuted((prev) => {
+              // Toggle mute on local audio tracks
+              const stream = localVideoRef.current?.srcObject as MediaStream;
+              if (stream) {
+                stream.getAudioTracks().forEach((track) => {
+                  track.enabled = prev; // if currently muted, enable; else disable
+                });
+              }
+              return !prev;
+            });
+          }}
+        >
+          {isMuted ? "🔇" : "🎤"}
         </button>
-        <button className="w-12 h-12 flex items-center justify-center rounded-full bg-slate-600 hover:bg-slate-700 shadow-lg">
-          🎥
+
+        {/* Camera Toggle */}
+        <button
+          className="w-12 h-12 flex items-center justify-center rounded-full bg-slate-600 hover:bg-slate-700 shadow-lg"
+          onClick={(e) => {
+            e.preventDefault();
+
+            const stream = localVideoRef.current?.srcObject as MediaStream;
+            if (!stream || !pcRef.current) return;
+
+            // Get the video track
+            const videoTrack = stream.getVideoTracks()[0];
+            if (!videoTrack) return;
+
+            // Get the sender responsible for this track
+            const sender = pcRef.current
+              .getSenders()
+              .find((s) => s.track && s.track.kind === "video");
+
+            if (sender) {
+              if (videoTrack.enabled) {
+                // Pause sending video
+                videoTrack.enabled = false;
+                console.log(videoTrack)
+                sender.replaceTrack(null); // stop sending to remote
+              } else {
+                // Resume sending video
+                videoTrack.enabled = true;
+                console.log(videoTrack)
+                sender.replaceTrack(videoTrack); // reattach track to remote
+              }
+            }
+          }}
+        >
+          {"🎥"}
         </button>
       </div>
     </div>

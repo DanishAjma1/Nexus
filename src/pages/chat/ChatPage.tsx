@@ -41,7 +41,7 @@ export const ChatPage: React.FC = () => {
   const acceptCall = () => {
     if (incomingCall) {
       socket?.emit("accept-call", {
-        from: incomingCall.from,
+        to: incomingCall.from,
       });
       navigate(`video-call/${incomingCall.roomId}`);
       setIncomingCall(null);
@@ -50,7 +50,7 @@ export const ChatPage: React.FC = () => {
 
   const rejectCall = () => {
     if (incomingCall) {
-      socket?.emit("reject-call", { from: incomingCall.from });
+      socket?.emit("reject-call", { to: incomingCall.from });
       setIncomingCall(null);
     }
   };
