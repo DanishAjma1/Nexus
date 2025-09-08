@@ -1,88 +1,227 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
-import io from "socket.io-client";
+import { useNavigate, useParams } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import { useSocket } from "../../context/SocketContext";
+import toast from "react-hot-toast";
 
-const socket = io("http://localhost:5000");
+export const AudioCall: React.FC = () => {
+  const { roomId, userId } = useParams();
+  const { socket } = useSocket();
+  const { user } = useAuth();
 
-export const AudioCall = () => {
-  const {roomId} = useParams();
-  const localAudioRef = useRef(null);
-  const remoteAudioRef = useRef(null);
-  const pcRef = useRef(null);
+  const localAudioRef = useRef<HTMLAudioElement>(null);
+  const remoteAudioRef = useRef<HTMLAudioElement>(null);
+  const pcRef = useRef<RTCPeerConnection | null>(null);
+  const navigate = useNavigate();
 
   const [joined, setJoined] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
 
   useEffect(() => {
     pcRef.current = new RTCPeerConnection();
 
-    //  Handle remote stream
+    // Handle remote stream
     pcRef.current.ontrack = (event) => {
-      remoteAudioRef.current.srcObject = event.streams[0];
-    };
-
-    //  connect the user
-    if(!joined){
-      joinRoom();
-    }
-
-    //  Send ICE candidate to peer
-    pcRef.current.onicecandidate = (event) => {
-      if (event.candidate) {
-        socket.emit("ice-candidate", { candidate: event.candidate, roomId });
+      if (remoteAudioRef.current) {
+        remoteAudioRef.current.srcObject = event.streams[0];
       }
     };
 
-    //  Socket listeners
-    socket.on("offer", async ({ offer }) => {
-      await pcRef.current.setRemoteDescription(
-        new RTCSessionDescription(offer)
-      );
-      const answer = await pcRef.current.createAnswer();
-      await pcRef.current.setLocalDescription(answer);
-      socket.emit("answer", { roomId, answer });
-    });
+    // ICE candidates → send to other peer
+    pcRef.current.onicecandidate = (event) => {
+      if (event.candidate) {
+        socket?.emit("ice-candidate", { roomId, candidate: event.candidate });
+      }
+    };
 
-    socket.on("answer", async ({ answer }) => {
-      await pcRef.current.setRemoteDescription(
-        new RTCSessionDescription(answer)
-      );
-    });
+    const stopStream = () => {
+      const stream = localAudioRef.current?.srcObject as MediaStream;
+      if (stream) {
+        stream.getTracks().forEach((track) => {
+          track.stop(); // stops both mic and camera
+        });
+        if (localAudioRef.current) {
+          localAudioRef.current.srcObject = null;
+        }
+      }
 
-    socket.on("ice-candidate", async ({ candidate }) => {
+      // Close peer connection
+      pcRef.current?.close();
+      pcRef.current = null;
+      socket?.emit("end-call", { to: userId, roomId });
+    };
+
+    // ===== SOCKET LISTENERS =====
+    socket?.on("offer", async ({ offer }) => {
       try {
-        await pcRef.current.addIceCandidate(new RTCIceCandidate(candidate));
+        await pcRef.current?.setRemoteDescription(
+          new RTCSessionDescription(offer)
+        );
+        // Create answer
+        const answer = await pcRef.current?.createAnswer();
+        await pcRef.current?.setLocalDescription(answer);
+        socket.emit("answer", { roomId, answer });
+      } catch (err) {
+        console.error("Error handling offer:", err);
+      }
+    });
+
+    socket?.on("answer", async ({ answer }) => {
+      try {
+        if (pcRef.current && !pcRef.current.remoteDescription) {
+          await pcRef.current.setRemoteDescription(
+            new RTCSessionDescription(answer)
+          );
+        }
+      } catch (err) {
+        console.error("Error setting remote description:", err);
+      }
+    });
+
+    socket?.on("ice-candidate", async ({ candidate }) => {
+      try {
+        if (pcRef.current?.remoteDescription) {
+          await pcRef.current.addIceCandidate(new RTCIceCandidate(candidate));
+        }
       } catch (err) {
         console.error("Error adding ICE candidate:", err);
       }
     });
+
+    socket?.on("call-accepted", () => {
+      toast.success("Call accepted");
+    });
+
+    socket?.on("call-ended", () => {
+      toast.success("Call ended");
+      navigate(`/chat/${userId}`);
+    });
+
+    socket?.on("call-rejected", () => {
+      toast.error("Your call is declined.");
+      navigate(`/chat/${userId}`);
+    });
+
+    socket?.on("receiver-offline", () => {
+      toast.error("The receiver is offline.");
+      navigate(`/chat/${userId}`);
+    });
+
+    if (!joined) joinRoom();
+
     return () => {
-      socket.off("offer");
-      socket.off("answer");
-      socket.off("ice-candidate");
+      socket?.off("offer");
+      socket?.off("answer");
+      socket?.off("ice-candidate");
+      socket?.off("call-accepted");
+      socket?.off("call-rejected");
+      socket?.off("call-ended");
     };
   }, [roomId]);
 
-  const joinRoom = async() => {
+  const joinRoom = async () => {
     setJoined(true);
+    socket?.emit("join-room", { roomId });
 
-    socket.emit("join-room", roomId);
+    try {
+      // Get media
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+      });
+      if (localAudioRef.current) {
+        localAudioRef.current.srcObject = stream;
+      }
 
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    localAudioRef.current.srcObject = stream;
+      // Add tracks
+      if (pcRef.current?.getSenders().length === 0) {
+        stream
+          .getTracks()
+          .forEach((track) => pcRef.current?.addTrack(track, stream));
+      }
 
-    stream.getTracks().forEach((track) => {
-      pcRef.current.addTrack(track, stream);
-    });
-
-    const offer = await pcRef.current.createOffer();
-    await pcRef.current.setLocalDescription(offer);
-    socket.emit("offer", { roomId, offer });
+      // Caller creates offer
+      if (user?.userId !== userId) {
+        // Only caller
+        const offer = await pcRef.current?.createOffer();
+        await pcRef.current?.setLocalDescription(offer);
+        socket?.emit("offer", { roomId, offer });
+        socket?.emit("start-call", { from: user?.userId, to: userId, roomId });
+      }
+    } catch (error) {
+      console.log("Audio call error:", error);
+    }
   };
 
   return (
-    <div className="flex flex-col items-center gap-4">
-      <audio ref={localAudioRef} autoPlay muted />
-      <audio ref={remoteAudioRef} autoPlay />
+    <div className="flex flex-col w-full h-screen bg-slate-900 text-white">
+      {/* Audio Area */}
+      <div className="flex flex-1 items-center justify-center gap-4 p-4">
+        {/* Local Audio */}
+        <div hidden>
+          <audio ref={localAudioRef} autoPlay playsInline />
+          <span className="absolute bottom-2 left-2 text-xs bg-black/50 px-2 py-1 rounded-md">
+            You
+          </span>
+        </div>
+
+       
+        {/* Remote Audio */}
+        <div className="relative w-2/5 h-5/6 bg-black rounded-full overflow-hidden shadow-lg border border-gray-700 flex items-center justify-center">
+          <audio
+            ref={remoteAudioRef}
+            autoPlay
+            playsInline
+            className="w-full h-full object-cover"
+          />
+
+          <span className="absolute text-5xl font-mono bg-black/50 px-2 py-1 rounded-md">
+            Partner
+          </span>
+        </div>
+      </div>
+
+      {/* Control Bar */}
+      <div className="h-20 bg-slate-800 flex items-center justify-center gap-6 border-t border-slate-700">
+        <button
+          className="w-12 h-12 flex items-center justify-center rounded-full bg-red-600 hover:bg-red-700 shadow-lg"
+          onClick={async (e) => {
+            e.preventDefault();
+
+            const stream = localAudioRef.current?.srcObject as MediaStream;
+            if (stream) {
+              // Stop all tracks (camera + mic)
+              stream.getTracks().forEach((track) => {
+                track.stop();
+              });
+
+              // Clear local audio element
+              if (localAudioRef.current) {
+                localAudioRef.current.srcObject = null;
+              }
+            }
+
+            // Close peer connection
+            if (pcRef.current) {
+              pcRef.current
+                .getSenders()
+                .forEach((sender) => sender.track?.stop());
+              pcRef.current.close();
+              pcRef.current = null;
+            }
+
+            // Also clear remote audio element (so frozen audio doesn’t stay visible)
+            if (remoteAudioRef.current) {
+              remoteAudioRef.current.srcObject = null;
+            }
+
+            // Tell server call ended
+            socket?.emit("end-call", { to: userId, roomId });
+            navigate(`/chat/${userId}`);
+          }}
+        >
+          📞
+        </button>
+      </div>
     </div>
   );
 };

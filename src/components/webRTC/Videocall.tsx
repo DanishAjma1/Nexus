@@ -34,6 +34,23 @@ export const VideoCall: React.FC = () => {
       }
     };
 
+    const stopStream = () => {
+      const stream = localVideoRef.current?.srcObject as MediaStream;
+      if (stream) {
+        stream.getTracks().forEach((track) => {
+          track.stop(); // stops both mic and camera
+        });
+        if (localVideoRef.current) {
+          localVideoRef.current.srcObject = null;
+        }
+      }
+
+      // Close peer connection
+      pcRef.current?.close();
+      pcRef.current = null;
+      socket?.emit("end-call", { to: userId, roomId });
+    };
+
     // ===== SOCKET LISTENERS =====
     socket?.on("offer", async ({ offer }) => {
       try {
@@ -150,7 +167,7 @@ export const VideoCall: React.FC = () => {
             ref={localVideoRef}
             autoPlay
             playsInline
-            muted
+            // muted
             className={`w-full h-full object-cover`}
           />
           <span className="absolute bottom-2 left-2 text-xs bg-black/50 px-2 py-1 rounded-md">
@@ -164,7 +181,7 @@ export const VideoCall: React.FC = () => {
             ref={remoteVideoRef}
             autoPlay
             playsInline
-            muted
+            // muted
             className="w-full h-full object-cover"
           />
         </div>
@@ -174,67 +191,42 @@ export const VideoCall: React.FC = () => {
       <div className="h-20 bg-slate-800 flex items-center justify-center gap-6 border-t border-slate-700">
         <button
           className="w-12 h-12 flex items-center justify-center rounded-full bg-red-600 hover:bg-red-700 shadow-lg"
-          onClick={(e) => {
-            e.preventDefault();
-            socket?.emit("end-call", { to: userId, roomId });
-          }}
-        >
-          📞
-        </button>
-        {/* Mic Toggle */}
-        <button
-          className="w-12 h-12 flex items-center justify-center rounded-full bg-slate-600 hover:bg-slate-700 shadow-lg"
-          onClick={(e) => {
-            e.preventDefault();
-            setIsMuted((prev) => {
-              // Toggle mute on local audio tracks
-              const stream = localVideoRef.current?.srcObject as MediaStream;
-              if (stream) {
-                stream.getAudioTracks().forEach((track) => {
-                  track.enabled = prev; // if currently muted, enable; else disable
-                });
-              }
-              return !prev;
-            });
-          }}
-        >
-          {isMuted ? "🔇" : "🎤"}
-        </button>
-
-        {/* Camera Toggle */}
-        <button
-          className="w-12 h-12 flex items-center justify-center rounded-full bg-slate-600 hover:bg-slate-700 shadow-lg"
-          onClick={(e) => {
+          onClick={async (e) => {
             e.preventDefault();
 
             const stream = localVideoRef.current?.srcObject as MediaStream;
-            if (!stream || !pcRef.current) return;
+            if (stream) {
+              // Stop all tracks (camera + mic)
+              stream.getTracks().forEach((track) => {
+                track.stop();
+              });
 
-            // Get the video track
-            const videoTrack = stream.getVideoTracks()[0];
-            if (!videoTrack) return;
-
-            // Get the sender responsible for this track
-            const sender = pcRef.current
-              .getSenders()
-              .find((s) => s.track && s.track.kind === "video");
-
-            if (sender) {
-              if (videoTrack.enabled) {
-                // Pause sending video
-                videoTrack.enabled = false;
-                console.log(videoTrack)
-                sender.replaceTrack(null); // stop sending to remote
-              } else {
-                // Resume sending video
-                videoTrack.enabled = true;
-                console.log(videoTrack)
-                sender.replaceTrack(videoTrack); // reattach track to remote
+              // Clear local video element
+              if (localVideoRef.current) {
+                localVideoRef.current.srcObject = null;
               }
             }
+
+            // Close peer connection
+            if (pcRef.current) {
+              pcRef.current
+                .getSenders()
+                .forEach((sender) => sender.track?.stop());
+              pcRef.current.close();
+              pcRef.current = null;
+            }
+
+            // Also clear remote video element (so frozen video doesn’t stay visible)
+            if (remoteVideoRef.current) {
+              remoteVideoRef.current.srcObject = null;
+            }
+
+            // Tell server call ended
+            socket?.emit("end-call", { to: userId, roomId });
+            navigate(`/chat/${userId}`);
           }}
         >
-          {"🎥"}
+          📞
         </button>
       </div>
     </div>

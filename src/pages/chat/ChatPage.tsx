@@ -43,7 +43,7 @@ export const ChatPage: React.FC = () => {
       socket?.emit("accept-call", {
         to: incomingCall.from,
       });
-      navigate(`video-call/${incomingCall.roomId}`);
+      navigate(`audio-call/${incomingCall.roomId}`);
       setIncomingCall(null);
     }
   };
