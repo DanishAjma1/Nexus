@@ -36,16 +36,12 @@ import { DealsPage } from "./pages/deals/DealsPage";
 import { ChatPage } from "./pages/chat/ChatPage";
 import { ForgotPasswordPage } from "./pages/auth/ForgotPasswordPage";
 import { ResetPasswordPage } from "./pages/auth/ResetPasswordPage";
-import { VideoCall } from "./components/webRTC/Videocall";
-import { AudioCall } from "./components/webRTC/AudioCall";
+import { VideoCall } from "./pages/webRTC/Videocall";
+import { AudioCall } from "./pages/webRTC/AudioCall";
 import { Toaster } from "react-hot-toast";
 
 function App() {
   return (
-    //  <div>
-    //   <h1>WebRTC Test</h1>
-    //   <VideoCall roomId="room123" />
-    // </div>
     <AuthProvider>
       <SocketProvider>
         <Router>

@@ -32,28 +32,28 @@ export const ChatPage: React.FC = () => {
   const [users, setUsers] = useState<[string, User][]>([]);
   const { socket } = useSocket();
 
-  const [incomingCall, setIncomingCall] = useState<{
-    from: string;
-    roomId: string;
-  } | null>(null);
+  // const [incomingCall, setIncomingCall] = useState<{
+  //   from: string;
+  //   roomId: string;
+  // } | null>(null);
   const navigate = useNavigate();
 
-  const acceptCall = () => {
-    if (incomingCall) {
-      socket?.emit("accept-call", {
-        to: incomingCall.from,
-      });
-      navigate(`audio-call/${incomingCall.roomId}`);
-      setIncomingCall(null);
-    }
-  };
+  // const acceptCall = () => {
+  //   if (incomingCall) {
+  //     socket?.emit("accept-call", {
+  //       to: incomingCall.from,
+  //     });
+  //     navigate(`audio-call/${incomingCall.roomId}`);
+  //     setIncomingCall(null);
+  //   }
+  // };
 
-  const rejectCall = () => {
-    if (incomingCall) {
-      socket?.emit("reject-call", { to: incomingCall.from });
-      setIncomingCall(null);
-    }
-  };
+  // const rejectCall = () => {
+  //   if (incomingCall) {
+  //     socket?.emit("reject-call", { to: incomingCall.from });
+  //     setIncomingCall(null);
+  //   }
+  // };
 
   // Load conversations
   useEffect(() => {
@@ -108,9 +108,9 @@ export const ChatPage: React.FC = () => {
 
   // Connect socket.io client
   useEffect(() => {
-    socket?.on("incoming-call", ({ from, roomId }) => {
-      setIncomingCall({ from, roomId });
-    });
+    // socket?.on("incoming-call", ({ from, roomId }) => {
+    //   setIncomingCall({ from, roomId });
+    // });
 
     // when user receive message
     socket?.on("received-message", (message) => {
@@ -132,7 +132,7 @@ export const ChatPage: React.FC = () => {
     return () => {
       socket?.off("send-messsage");
       socket?.off("received-messsage");
-      socket?.off("incoming-call");
+      // socket?.off("incoming-call");
       socket?.off("accept-call");
       socket?.off("reject-call");
     };
@@ -181,19 +181,7 @@ export const ChatPage: React.FC = () => {
 
   return (
     <div className="flex h-[calc(100vh-4rem)] bg-white border border-gray-200 rounded-lg overflow-hidden animate-fade-in">
-      {incomingCall && (
-        <div>
-          {/* Chat UI */}
-          <h1>Chat & Calls</h1>
-
-          <IncomingCallModal
-            from={incomingCall.from}
-            roomId={incomingCall.roomId}
-            onAccept={acceptCall}
-            onReject={rejectCall}
-          />
-        </div>
-      )}
+      
       {/* Conversations sidebar */}
       <div className="hidden md:block w-1/3 lg:w-1/4 border-r border-gray-200">
         <ChatUserList conversation={conversation || null} />
