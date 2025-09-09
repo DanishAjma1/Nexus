@@ -1,13 +1,14 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Check, X, MessageCircle } from 'lucide-react';
-import { CollaborationRequest } from '../../types';
+import { CollaborationRequest, Investor } from '../../types';
 import { Card, CardBody, CardFooter } from '../ui/Card';
 import { Avatar } from '../ui/Avatar';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { updateRequestStatus } from '../../data/collaborationRequests';
 import { formatDistanceToNow } from 'date-fns';
+import { getInvestorById } from '../../data/users';
 
 interface CollaborationRequestCardProps {
   request: CollaborationRequest;
@@ -19,34 +20,42 @@ export const CollaborationRequestCard: React.FC<CollaborationRequestCardProps> =
   onStatusUpdate
 }) => {
   const navigate = useNavigate();
-  const investor = findUserById(request.investorId);
+  const [investor, setInvestor] = useState<Investor>();
+    useEffect(() => {
+      const fetchInvestors = async () => {
+        const investor = await getInvestorById(request.inves_id);
+        setInvestor(investor);
+      };
+      fetchInvestors();
+    }, []);
+  
   
   if (!investor) return null;
   
-  const handleAccept = () => {
-    updateRequestStatus(request.id, 'accepted');
+const handleAccept = () => {
+    updateRequestStatus(request._id, 'accepted');
     if (onStatusUpdate) {
-      onStatusUpdate(request.id, 'accepted');
+      onStatusUpdate(request._id, 'accepted');
     }
   };
   
   const handleReject = () => {
-    updateRequestStatus(request.id, 'rejected');
+    updateRequestStatus(request._id, 'rejected');
     if (onStatusUpdate) {
-      onStatusUpdate(request.id, 'rejected');
+      onStatusUpdate(request._id, 'rejected');
     }
   };
   
   const handleMessage = () => {
-    navigate(`/chat/${investor.id}`);
+    navigate(`/chat/${investor.userId}`);
   };
   
   const handleViewProfile = () => {
-    navigate(`/profile/investor/${investor.id}`);
+    navigate(`/profile/investor/${investor.userId}`);
   };
   
   const getStatusBadge = () => {
-    switch (request.status) {
+    switch (request.requestStatus) {
       case 'pending':
         return <Badge variant="warning">Pending</Badge>;
       case 'accepted':
@@ -74,7 +83,7 @@ export const CollaborationRequestCard: React.FC<CollaborationRequestCardProps> =
             <div>
               <h3 className="text-md font-semibold text-gray-900">{investor.name}</h3>
               <p className="text-sm text-gray-500">
-                {formatDistanceToNow(new Date(request.createdAt), { addSuffix: true })}
+                {formatDistanceToNow(new Date(request.time), { addSuffix: true })}
               </p>
             </div>
           </div>
@@ -88,7 +97,7 @@ export const CollaborationRequestCard: React.FC<CollaborationRequestCardProps> =
       </CardBody>
       
       <CardFooter className="border-t border-gray-100 bg-gray-50">
-        {request.status === 'pending' ? (
+        {request.requestStatus === 'pending' ? (
           <div className="flex justify-between w-full">
             <div className="space-x-2">
               <Button

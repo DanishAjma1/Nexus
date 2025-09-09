@@ -17,8 +17,8 @@ import { Card, CardBody, CardHeader } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/Badge";
 import { useAuth } from "../../context/AuthContext";
 import {
+  checkRequestsFromInvestor,
   createCollaborationRequest,
-  getRequestsFromInvestor,
 } from "../../data/collaborationRequests";
 import { getEnterpreneurById, updateEntrepreneurData } from "../../data/users";
 import { Entrepreneur } from "../../types";
@@ -29,6 +29,8 @@ export const EntrepreneurProfile: React.FC = () => {
   const { user: currentUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [entrepreneur, setEnterpreneur] = useState<Entrepreneur>();
+  const [hasRequestedCollaboration, setHasRequestedCollaboration] =
+    useState<Boolean>();
   const initialData = {
     userId: id,
     startupName: entrepreneur?.startupName,
@@ -50,8 +52,17 @@ export const EntrepreneurProfile: React.FC = () => {
       const entrepreneur = await getEnterpreneurById(id);
       setEnterpreneur(entrepreneur);
     };
+
     fetchEntrepreneur();
   }, []);
+
+  useEffect(() => {
+    const checkInvestor = async()=>{
+    const request = await checkRequestsFromInvestor(currentUser?.userId,id);
+    setHasRequestedCollaboration(request);
+    }
+    checkInvestor();
+  }, [currentUser?.userId,id]);
 
   useEffect(() => {
     setFormData(initialData);
@@ -82,20 +93,15 @@ export const EntrepreneurProfile: React.FC = () => {
   const isInvestor = currentUser?.role === "investor";
 
   // Check if the current investor has already sent a request to this entrepreneur
-  const hasRequestedCollaboration =
-    isInvestor && id
-      ? getRequestsFromInvestor(currentUser.userId).some(
-          (req) => req.entrepreneurId === id
-        )
-      : false;
 
-  const handleSendRequest = () => {
+  const handleSendRequest = async () => {
     if (isInvestor && currentUser && id) {
       createCollaborationRequest(
         currentUser.userId,
         id,
         `I'm interested in learning more about ${entrepreneur.startupName} and would like to explore potential investment opportunities.`
       );
+      await setHasRequestedCollaboration(true);
     }
   };
 
@@ -149,71 +155,71 @@ export const EntrepreneurProfile: React.FC = () => {
               className="gap-5 flex flex-col text-sm justify-center items-center"
             >
               <div className="flex flex-row w-3/4 gap-5">
-              <div className="flex gap-2 flex-col w-1/2">
-                <Input
-                  label="Your startup name..?"
-                  name="startupName"
-                  value={formData.startupName}
-                  onChange={handleChange}
-                />
-                <Input
-                  label="Summary about your company.."
-                  name="pitchSummary"
-                  value={formData.pitchSummary}
-                  onChange={handleChange}
-                />
-                <Input
-                  label="When you company founded..?"
-                  name="foundedYear"
-                  value={formData.foundedYear}
-                  onChange={handleChange}
-                />
-              
-                <Input
-                  label="Team Size..?"
-                  name="teamSize"
-                  value={formData.teamSize}
-                  onChange={handleChange}
-                />
-                <Input
-                  label="Industry..?"
-                  name="industry"
-                  value={formData.industry}
-                  onChange={handleChange}
-                />
+                <div className="flex gap-2 flex-col w-1/2">
+                  <Input
+                    label="Your startup name..?"
+                    name="startupName"
+                    value={formData.startupName}
+                    onChange={handleChange}
+                  />
+                  <Input
+                    label="Summary about your company.."
+                    name="pitchSummary"
+                    value={formData.pitchSummary}
+                    onChange={handleChange}
+                  />
+                  <Input
+                    label="When you company founded..?"
+                    name="foundedYear"
+                    value={formData.foundedYear}
+                    onChange={handleChange}
+                  />
+
+                  <Input
+                    label="Team Size..?"
+                    name="teamSize"
+                    value={formData.teamSize}
+                    onChange={handleChange}
+                  />
+                  <Input
+                    label="Industry..?"
+                    name="industry"
+                    value={formData.industry}
+                    onChange={handleChange}
+                  />
                 </div>
-              <div className="flex gap-2 flex-col w-1/2">
-                <Input
-                  label="How much fund you need..?"
-                  name="fundingNeeded"
-                  value={formData.fundingNeeded}
-                  onChange={handleChange}
-                />
-                <Input
-                  label="Market opporunity..?"
-                  name="marketOpportunity"
-                  value={formData.marketOpportunity}
-                  onChange={handleChange}
-                />
-                <Input
-                  label="Advantage..?"
-                  name="advantage"
-                  value={formData.advantage}
-                  onChange={handleChange}
-                />
-                <Input
-                  label="Minimum valuation..?"
-                  name="minValuation"
-                  value={formData.minValuation}
-                  onChange={handleChange}
-                />
-                <Input
-                  label="Maximum valuation..?"
-                  name="maxValuation"
-                  value={formData.maxValuation}
-                  onChange={handleChange}
-                />
-              </div>
+                <div className="flex gap-2 flex-col w-1/2">
+                  <Input
+                    label="How much fund you need..?"
+                    name="fundingNeeded"
+                    value={formData.fundingNeeded}
+                    onChange={handleChange}
+                  />
+                  <Input
+                    label="Market opporunity..?"
+                    name="marketOpportunity"
+                    value={formData.marketOpportunity}
+                    onChange={handleChange}
+                  />
+                  <Input
+                    label="Advantage..?"
+                    name="advantage"
+                    value={formData.advantage}
+                    onChange={handleChange}
+                  />
+                  <Input
+                    label="Minimum valuation..?"
+                    name="minValuation"
+                    value={formData.minValuation}
+                    onChange={handleChange}
+                  />
+                  <Input
+                    label="Maximum valuation..?"
+                    name="maxValuation"
+                    value={formData.maxValuation}
+                    onChange={handleChange}
+                  />
+                </div>
               </div>
               <div className="flex justify-end mt-4 gap-3">
                 <Button
