@@ -1,6 +1,6 @@
 import axios from "axios";
 import toast from "react-hot-toast";
-const URL = "http://localhost:5000";
+const URL = process.env.BACKEND_URL;
 
 export const getInvestorsFromDb = async () => {
   try {
