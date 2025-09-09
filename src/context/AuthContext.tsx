@@ -9,7 +9,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // Local storage keys
 const USER_STORAGE_KEY = "business_nexus_user";
 const RESET_TOKEN_KEY = "business_nexus_reset_token";
-const URL = process.env.BACKEND_URL;
+const URL = import.meta.env.VITE_BACKEND_URL;
+console.log(URL)
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
