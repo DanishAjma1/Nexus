@@ -19,7 +19,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     if (user) {
       //  connect socket after login
-      const s = io("http://localhost:5000", {
+      const s = io(process.env.BACKEND_URL, {
         withCredentials: true,
         transports: ["websocket", "polling"],
       });

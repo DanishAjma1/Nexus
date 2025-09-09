@@ -9,7 +9,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // Local storage keys
 const USER_STORAGE_KEY = "business_nexus_user";
 const RESET_TOKEN_KEY = "business_nexus_reset_token";
-const URL = "http://localhost:5000";
+const URL = process.env.BACKEND_URL;
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
@@ -22,7 +22,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const token = localStorage.getItem("token");
     if (token) {
       axios
-        .get("http://localhost:5000/auth/verify", {
+        .get(URL+"/auth/verify", {
           headers: { Authorization: `Bearer ${token}` },
         })
         .then((res) => {
@@ -120,7 +120,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       localStorage.setItem(RESET_TOKEN_KEY, resetToken);
 
       // In a real app, this would send an email
-      const resetLink = `http://localhost:5173/reset-password?token=${resetToken}`;
+      const resetLink = `https://nexus-gso984fz0-danish-ajmals-projects.vercel.app/reset-password?token=${resetToken}`;
       const message = `
           <p>To reset your password, please click the button below:</p>
           <a href="${resetLink}" 
