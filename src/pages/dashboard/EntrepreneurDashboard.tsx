@@ -15,7 +15,7 @@ import { CollaborationRequestCard } from "../../components/collaboration/Collabo
 import { InvestorCard } from "../../components/investor/InvestorCard";
 import { useAuth } from "../../context/AuthContext";
 import { CollaborationRequest } from "../../types";
-import { getRequestsForEntrepreneur } from "../../data/collaborationRequests";
+import { getRequestsForEntrepreneur, updateRequestStatus } from "../../data/collaborationRequests";
 import { getInvestorsFromDb } from "../../data/users";
 
 export const EntrepreneurDashboard: React.FC = () => {
@@ -31,13 +31,38 @@ export const EntrepreneurDashboard: React.FC = () => {
         const investors = await getInvestorsFromDb();
         console.log(investors);
         setRecommendedInvestors(investors);
-
-        const requests = getRequestsForEntrepreneur(user.id);
-        setCollaborationRequests(requests);
       }
     };
     fetchData();
   }, []);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (user) {
+        const investors = await getInvestorsFromDb();
+        console.log(investors);
+        setRecommendedInvestors(investors);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (!user) return null;
+
+  useEffect(() => {
+    const fetchRequests = async () => {
+      const requests = await getRequestsForEntrepreneur(user?.userId);
+      setCollaborationRequests(Array.isArray(requests) ? requests : []);
+    };
+    fetchRequests();
+  }, [user?.userId]);
+
+  const pendingRequests =
+    collaborationRequests.length > 0 &&
+    Array.isArray(collaborationRequests) &&
+    collaborationRequests.length > 0
+      ? collaborationRequests.filter((req) => req.requestStatus === "pending")
+      : [];
 
   const handleRequestStatusUpdate = (
     requestId: string,
@@ -45,16 +70,11 @@ export const EntrepreneurDashboard: React.FC = () => {
   ) => {
     setCollaborationRequests((prevRequests) =>
       prevRequests.map((req) =>
-        req.id === requestId ? { ...req, status } : req
+        req._id === requestId ? { ...req, requestStatus:status } : req
       )
     );
+    updateRequestStatus(requestId,status)
   };
-
-  if (!user) return null;
-
-  const pendingRequests = collaborationRequests.filter(
-    (req) => req.status === "pending"
-  );
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -106,7 +126,7 @@ export const EntrepreneurDashboard: React.FC = () => {
                 <h3 className="text-xl font-semibold text-secondary-900">
                   {
                     collaborationRequests.filter(
-                      (req) => req.status === "accepted"
+                      (req) => req.requestStatus === "accepted"
                     ).length
                   }
                 </h3>
@@ -164,7 +184,7 @@ export const EntrepreneurDashboard: React.FC = () => {
                 <div className="space-y-4">
                   {collaborationRequests.map((request) => (
                     <CollaborationRequestCard
-                      key={request.id}
+                      key={request._id}
                       request={request}
                       onStatusUpdate={handleRequestStatusUpdate}
                     />
@@ -205,7 +225,7 @@ export const EntrepreneurDashboard: React.FC = () => {
               {recommendedInvestors && recommendedInvestors.length > 0 ? (
                 recommendedInvestors.map((investor, i) => (
                   <div key={i}>
-                  <InvestorCard investor={investor} />
+                    <InvestorCard investor={investor} />
                   </div>
                 ))
               ) : (
