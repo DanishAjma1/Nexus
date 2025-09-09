@@ -2,7 +2,7 @@ import axios from "axios";
 import { CollaborationRequest } from "../types";
 import toast from "react-hot-toast";
 
-const URL = process.env.BACKEND_URL;
+const URL = import.meta.env.VITE_BACKEND_URL;
 // Helper function to get collaboration requests for an entrepreneur
 export const getRequestsForEntrepreneur = async (
   enter_id: string

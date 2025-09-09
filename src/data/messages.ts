@@ -1,5 +1,5 @@
 import axios from "axios";
-const URL = process.env.BACKEND_URL;
+const URL = import.meta.env.VITE_BACKEND_URL;
 // Helper function to get messages between two users
 export const getMessagesBetweenUsers = async (
   user1Id: string,
