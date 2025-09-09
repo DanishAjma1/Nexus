@@ -99,7 +99,7 @@ export const messages: Message[] = [
   },
 ];
 
-const URL = "http://localhost:5000";
+const URL = process.env.BACKEND_URL;
 // Helper function to get messages between two users
 export const getMessagesBetweenUsers = async (
   user1Id: string,

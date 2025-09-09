@@ -50,7 +50,7 @@ export const collaborationRequests: CollaborationRequest[] = [
   },
 ];
 
-const URL = "http://localhost:5000";
+const URL = process.env.BACKEND_URL;
 // Helper function to get collaboration requests for an entrepreneur
 export const getRequestsForEntrepreneur = async (
   enter_id: string
