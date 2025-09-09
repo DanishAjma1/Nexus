@@ -53,12 +53,11 @@ export interface ChatConversation {
 }
 
 export interface CollaborationRequest {
-  id: string;
-  investorId: string;
-  entrepreneurId: string;
+  inves_id: string;
+  enter_id: string;
   message: string;
-  status: "pending" | "accepted" | "rejected";
-  createdAt: string;
+  requestStatus: "pending" | "accepted" | "rejected";
+  time: Date;
 }
 
 export interface Document {
