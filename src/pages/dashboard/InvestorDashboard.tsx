@@ -9,22 +9,19 @@ import { EntrepreneurCard } from "../../components/entrepreneur/EntrepreneurCard
 import { useAuth } from "../../context/AuthContext";
 import { getRequestsFromInvestor } from "../../data/collaborationRequests";
 import { getEnterprenuerFromDb } from "../../data/users";
-import { CollaborationRequest } from "../../types";
+import { CollaborationRequest, Entrepreneur } from "../../types";
 
 export const InvestorDashboard: React.FC = () => {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIndustries, setSelectedIndustries] = useState<string[]>([]);
-  console.log(user);
   if (!user) return null;
 
   // Get collaboration requests sent by this investor
 
   // const requestedEntrepreneurIds = sentRequests.map(req => req.entrepreneurId);
-  const [entrepreneurs, setEnterprenuers] = useState([]);
+  const [entrepreneurs, setEnterprenuers] = useState<Entrepreneur[]>([]);
   const [sentRequests, setSentRequests] = useState<CollaborationRequest[]>([]);
-
-  const industries = [];
 
   useEffect(() => {
     const fetchData = async () => {
@@ -48,21 +45,28 @@ export const InvestorDashboard: React.FC = () => {
   }, [user.userId]);
 
   // Filter entrepreneurs based on search and industry filters
-  const filteredEntrepreneurs = entrepreneurs;
-  // const filteredEntrepreneurs = entrepreneurs.filter(entrepreneur => {
-  //   // Search filter
-  //   const matchesSearch = searchQuery === '' ||
-  //     entrepreneur.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-  //     entrepreneur.startupName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-  //     entrepreneur.industry.toLowerCase().includes(searchQuery.toLowerCase()) ||
-  //     entrepreneur.pitchSummary.toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredEntrepreneurs = entrepreneurs.filter((entrepreneur) => {
+    // Search filter
+    const matchesSearch =
+      searchQuery === "" ||
+      entrepreneur.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      entrepreneur.startupName
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      entrepreneur.industry.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      entrepreneur.pitchSummary
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
 
-  //   // Industry filter
-  //   const matchesIndustry = selectedIndustries.length === 0 ||
-  //     selectedIndustries.includes(entrepreneur.industry);
+    // Industry filter
+    const matchesIndustry =
+      selectedIndustries.length === 0 ||
+      selectedIndustries.includes(entrepreneur.industry);
 
-  //   return matchesSearch && matchesIndustry;
-  // });
+    return matchesSearch && matchesIndustry;
+  });
+
+  const industries = entrepreneurs && entrepreneurs.map((enter) => enter.industry);
 
   // Get unique industries for filter
 

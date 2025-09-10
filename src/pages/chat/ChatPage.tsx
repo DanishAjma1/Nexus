@@ -17,7 +17,6 @@ import {
 import { MessageCircle } from "lucide-react";
 import { getUserFromDb } from "../../data/users";
 import { useSocket } from "../../context/SocketContext";
-import IncomingCallModal from "../../components/webrtc/IncomingCallModal";
 
 export const ChatPage: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
@@ -32,33 +31,12 @@ export const ChatPage: React.FC = () => {
   const [users, setUsers] = useState<[string, User][]>([]);
   const { socket } = useSocket();
 
-  // const [incomingCall, setIncomingCall] = useState<{
-  //   from: string;
-  //   roomId: string;
-  // } | null>(null);
   const navigate = useNavigate();
-
-  // const acceptCall = () => {
-  //   if (incomingCall) {
-  //     socket?.emit("accept-call", {
-  //       to: incomingCall.from,
-  //     });
-  //     navigate(`audio-call/${incomingCall.roomId}`);
-  //     setIncomingCall(null);
-  //   }
-  // };
-
-  // const rejectCall = () => {
-  //   if (incomingCall) {
-  //     socket?.emit("reject-call", { to: incomingCall.from });
-  //     setIncomingCall(null);
-  //   }
-  // };
 
   // Load conversations
   useEffect(() => {
     const fetchConversation = async () => {
-      const conv = await getConversationsForUser(currentUser?.userId, userId);
+      const conv = await getConversationsForUser(currentUser?.userId);
       if (conv) setConversation(conv);
     };
     fetchConversation();
@@ -108,10 +86,6 @@ export const ChatPage: React.FC = () => {
 
   // Connect socket.io client
   useEffect(() => {
-    // socket?.on("incoming-call", ({ from, roomId }) => {
-    //   setIncomingCall({ from, roomId });
-    // });
-
     // when user receive message
     socket?.on("received-message", (message) => {
       setMessages((prev) => [...prev, message]);
@@ -132,7 +106,6 @@ export const ChatPage: React.FC = () => {
     return () => {
       socket?.off("send-messsage");
       socket?.off("received-messsage");
-      // socket?.off("incoming-call");
       socket?.off("accept-call");
       socket?.off("reject-call");
     };

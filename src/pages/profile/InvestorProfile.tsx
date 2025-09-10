@@ -150,7 +150,6 @@ export const InvestorProfile: React.FC = () => {
       investmentCriteria: updateCriteria,
       criteria: "",
     });
-    console.log(updateCriteria);
   };
 
   return (

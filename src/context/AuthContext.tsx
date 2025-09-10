@@ -10,7 +10,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const USER_STORAGE_KEY = "business_nexus_user";
 const RESET_TOKEN_KEY = "business_nexus_reset_token";
 const URL = import.meta.env.VITE_BACKEND_URL;
-console.log(URL)
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
@@ -197,7 +196,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       userData.bio === "" &&
       userData.avatarUrl === ""
     ) {
-      console.log(userData);
       alert("Make changes to update profile..");
       return;
     }
@@ -207,7 +205,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     formData.append("email", userData.email);
     formData.append("bio", userData.bio);
     formData.append("avatarUrl", userData.avatarUrl);
-    console.log(formData);
     await axios
       .post(`${URL}/user/update-profile/${userId}`, formData, {
         withCredentials: true,

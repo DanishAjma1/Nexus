@@ -20,7 +20,6 @@ export const saveMessagesBetweenUsers = async (newMessage: Any) => {
     const res = await axios.post(`${URL}/message/save-message`, newMessage, {
       withCredentials: true,
     });
-    console.log("message saved");
     const { message } = res.data;
     return message;
   } catch (err) {
@@ -30,11 +29,10 @@ export const saveMessagesBetweenUsers = async (newMessage: Any) => {
 // Helper function to get conversations for a user
 export const getConversationsForUser = async (
   currentUserId: string | undefined,
-  partnerId: string | undefined
 ) => {
   // Get unique conversation partners
   const res = await axios.get(
-    `${URL}/conversation/get-conversations-for-user?currentUserId=${currentUserId}&partnerId=${partnerId}`,
+    `${URL}/conversation/get-conversations-for-user?currentUserId=${currentUserId}`,
     {
       withCredentials: true,
     }
