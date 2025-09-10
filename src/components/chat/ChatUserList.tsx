@@ -96,14 +96,14 @@ export const ChatUserList: React.FC<ChatUserListProps> = ({ conversation }) => {
                         {"..."}
                       </h3>
 
-                      {Object.keys(lastMessage).length !== 0 && (
-                        <span className="text-xs text-gray-500">
-                          {formatDistanceToNow(
-                            new Date(lastMessage?.time || "Text first"),
-                            { addSuffix: false }
-                          )}
-                        </span>
-                      )}
+                      {Object.keys(lastMessage).length !== 0 &&
+                        lastMessage?.time && (
+                          <span className="text-xs text-gray-500">
+                            {formatDistanceToNow(new Date(lastMessage.time), {
+                              addSuffix: false,
+                            })}
+                          </span>
+                        )}
                     </div>
 
                     <div className="flex justify-between items-center mt-1">
