@@ -25,7 +25,6 @@ export const ChatUserList: React.FC<ChatUserListProps> = ({ conversation }) => {
       const allIds = Array.from(
         new Set(conversation.participants.flatMap((i) => i.receiverId || ""))
       );
-
       const users = await Promise.all(
         allIds.map(async (id) => await getUserFromDb(id))
       );
@@ -48,7 +47,7 @@ export const ChatUserList: React.FC<ChatUserListProps> = ({ conversation }) => {
   };
 
   return (
-    <div className="bg-white border-r border-gray-200 w-full md:w-64 overflow-y-auto">
+    <div className="bg-white border-r border-gray-200 w-full overflow-y-auto">
       <div className="py-4">
         <h2 className="px-4 text-lg font-semibold text-gray-800 mb-4">
           Messages
@@ -100,7 +99,7 @@ export const ChatUserList: React.FC<ChatUserListProps> = ({ conversation }) => {
                       {Object.keys(lastMessage).length !== 0 && (
                         <span className="text-xs text-gray-500">
                           {formatDistanceToNow(
-                            new Date(lastMessage.time || "Text first"),
+                            new Date(lastMessage?.time || "Text first"),
                             { addSuffix: false }
                           )}
                         </span>

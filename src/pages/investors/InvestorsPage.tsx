@@ -21,10 +21,7 @@ export const InvestorsPage: React.FC = () => {
     const fetchData = async () => {
       if (user) {
         const investors = await getInvestorsFromDb();
-        console.log(investors);
         setInvestors(investors ? investors : []);
-
-        const requests = getRequestsForEntrepreneur(user.id);
       }
     };
     fetchData();
@@ -39,13 +36,13 @@ export const InvestorsPage: React.FC = () => {
   );
 
   // Filter investors based on search and filters
-  const filteredInvestors = investors.filter((investor) => {
+  const filteredInvestors = investors && investors.filter((investor) => {
     const matchesSearch =
       searchQuery === "" ||
-      investor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      investor.bio.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      investor.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      investor.bio?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       investor.investmentInterests?.some((interest) =>
-        interest.toLowerCase().includes(searchQuery.toLowerCase())
+        interest?.toLowerCase().includes(searchQuery.toLowerCase())
       );
 
     const matchesStages =

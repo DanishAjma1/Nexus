@@ -24,23 +24,11 @@ export const EntrepreneurDashboard: React.FC = () => {
     CollaborationRequest[]
   >([]);
   const [recommendedInvestors, setRecommendedInvestors] = useState([]);
-
+  
   useEffect(() => {
     const fetchData = async () => {
       if (user) {
         const investors = await getInvestorsFromDb();
-        console.log(investors);
-        setRecommendedInvestors(investors);
-      }
-    };
-    fetchData();
-  }, []);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      if (user) {
-        const investors = await getInvestorsFromDb();
-        console.log(investors);
         setRecommendedInvestors(investors);
       }
     };

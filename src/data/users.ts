@@ -47,7 +47,6 @@ export const getEnterpreneurById = async (id) => {
       }
     );
     const { entrepreneur } = res.data;
-    console.log(entrepreneur);
     return entrepreneur;
   } catch (err) {
     console.log(err);
