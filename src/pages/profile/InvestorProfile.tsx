@@ -361,7 +361,7 @@ export const InvestorProfile: React.FC = () => {
               </h1>
               <p className="text-gray-600 flex items-center justify-center sm:justify-start mt-1">
                 <Building2 size={16} className="mr-1" />
-                Investor • {investor.totalInvestments} investments
+                Investor • {investor.totalInvestments || "0"} investments
               </p>
 
               <div className="flex flex-wrap gap-2 justify-center sm:justify-start mt-3">

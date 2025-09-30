@@ -6,7 +6,7 @@ import { Badge } from "../../components/ui/Badge";
 import { InvestorCard } from "../../components/investor/InvestorCard";
 import { useAuth } from "../../context/AuthContext";
 import { getInvestorsFromDb } from "../../data/users";
-import { getRequestsForEntrepreneur } from "../../data/collaborationRequests";
+
 import { Investor } from "../../types";
 
 export const InvestorsPage: React.FC = () => {

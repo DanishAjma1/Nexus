@@ -49,7 +49,7 @@ export const EntrepreneurCard: React.FC<EntrepreneurCardProps> = ({
             
             <div className="flex flex-wrap gap-2 mb-3">
               <Badge variant="primary" size="sm">{entrepreneur.industry}</Badge>
-              <Badge variant="gray" size="sm">{entrepreneur.location}</Badge>
+              <Badge variant="gray" size="sm">{entrepreneur.teamSize}</Badge>
               <Badge variant="accent" size="sm">Founded {entrepreneur.foundedYear}</Badge>
             </div>
           </div>

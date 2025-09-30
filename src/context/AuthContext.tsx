@@ -22,7 +22,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const token = localStorage.getItem("token");
     if (token) {
       axios
-        .get(URL+"/auth/verify", {
+        .get(URL + "/auth/verify", {
           headers: { Authorization: `Bearer ${token}` },
         })
         .then((res) => {
@@ -64,8 +64,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       );
       const { token, user } = res.data;
 
+      console.log(user);
       localStorage.setItem("token", token);
-      setUser({...user,isOnline:true});
+      setUser({ ...user, isOnline: true });
       toast.success("Successfully logged in!");
     } catch (error) {
       toast.error((error as Error).message);
@@ -112,14 +113,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  // Mock forgot password function
+  // Forgot password function
   const forgotPassword = async (email: string, role: string): Promise<void> => {
     try {
       // Generate reset token (in a real app, this would be a secure token)
       const resetToken = Math.random().toString(36).substring(2, 15);
       localStorage.setItem(RESET_TOKEN_KEY, resetToken);
 
-      // In a real app, this would send an email
+      // This would send an email
       const resetLink = `https://nexus-gso984fz0-danish-ajmals-projects.vercel.app/reset-password?token=${resetToken}`;
       const message = `
           <p>To reset your password, please click the button below:</p>
@@ -143,6 +144,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         }
       );
       const { user } = res.data;
+
       localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
       toast.success("Password reset instructions sent to your email");
     } catch (error) {
@@ -161,15 +163,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       if (token !== storedToken) {
         throw new Error("Invalid or expired reset token");
       }
-      const user = localStorage.getItem(USER_STORAGE_KEY);
+      const savedUser = localStorage.getItem(USER_STORAGE_KEY);
 
-      await axios.patch(
-        `${URL}/auth/update-password/${user._id}`,
-        { newPassword, role: user.role },
+      const res = await axios.patch(
+        `${URL}/auth/update-password/${savedUser?.userId}`,
+        { newPassword },
         { withCredentials: true }
       );
+      const { user } = res.data;
+      setUser(user);
 
-      // In a real app, this would update the user's password in the database
+      // This would update the user's password in the database
       localStorage.removeItem(RESET_TOKEN_KEY);
       localStorage.removeItem("user");
       toast.success("Password reset successfully");
@@ -199,12 +203,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       alert("Make changes to update profile..");
       return;
     }
+
     const formData = new FormData();
     formData.append("name", userData.name);
     formData.append("location", userData.location);
     formData.append("email", userData.email);
     formData.append("bio", userData.bio);
     formData.append("avatarUrl", userData.avatarUrl);
+
     await axios
       .post(`${URL}/user/update-profile/${userId}`, formData, {
         withCredentials: true,
