@@ -154,7 +154,6 @@ export const ChatPage: React.FC = () => {
 
   return (
     <div className="flex h-[calc(100vh-4rem)] bg-white border border-gray-200 rounded-lg overflow-hidden animate-fade-in">
-      
       {/* Conversations sidebar */}
       <div className="hidden md:block w-1/3 lg:w-1/4 border-r border-gray-200">
         <ChatUserList conversation={conversation || null} />
@@ -207,7 +206,7 @@ export const ChatPage: React.FC = () => {
                       `audio-call/${currentUser?.userId.slice(
                         0,
                         5
-                      )}&${chatPartner?._id.slice(0, 5)}`
+                      )}&${chatPartner?._id.slice(0, 5)}/${false}`
                     );
                   }}
                 >
@@ -225,7 +224,7 @@ export const ChatPage: React.FC = () => {
                       `video-call/${currentUser?.userId.slice(
                         0,
                         5
-                      )}&${chatPartner?._id.slice(0, 5)}`
+                      )}&${chatPartner?._id.slice(0, 5)}/${false}`
                     );
                   }}
                 >

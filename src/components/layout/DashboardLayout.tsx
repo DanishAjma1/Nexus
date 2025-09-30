@@ -14,6 +14,8 @@ export const DashboardLayout: React.FC = () => {
   const [incomingCall, setIncomingCall] = useState<{
     from: string;
     roomId: string;
+    callType: string;
+    fromName: string;
   } | null>(null);
 
   if (isLoading) {
@@ -30,7 +32,11 @@ export const DashboardLayout: React.FC = () => {
   const acceptCall = () => {
     if (incomingCall) {
       socket?.emit("accept-call", { to: incomingCall.from });
-      navigate(`/chat/${incomingCall.from}/audio-call/${incomingCall.roomId}`);
+      navigate(
+        `/chat/${incomingCall.from}/${incomingCall.callType}-call/${
+          incomingCall.roomId
+        }/${true}`
+      );
       setIncomingCall(null);
     }
   };
@@ -43,8 +49,18 @@ export const DashboardLayout: React.FC = () => {
   };
 
   useEffect(() => {
-    const handleIncoming = ({ from, roomId }: { from: string; roomId: string }) => {
-      setIncomingCall({ from, roomId });
+    const handleIncoming = ({
+      from,
+      roomId,
+      callType,
+      fromName,
+    }: {
+      from: string;
+      roomId: string;
+      callType: string;
+      fromName: string;
+    }) => {
+      setIncomingCall({ from, roomId, callType, fromName });
     };
 
     socket?.on("incoming-call", handleIncoming);
@@ -55,11 +71,10 @@ export const DashboardLayout: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-
       {incomingCall && (
         <IncomingCallModal
-          from={incomingCall.from}
-          roomId={incomingCall.roomId}
+          callType={incomingCall.callType}
+          fromName={incomingCall.fromName}
           onAccept={acceptCall}
           onReject={rejectCall}
         />

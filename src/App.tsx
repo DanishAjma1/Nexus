@@ -104,8 +104,14 @@ function App() {
 
             {/* Chat Routes */}
             <Route path="/chat" element={<DashboardLayout />}>
-              <Route path=":userId/audio-call/:roomId" element={<AudioCall />} />
-              <Route path=":userId/video-call/:roomId" element={<VideoCall />} />
+              <Route
+                path=":userId/audio-call/:roomId/:isIncommingCall"
+                element={<AudioCall />}
+              />
+              <Route
+                path=":userId/video-call/:roomId/:isIncommingCall"
+                element={<VideoCall />}
+              />
               <Route path=":userId" element={<ChatPage />} />
             </Route>
 
