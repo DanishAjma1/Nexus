@@ -12,7 +12,7 @@ export const AudioCall: React.FC = () => {
   const { socket } = useSocket();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const APP_ID = "5e3db4d74aaa43ff8eeee3ad9f08efd8";
+  const APP_ID = import.meta.env.VITE_APP_ID;
   const CHANNEL = String(roomId);
   const [joined, setJoined] = useState(false);
   const localAudioRef = useRef<HTMLDivElement | null>(null);
@@ -25,7 +25,7 @@ export const AudioCall: React.FC = () => {
 
   useEffect(() => {
     const fetchToken = async () => {
-      const uid = String(Date.now()); // simple unique uid
+      const uid = String(Date.now());
       setUid(uid);
 
       try {
@@ -100,7 +100,7 @@ export const AudioCall: React.FC = () => {
     return () => {
       cleanup();
     };
-  }, [CHANNEL, isIncommingCall, user, userId, token, uid, socket]);
+  }, [CHANNEL, isIncommingCall,APP_ID, user, userId, token, uid, socket]);
 
   // === Cleanup ===
   const cleanup = async () => {
@@ -161,7 +161,7 @@ export const AudioCall: React.FC = () => {
       socket?.off("call-rejected");
       socket?.off("call-ended");
     };
-  }, [socket, userId]);
+  }, [socket, userId,navigate]);
   return (
     <div className="flex h-lvh flex-col items-center bg-white p-3 rounded-xl shadow-lg">
       <h2 className="text-xl font-bold my-4">Agora 1-to-1 Audio Call</h2>
