@@ -18,10 +18,10 @@ export interface Entrepreneur extends User {
   industry: string | undefined;
   foundedYear: number | undefined;
   teamSize: number | undefined;
-  minValuation:string | undefined;
-  maxValuation:string | undefined;
-  marketOpportunity:string | undefined;
-  advantage:string | undefined;
+  minValuation: string | undefined;
+  maxValuation: string | undefined;
+  marketOpportunity: string | undefined;
+  advantage: string | undefined;
 }
 
 export interface Investor extends User {
@@ -33,8 +33,8 @@ export interface Investor extends User {
   maximumInvestment: string | undefined;
   investmentCriteria: string[] | undefined;
   successfullExits: number | undefined;
-  minTimline:number | undefined,
-  maxTimline:number | undefined,
+  minTimline: number | undefined;
+  maxTimline: number | undefined;
 }
 
 export interface Message {
@@ -42,7 +42,7 @@ export interface Message {
   receiver: string;
   content: string;
   isRead: boolean;
-  time:Date,
+  time: Date;
 }
 
 export interface ChatConversation {
@@ -85,10 +85,11 @@ export interface AuthContextType {
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (token: string, newPassword: string) => Promise<void>;
   updateProfile: (userId: string, updates: Partial<User>) => Promise<void>;
+  loginWithOauth: (userToken: string, role: UserRole) => Promise<void>;
   isAuthenticated: boolean;
   isLoading: boolean;
 }
 
-export interface Socketcontext{
-  socket:string | null;
+export interface Socketcontext {
+  socket: string | null;
 }
