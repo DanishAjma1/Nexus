@@ -75,6 +75,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setIsLoading(false);
     }
   };
+  const loginWithOauth = async (
+    userToken: string,
+    role: UserRole
+  ): Promise<void> => {
+    setIsLoading(true);
+
+    console.log("hello");
+    try {
+      const res = await axios.post(
+        `${URL}/auth/login-with-oauth`,
+        {
+          userToken,
+          role,
+        },
+        {
+          headers: { "Content-Type": "application/json" },
+          withCredentials: true,
+        }
+      );
+      const { token, user } = res.data;
+
+      console.log(user);
+      localStorage.setItem("token", token);
+      setUser({ ...user, isOnline: true });
+      toast.success("Successfully logged in!");
+    } catch (error) {
+      toast.error((error as Error).message);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Mock register function - in a real app, this would make an API call
   const register = async (
@@ -228,6 +260,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const value = {
     user,
     login,
+    loginWithOauth,
     register,
     logout,
     forgotPassword,

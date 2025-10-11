@@ -39,6 +39,8 @@ import { ResetPasswordPage } from "./pages/auth/ResetPasswordPage";
 import { VideoCall } from "./pages/webRTC/Videocall";
 import { AudioCall } from "./pages/webRTC/AudioCall";
 import { Toaster } from "react-hot-toast";
+import { LoginWithOAuthPage } from "./pages/auth/LoginWithOAuthPage";
+import { HomePage } from "./pages/home/HomePage";
 
 function App() {
   return (
@@ -51,6 +53,7 @@ function App() {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/login-with-oauth" element={<LoginWithOAuthPage />} />
 
             {/* Dashboard Routes */}
             <Route path="/dashboard" element={<DashboardLayout />}>
@@ -116,7 +119,7 @@ function App() {
             </Route>
 
             {/* Redirect root to login */}
-            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="/home" element={<HomePage/>} />
 
             {/* Catch all other routes and redirect to login */}
             <Route
