@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { 
   Home, Building2, CircleDollarSign, Users, MessageCircle, 
-  Bell, FileText, Settings, HelpCircle
+  Bell, FileText, Settings, HelpCircle, AlertTriangle, Rocket 
 } from 'lucide-react';
 
 interface SidebarItemProps {
@@ -35,7 +35,7 @@ export const Sidebar: React.FC = () => {
   
   if (!user) return null;
   
-  // Define sidebar items based on user role
+  // Entrepreneur Sidebar
   const entrepreneurItems = [
     { to: '/dashboard/entrepreneur', icon: <Home size={20} />, text: 'Dashboard' },
     { to: '/profile/entrepreneur/' + user.userId, icon: <Building2 size={20} />, text: 'My Startup' },
@@ -45,6 +45,7 @@ export const Sidebar: React.FC = () => {
     { to: '/documents', icon: <FileText size={20} />, text: 'Documents' },
   ];
   
+  // Investor Sidebar
   const investorItems = [
     { to: '/dashboard/investor', icon: <Home size={20} />, text: 'Dashboard' },
     { to: '/profile/investor/' + user.userId, icon: <CircleDollarSign size={20} />, text: 'My Portfolio' },
@@ -53,15 +54,35 @@ export const Sidebar: React.FC = () => {
     { to: '/notifications', icon: <Bell size={20} />, text: 'Notifications' },
     { to: '/deals', icon: <FileText size={20} />, text: 'Deals' },
   ];
-  
-  const sidebarItems = user.role === 'entrepreneur' ? entrepreneurItems : investorItems;
-  
-  // Common items at the bottom
+
+  //  Admin Sidebar
+  const adminItems = [
+    { to: '/dashboard/admin', icon: <Home size={20} />, text: 'Dashboard Overview' },
+    
+    { to: '/admin/entrepreneur', icon: <Building2 size={20} />, text: 'Manage entrepreneur' },
+    { to: '/admin/investors', icon: <CircleDollarSign size={20} />, text: 'Manage Investors' },
+    { to: '/admin/supporters', icon: <Users size={20} />, text: 'Manage Supporters' },
+    
+    { to: '/admin/campaigns', icon: <Rocket size={20} />, text: 'Active Campaigns' },
+    
+    { to: '/admin/fraud/accounts', icon: <AlertTriangle size={20} />, text: 'Flagged Accounts' },
+  ];
+
   const commonItems = [
     { to: '/settings', icon: <Settings size={20} />, text: 'Settings' },
     { to: '/help', icon: <HelpCircle size={20} />, text: 'Help & Support' },
   ];
   
+  // Role-based sidebar items
+  const sidebarItems =
+    user.role === 'entrepreneur'
+      ? entrepreneurItems
+      : user.role === 'investor'
+      ? investorItems
+      : user.role === 'admin'
+      ? adminItems
+      : [];
+
   return (
     <div className="w-64 bg-white h-full border-r border-gray-200 hidden md:block">
       <div className="h-full flex flex-col">
