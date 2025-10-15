@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import React, { useEffect, useRef, useState } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import {
   MessageCircle,
   Users,
@@ -20,53 +20,56 @@ import {
   checkRequestsFromInvestor,
   createCollaborationRequest,
 } from "../../data/collaborationRequests";
-import { getEnterpreneurById, updateEntrepreneurData } from "../../data/users";
 import { Entrepreneur } from "../../types";
-import { Input } from "../../components/ui/Input";
+import { getEnterpreneurById } from "../../data/users";
 
 export const EntrepreneurProfile: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { user: currentUser } = useAuth();
-  const [isEditing, setIsEditing] = useState(false);
   const [entrepreneur, setEnterpreneur] = useState<Entrepreneur>();
+  const navigate = useNavigate();
   const [hasRequestedCollaboration, setHasRequestedCollaboration] =
-    useState<Boolean>();
-  const initialData = {
-    userId: id,
-    startupName: entrepreneur?.startupName,
-    pitchSummary: entrepreneur?.pitchSummary,
-    fundingNeeded: entrepreneur?.fundingNeeded,
-    industry: entrepreneur?.industry,
-    foundedYear: entrepreneur?.foundedYear,
-    teamSize: entrepreneur?.teamSize,
-    minValuation: entrepreneur?.minValuation,
-    maxValuation: entrepreneur?.maxValuation,
-    marketOpportunity: entrepreneur?.marketOpportunity,
-    advantage: entrepreneur?.advantage,
-  };
-  const [formData, setFormData] = useState(initialData);
+    useState<boolean>();
 
-  // Fetch entrepreneur data
+  const valuation =useRef<number | undefined>(0);;
+
   useEffect(() => {
     const fetchEntrepreneur = async () => {
       const entrepreneur = await getEnterpreneurById(id);
       setEnterpreneur(entrepreneur);
     };
-
     fetchEntrepreneur();
-  }, []);
+  }, [id]);
 
   useEffect(() => {
-    const checkInvestor = async()=>{
-    const request = await checkRequestsFromInvestor(currentUser?.userId,id);
-    setHasRequestedCollaboration(request);
-    }
-    checkInvestor();
-  }, [currentUser?.userId,id]);
-
-  useEffect(() => {
-    setFormData(initialData);
+    const calculateValuation = () => {
+      if (entrepreneur?.growthRate && entrepreneur?.profitMargin)
+        return (
+          5 *
+          (1 +
+            entrepreneur?.growthRate / 100 +
+            entrepreneur?.profitMargin / 100)
+        );
+    };
+    const nichevalue = calculateValuation();
+    // ensure we multiply two numbers: use a numeric default for nichevalue and revenue
+    const base = nichevalue ?? 1;
+    const revenue = entrepreneur?.revenue ?? 0;
+    valuation.current = base * revenue;
   }, [entrepreneur]);
+
+  useEffect(() => {
+    const checkInvestor = async () => {
+      if (currentUser?.userId && id) {
+        const request = await checkRequestsFromInvestor(
+          currentUser?.userId,
+          id
+        );
+        setHasRequestedCollaboration(request);
+      }
+    };
+    checkInvestor();
+  }, [currentUser?.userId, id]);
 
   if (!currentUser) return null;
   if (!entrepreneur || entrepreneur.role !== "entrepreneur") {
@@ -88,10 +91,8 @@ export const EntrepreneurProfile: React.FC = () => {
     );
   }
 
-  const isCurrentUser =
-    currentUser?.userId === (entrepreneur.userId || entrepreneur._id);
+  const isCurrentUser = currentUser?.userId === entrepreneur?.userId;
   const isInvestor = currentUser?.role === "investor";
-
   // Check if the current investor has already sent a request to this entrepreneur
 
   const handleSendRequest = async () => {
@@ -105,141 +106,8 @@ export const EntrepreneurProfile: React.FC = () => {
     }
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    updateEntrepreneurData(formData);
-    const {
-      startupName,
-      pitchSummary,
-      fundingNeeded,
-      industry,
-      foundedYear,
-      teamSize,
-      marketOpportunity,
-      advantage,
-      minValuation,
-      maxValuation,
-    } = formData;
-    setEnterpreneur({
-      ...entrepreneur,
-      startupName,
-      pitchSummary,
-      fundingNeeded,
-      industry,
-      foundedYear,
-      teamSize,
-      marketOpportunity,
-      advantage,
-      minValuation,
-      maxValuation,
-    });
-    setFormData(initialData);
-    setIsEditing(false);
-  };
-
   return (
     <div className="space-y-6 animate-fade-in">
-      {isEditing && (
-        <div className="fixed inset-0 animate-slide-in animate-slide-out flex items-center justify-center bg-black/40 z-20">
-          <div className="bg-white rounded-2xl shadow-lg p-6 max-h-3/6 overflow-y-scroll w-4/5 flex flex-col min-w-60 flex-shrink">
-            <h2 className="text-xl font-medium my-5 underline underline-offset-4 flex justify-center">
-              Profile Update
-            </h2>
-            <form
-              onSubmit={handleSubmit}
-              className="gap-5 flex flex-col text-sm justify-center items-center"
-            >
-              <div className="flex flex-row w-3/4 gap-5">
-                <div className="flex gap-2 flex-col w-1/2">
-                  <Input
-                    label="Your startup name..?"
-                    name="startupName"
-                    value={formData.startupName}
-                    onChange={handleChange}
-                  />
-                  <Input
-                    label="Summary about your company.."
-                    name="pitchSummary"
-                    value={formData.pitchSummary}
-                    onChange={handleChange}
-                  />
-                  <Input
-                    label="When you company founded..?"
-                    name="foundedYear"
-                    value={formData.foundedYear}
-                    onChange={handleChange}
-                  />
-
-                  <Input
-                    label="Team Size..?"
-                    name="teamSize"
-                    value={formData.teamSize}
-                    onChange={handleChange}
-                  />
-                  <Input
-                    label="Industry..?"
-                    name="industry"
-                    value={formData.industry}
-                    onChange={handleChange}
-                  />
-                </div>
-                <div className="flex gap-2 flex-col w-1/2">
-                  <Input
-                    label="How much fund you need..?"
-                    name="fundingNeeded"
-                    value={formData.fundingNeeded}
-                    onChange={handleChange}
-                  />
-                  <Input
-                    label="Market opporunity..?"
-                    name="marketOpportunity"
-                    value={formData.marketOpportunity}
-                    onChange={handleChange}
-                  />
-                  <Input
-                    label="Advantage..?"
-                    name="advantage"
-                    value={formData.advantage}
-                    onChange={handleChange}
-                  />
-                  <Input
-                    label="Minimum valuation..?"
-                    name="minValuation"
-                    value={formData.minValuation}
-                    onChange={handleChange}
-                  />
-                  <Input
-                    label="Maximum valuation..?"
-                    name="maxValuation"
-                    value={formData.maxValuation}
-                    onChange={handleChange}
-                  />
-                </div>
-              </div>
-              <div className="flex justify-end mt-4 gap-3">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setIsEditing(false);
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button variant="outline" size="sm" type="submit">
-                  Submit
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
       {/* Profile header */}
       <Card>
         <CardBody className="sm:flex sm:items-start sm:justify-between p-6">
@@ -311,7 +179,7 @@ export const EntrepreneurProfile: React.FC = () => {
                 leftIcon={<UserCircle size={18} />}
                 onClick={(e) => {
                   e.preventDefault();
-                  setIsEditing(true);
+                  navigate("/settings");
                 }}
               >
                 Edit Profile
@@ -469,7 +337,7 @@ export const EntrepreneurProfile: React.FC = () => {
                 <div>
                   <span className="text-sm text-gray-500">Valuation</span>
                   <p className="text-md font-medium text-gray-900">
-                    ${entrepreneur.minValuation} - ${entrepreneur.maxValuation}
+                    ${valuation.current}
                   </p>
                 </div>
 

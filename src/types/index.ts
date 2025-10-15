@@ -5,7 +5,7 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
-  avatarUrl: string;
+  avatarUrl: string | File | null;
   location: string;
   bio: string;
   isOnline?: boolean;
@@ -18,8 +18,9 @@ export interface Entrepreneur extends User {
   industry: string | undefined;
   foundedYear: number | undefined;
   teamSize: number | undefined;
-  minValuation:string | undefined;
-  maxValuation:string | undefined;
+  revenue:string | undefined;
+  profitMargin:number | undefined;
+  growthRate:number | undefined;
   marketOpportunity:string | undefined;
   advantage:string | undefined;
 }
