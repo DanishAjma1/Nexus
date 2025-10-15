@@ -180,11 +180,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   // Logout function
-  const logout = (): void => {
+ const logout = async (): Promise<void> => {
+  try {
+    const token = localStorage.getItem("token");
+    if (token) {
+      await axios.post(
+        `${URL}/auth/logout`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          withCredentials: true,
+        }
+      );
+    }
     setUser(null);
     localStorage.removeItem("token");
     toast.success("Logged out successfully");
-  };
+  } catch (error) {
+    console.error("Logout error:", error);
+    toast.error("Failed to log out properly. Please try again.");
+  }
+};
+
 
   // Update user profile
   const updateProfile = async (

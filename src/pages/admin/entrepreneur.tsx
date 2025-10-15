@@ -7,6 +7,10 @@ interface User {
   name: string;
   email: string;
   role: string;
+  lastLoginTime?: string;
+  lastLogoutTime?: string;
+  totalSessionDuration?: number;
+  lastLogoutDuration?: number; // ⏱️ new field
 }
 
 export const Entrepreneurj: React.FC = () => {
@@ -51,15 +55,20 @@ export const Entrepreneurj: React.FC = () => {
     fetchEntrepreneurs();
   }, []);
 
-  if (loading)
-    return <p className="p-4 text-gray-600">Loading entrepreneurs...</p>;
+  if (loading) return <p className="p-4 text-gray-600">Loading entrepreneurs...</p>;
+  if (entrepreneurs.length === 0) return <p className="p-4 text-gray-600">No entrepreneurs found.</p>;
 
-  if (entrepreneurs.length === 0)
-    return <p className="p-4 text-gray-600">No entrepreneurs found.</p>;
+  // Helper function to format date/time
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "-";
+    const date = new Date(dateString);
+    return date.toLocaleString();
+  };
 
   return (
     <div className="p-4">
       <h1 className="text-xl font-bold mb-4">Entrepreneur Management</h1>
+
       <div className="overflow-x-auto bg-white rounded-lg shadow border">
         <table className="min-w-full text-sm text-left text-gray-700">
           <thead className="bg-gray-100 text-gray-800 uppercase text-xs font-semibold">
@@ -67,15 +76,28 @@ export const Entrepreneurj: React.FC = () => {
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Email</th>
               <th className="px-4 py-3">Role</th>
+              <th className="px-4 py-3">Last Login</th>
+              <th className="px-4 py-3">Last Logout</th>
+              <th className="px-4 py-3">Total Duration (min)</th>
+              <th className="px-4 py-3">Last Logout Duration (hrs)</th>
               <th className="px-4 py-3 text-center">Action</th>
             </tr>
           </thead>
+
           <tbody>
             {entrepreneurs.map((user) => (
               <tr key={user._id} className="border-t hover:bg-gray-50">
                 <td className="px-4 py-2">{user.name}</td>
                 <td className="px-4 py-2">{user.email}</td>
                 <td className="px-4 py-2 capitalize">{user.role}</td>
+                <td className="px-4 py-2">{formatDate(user.lastLoginTime)}</td>
+                <td className="px-4 py-2">{formatDate(user.lastLogoutTime)}</td>
+                <td className="px-4 py-2 text-center">
+                  {user.totalSessionDuration || 0}
+                </td>
+                <td className="px-4 py-2 text-center">
+                  {user.lastLogoutDuration?.toFixed(2) || 0}
+                </td>
                 <td className="px-4 py-2 text-center">
                   <button
                     onClick={() => deleteEntrepreneur(user._id)}
