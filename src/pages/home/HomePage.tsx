@@ -1,8 +1,24 @@
 import React from "react";
 import { Navbar } from "../../components/home/Navbar";
 
+interface CompaignProps {
+  image: string;
+  title: string;
+}
+interface FundraiserProps {
+  image: string;
+  fundNeeded: string;
+  company: string;
+  description: string;
+}
+interface SuccessfulCompanyProps {
+  image: string;
+  company: string;
+  description: string;
+  exits: number;
+}
 export const HomePage: React.FC = () => {
-  const CompaignDiv = ({ image, title }) => {
+  const CompaignDiv: React.FC<CompaignProps> = ({ image, title }) => {
     return (
       <div className="flex w-full h-40 justify-center hover:scale-105 transition">
         <img
@@ -19,7 +35,12 @@ export const HomePage: React.FC = () => {
       </div>
     );
   };
-  const FundeRaiserDiv = ({ image, fundNeeded, company, description }) => {
+  const FundeRaiserDiv: React.FC<FundraiserProps> = ({
+    image,
+    fundNeeded,
+    company,
+    description,
+  }) => {
     return (
       <div className="flex w-full h-40 text-white justify-center hover:scale-105 transition">
         <img
@@ -42,7 +63,12 @@ export const HomePage: React.FC = () => {
       </div>
     );
   };
-  const SuccessfulCompanyDiv = ({ image, company, description, exits }) => {
+  const SuccessfulCompanyDiv: React.FC<SuccessfulCompanyProps> = ({
+    image,
+    company,
+    description,
+    exits,
+  }) => {
     return (
       <div className="flex flex-col w-full text-black items-center hover:scale-105 transition">
         <div className="flex flex-col w-3/4 p-5 border-2 rounded-md shadow-md">
@@ -65,7 +91,6 @@ export const HomePage: React.FC = () => {
               <span className="text-green-500">Total exits:</span>
               <p>{exits}</p>
             </div>
-            {/* <div className="border-b-2 border-white bottom-4 left-1/2 transform -translate-x-1/2 w-2/3 absolute" /> */}
           </div>
         </div>
       </div>
@@ -111,7 +136,7 @@ export const HomePage: React.FC = () => {
 
             <div className="flex flex-col w-1/5 py-5">
               <h1 className="text-xl font-bold font-serif p-5 underline-offset-4 underline shadow-sm">
-                Fundraiser Companies..
+                Fundraisers..
               </h1>
               <div className="gap-5 flex flex-col border-l-2">
                 <FundeRaiserDiv
@@ -137,7 +162,7 @@ export const HomePage: React.FC = () => {
           </div>
           <div className="relative flex flex-col my-5">
             <h1 className="text-black text-2xl font-bold w-fit font-serif my-5 p-5 underline-offset-4 underline ">
-              Successful Companies..
+              Successful Entrepreneurs..
             </h1>
             <div className="grid grid-cols-3 grid-rows-1 border-2 p-3 rounded-md bg-white shadow-md">
               <div className="grid grid-cols-1">

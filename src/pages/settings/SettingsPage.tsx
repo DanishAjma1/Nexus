@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { User, Lock, Bell, Globe, Palette, CreditCard } from "lucide-react";
 import { Card, CardHeader, CardBody } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
@@ -7,13 +7,49 @@ import { Badge } from "../../components/ui/Badge";
 import { Avatar } from "../../components/ui/Avatar";
 import { useAuth } from "../../context/AuthContext";
 import { Navigate } from "react-router-dom";
+import { getEnterpreneurById, updateEntrepreneurData } from "../../data/users";
+import { Entrepreneur, UserRole } from "../../types";
 
 export const SettingsPage: React.FC = () => {
-  const { user, updateProfile} = useAuth();
+  const { user, updateProfile } = useAuth();
+  const [entrepreneur, setEnterpreneur] = useState<Entrepreneur>();
 
-  if (!user ) return null;
+  useEffect(() => {
+    const fetchEntrepreneur = async () => {
+      const entrepreneur = await getEnterpreneurById(user?.userId);
+      setEnterpreneur(entrepreneur);
+    };
+    fetchEntrepreneur();
+  }, [user]);
 
-  const initialValues = {
+  const initialData = useMemo(
+    () => ({
+      userId: entrepreneur?.userId,
+      startupName: entrepreneur?.startupName,
+      pitchSummary: entrepreneur?.pitchSummary,
+      fundingNeeded: entrepreneur?.fundingNeeded,
+      industry: entrepreneur?.industry,
+      foundedYear: entrepreneur?.foundedYear,
+      teamSize: entrepreneur?.teamSize,
+      revenue: entrepreneur?.revenue,
+      profitMargin: entrepreneur?.profitMargin,
+      growthRate: entrepreneur?.growthRate,
+      marketOpportunity: entrepreneur?.marketOpportunity,
+      advantage: entrepreneur?.advantage,
+    }),
+    [entrepreneur]
+  );
+
+  type UserDetails = {
+    name?: string;
+    email?: string;
+    role?: UserRole | undefined;
+    bio: string;
+    location: string;
+    avatarUrl?: string | File | null;
+  };
+
+  const initialValues: UserDetails = {
     name: user?.name,
     email: user?.email,
     role: user?.role,
@@ -21,26 +57,88 @@ export const SettingsPage: React.FC = () => {
     location: user?.location || "",
     avatarUrl: user?.avatarUrl || "",
   };
-  const [userDetails, setUserDetails] = useState(initialValues);
-  const [isFileUploaded, setIsFileUploaded] = useState(false);
-  const handleChange = (e: Event) => {
-    const { name, value, files } = e.target;
+
+  // formData can be a partial Entrepreneur while editing
+  const [formData, setFormData] = useState<Partial<Entrepreneur>>(
+    initialData || {}
+  );
+  const [userDetails, setUserDetails] = useState<UserDetails>(initialValues);
+  const [isFileUploaded, setIsFileUploaded] = useState<boolean>(false);
+
+  useEffect(() => {
+    setFormData(initialData || {});
+  }, [initialData]);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const target = e.target as HTMLInputElement & { files?: FileList };
+    const { name, value, files } = target;
     if (name === "avatarUrl") {
-      setUserDetails({ ...userDetails, [name]: files[0] });
-      setIsFileUploaded(true);
+      const file = files?.[0] ?? null;
+      setUserDetails((prev) => ({ ...prev, avatarUrl: file }));
+      setIsFileUploaded(!!file);
     } else {
-      setUserDetails({ ...userDetails, [name]: value });
+      setUserDetails((prev) => ({ ...prev, [name]: value } as UserDetails));
     }
   };
-  const handleSubmit = async (e: Event) => {
-    e.preventDefault();
 
-    updateProfile(user?.userId, userDetails);
+  const handleSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    if (!user) return;
+    // userId guaranteed because of the guard
+    updateProfile(user.userId, userDetails);
   };
-  const handleCancel = (e) => {
+
+  const handleCancel = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     setUserDetails(initialValues);
   };
+
+  const handleUserChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(
+      (prev) => ({ ...(prev || {}), [name]: value } as Partial<Entrepreneur>)
+    );
+  };
+
+  const handleUserSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    await updateEntrepreneurData(formData);
+
+    const fd = formData || {};
+    const {
+      startupName,
+      pitchSummary,
+      fundingNeeded,
+      industry,
+      foundedYear,
+      teamSize,
+      marketOpportunity,
+      advantage,
+      revenue,
+      profitMargin,
+      growthRate,
+    } = fd as Partial<Entrepreneur>;
+
+    // Ensure userId is a string when updating entrepreneur state
+    setEnterpreneur({
+      startupName,
+      pitchSummary,
+      fundingNeeded,
+      industry,
+      foundedYear,
+      teamSize,
+      marketOpportunity,
+      advantage,
+      revenue,
+      profitMargin,
+      growthRate,
+    } as Entrepreneur);
+
+    setFormData(initialData || {});
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
@@ -104,7 +202,7 @@ export const SettingsPage: React.FC = () => {
             </CardHeader>
             <CardBody className="space-y-6">
               <div className="flex items-center gap-6">
-                <Avatar src={user.avatarUrl} alt={user.name} size="xl" />
+                <Avatar src={user?.avatarUrl} alt={user?.name} size="xl" />
 
                 <div>
                   <Button variant="outline" size="sm">
@@ -165,6 +263,92 @@ export const SettingsPage: React.FC = () => {
                   Cancel
                 </Button>
                 <Button onClick={handleSubmit}>Save Changes</Button>
+              </div>
+            </CardBody>
+          </Card>
+
+          {/* Update profile */}
+          <Card>
+            <CardHeader>
+              <h2 className="text-lg font-medium text-gray-900">
+                Profile Details
+              </h2>
+            </CardHeader>
+            <CardBody>
+              <form className="flex items-center">
+                <div className="flex flex-row w-full gap-10">
+                  <div className="flex gap-2 flex-col w-1/2">
+                    <Input
+                      label="Your startup name..?"
+                      name="startupName"
+                      value={formData.startupName}
+                      onChange={handleUserChange}
+                    />
+                    <Input
+                      label="Summary which describe your company.."
+                      name="pitchSummary"
+                      value={formData.pitchSummary}
+                      onChange={handleUserChange}
+                    />
+                    <Input
+                      label="In which year this company found..?"
+                      name="foundedYear"
+                      value={formData.foundedYear}
+                      onChange={handleUserChange}
+                    />
+
+                    <Input
+                      label="Industry..?"
+                      name="industry"
+                      value={formData.industry}
+                      onChange={handleUserChange}
+                    />
+                    <Input
+                      label="Enter the profit Margin..? (In persontage)"
+                      name="profitMargin"
+                      value={formData.profitMargin}
+                      onChange={handleUserChange}
+                    />
+                  </div>
+                  <div className="flex gap-2 flex-col w-1/2">
+                    <Input
+                      label="How much fund you need..?"
+                      name="fundingNeeded"
+                      value={formData.fundingNeeded}
+                      onChange={handleUserChange}
+                    />
+                    <Input
+                      label="Market opporunity..?"
+                      name="marketOpportunity"
+                      value={formData.marketOpportunity}
+                      onChange={handleUserChange}
+                    />
+                    <Input
+                      label="Advantage..?"
+                      name="advantage"
+                      value={formData.advantage}
+                      onChange={handleUserChange}
+                    />
+                    <Input
+                      label="Revenue / worth of your company..?"
+                      name="revenue"
+                      type="number"
+                      value={formData.revenue}
+                      onChange={handleUserChange}
+                    />
+
+                    <Input
+                      label="Enter the Growth Rate..? (In persontage)"
+                      name="growthRate"
+                      value={formData.growthRate}
+                      onChange={handleUserChange}
+                    />
+                  </div>
+                </div>
+              </form>
+
+              <div className="flex justify-end pt-6 mt-6 border-t-2">
+                <Button onClick={handleUserSubmit}>Save Changes</Button>
               </div>
             </CardBody>
           </Card>
