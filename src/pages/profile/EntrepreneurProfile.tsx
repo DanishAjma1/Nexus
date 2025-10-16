@@ -31,7 +31,8 @@ export const EntrepreneurProfile: React.FC = () => {
   const [hasRequestedCollaboration, setHasRequestedCollaboration] =
     useState<boolean>();
 
-  const valuation =useRef<number | undefined>(0);;
+  const [valuation, setValuation] = useState<number | undefined>(0);
+  const [valuationValue, setValuationValue] = useState<string | undefined>(0);
 
   useEffect(() => {
     const fetchEntrepreneur = async () => {
@@ -55,8 +56,23 @@ export const EntrepreneurProfile: React.FC = () => {
     // ensure we multiply two numbers: use a numeric default for nichevalue and revenue
     const base = nichevalue ?? 1;
     const revenue = entrepreneur?.revenue ?? 0;
-    valuation.current = base * revenue;
+    setValuation(base * revenue);
   }, [entrepreneur]);
+
+  const AmountMeasureWithTags = (amount: number) => {
+    if (amount !== 0) {
+      const val = amount;
+
+      let formattedVal = "";
+      formattedVal = Intl.NumberFormat("en-US", {
+        notation: "compact",
+        compactDisplay: "short",
+      }).format(val);
+
+      return formattedVal;
+    }
+    return "0";
+  };
 
   useEffect(() => {
     const checkInvestor = async () => {
@@ -105,6 +121,8 @@ export const EntrepreneurProfile: React.FC = () => {
       await setHasRequestedCollaboration(true);
     }
   };
+
+  const fundAmount = valuation ?? 0;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -303,10 +321,10 @@ export const EntrepreneurProfile: React.FC = () => {
                   </div>
                 </div>
 
-                {entrepreneur.teamSize > 3 && (
+                {entrepreneur.teamSize && entrepreneur?.teamSize > 3 && (
                   <div className="flex items-center justify-center p-3 border border-dashed border-gray-200 rounded-md">
                     <p className="text-sm text-gray-500">
-                      + {entrepreneur.teamSize - 3} more team members
+                      + {entrepreneur?.teamSize - 3} more team members
                     </p>
                   </div>
                 )}
@@ -329,7 +347,7 @@ export const EntrepreneurProfile: React.FC = () => {
                   <div className="flex items-center mt-1">
                     <DollarSign size={18} className="text-accent-600 mr-1" />
                     <p className="text-lg font-semibold text-gray-900">
-                      {entrepreneur.fundingNeeded}
+                      {AmountMeasureWithTags(entrepreneur.fundingNeeded ?? 0)}
                     </p>
                   </div>
                 </div>
@@ -337,7 +355,7 @@ export const EntrepreneurProfile: React.FC = () => {
                 <div>
                   <span className="text-sm text-gray-500">Valuation</span>
                   <p className="text-md font-medium text-gray-900">
-                    ${valuation.current}
+                    ${AmountMeasureWithTags(valuation ?? 0)}
                   </p>
                 </div>
 
@@ -357,20 +375,38 @@ export const EntrepreneurProfile: React.FC = () => {
                   <div className="mt-2 space-y-2">
                     <div className="flex justify-between items-center">
                       <span className="text-xs font-medium">Pre-seed</span>
-                      <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
-                        Completed
+                      <span
+                        className={`text-xs ${
+                          fundAmount > 10000
+                            ? " text-green-800 bg-green-100"
+                            : "text-yellow-800 bg-yellow-100"
+                        } px-2 py-0.5 rounded-full`}
+                      >
+                        {fundAmount > 10000 ? "Completed" : "In progress"}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-xs font-medium">Seed</span>
-                      <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
-                        Completed
+                      <span
+                        className={`text-xs  ${
+                          fundAmount > 250000
+                            ? " text-green-800 bg-green-100"
+                            : "text-yellow-800 bg-yellow-100"
+                        } px-2 py-0.5 rounded-full`}
+                      >
+                        {fundAmount > 250000 ? "Completed" : "In progress"}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-xs font-medium">Series A</span>
-                      <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full">
-                        In Progress
+                      <span
+                        className={`text-xs ${
+                          fundAmount > 2000000
+                            ? " text-green-800 bg-green-100"
+                            : "text-yellow-800 bg-yellow-100"
+                        } px-2 py-0.5 rounded-full`}
+                      >
+                        {fundAmount > 2000000 ? "Completed" : "In progress"}
                       </span>
                     </div>
                   </div>
