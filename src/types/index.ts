@@ -15,7 +15,7 @@ export interface User {
 export interface Entrepreneur extends User {
   startupName: string | undefined;
   pitchSummary: string | undefined;
-  fundingNeeded: string | undefined;
+  fundingNeeded: number | undefined;
   industry: string | undefined;
   foundedYear: number | undefined;
   teamSize: number | undefined;
