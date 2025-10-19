@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import {
   MessageCircle,
@@ -32,7 +32,6 @@ export const EntrepreneurProfile: React.FC = () => {
     useState<boolean>();
 
   const [valuation, setValuation] = useState<number | undefined>(0);
-  const [valuationValue, setValuationValue] = useState<string | undefined>(0);
 
   useEffect(() => {
     const fetchEntrepreneur = async () => {
