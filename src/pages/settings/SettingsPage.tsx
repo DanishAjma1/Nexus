@@ -23,22 +23,24 @@ export const SettingsPage: React.FC = () => {
   }, [user]);
 
   const initialData = useMemo(
-    () => ({
-      userId: entrepreneur?.userId,
-      startupName: entrepreneur?.startupName,
-      pitchSummary: entrepreneur?.pitchSummary,
-      fundingNeeded: entrepreneur?.fundingNeeded,
-      industry: entrepreneur?.industry,
-      foundedYear: entrepreneur?.foundedYear,
-      teamSize: entrepreneur?.teamSize,
-      revenue: entrepreneur?.revenue,
-      profitMargin: entrepreneur?.profitMargin,
-      growthRate: entrepreneur?.growthRate,
-      marketOpportunity: entrepreneur?.marketOpportunity,
-      advantage: entrepreneur?.advantage,
-    }),
-    [entrepreneur]
-  );
+  () => ({
+    userId: entrepreneur?.userId || user?.userId,
+    startupName: entrepreneur?.startupName || "",
+    pitchSummary: entrepreneur?.pitchSummary || "",
+    fundingNeeded: entrepreneur?.fundingNeeded || "",
+    industry: entrepreneur?.industry || "",
+    foundedYear: entrepreneur?.foundedYear ?? 0, 
+    teamSize: entrepreneur?.teamSize ?? 0,       
+    revenue: entrepreneur?.revenue ?? 0,         
+    profitMargin: entrepreneur?.profitMargin ?? 0,
+    growthRate: entrepreneur?.growthRate ?? 0,
+    marketOpportunity: entrepreneur?.marketOpportunity || "",
+    advantage: entrepreneur?.advantage || "",
+  }),
+  [entrepreneur, user]
+);
+
+
 
   type UserDetails = {
     name?: string;
