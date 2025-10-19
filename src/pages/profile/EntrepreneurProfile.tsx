@@ -81,7 +81,7 @@ export const EntrepreneurProfile: React.FC = () => {
         <p className="text-gray-600 mt-2">
           The entrepreneur profile you're looking for doesn't exist or has been
           removed.
-        </p>
+        </p>s
         <Link to="/dashboard/investor">
           <Button variant="outline" className="mt-4">
             Back to Dashboard
@@ -91,6 +91,7 @@ export const EntrepreneurProfile: React.FC = () => {
     );
   }
 
+  console.log(entrepreneur);
   const isCurrentUser = currentUser?.userId === entrepreneur?.userId;
   const isInvestor = currentUser?.role === "investor";
   // Check if the current investor has already sent a request to this entrepreneur
