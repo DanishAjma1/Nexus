@@ -32,8 +32,8 @@ export const getRequestsFromInvestor = async (
   return requests;
 };
 export const checkRequestsFromInvestor = async (
-  inves_id: string,
-  enter_id: string
+  inves_id: string | undefined,
+  enter_id: string | undefined
 ): Promise<boolean> => {
   try {
     const body = { inves_id, enter_id };
@@ -61,7 +61,7 @@ export const updateRequestStatus = async (
     { requestId, newStatus },
     { withCredentials: true }
   );
-  const {request} = res.data;
+  const { request } = res.data;
   toast.success("request status updated");
   return request;
 };
