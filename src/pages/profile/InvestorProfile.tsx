@@ -72,13 +72,13 @@ export const InvestorProfile: React.FC = () => {
               </h1>
               <p className="text-gray-600 flex items-center justify-center sm:justify-start mt-1">
                 <Building2 size={16} className="mr-1" />
-                Investor • {investor.totalInvestments || "0"} investments
+                Investor • {investor.totalInvestments || 0} investments
               </p>
 
               <div className="flex flex-wrap gap-2 justify-center sm:justify-start mt-3">
                 <Badge variant="primary">
                   <MapPin size={14} className="mr-1" />
-                  San Francisco, CA
+                  {investor?.location || "--"}
                 </Badge>
                 {investor.investmentStage &&
                   investor.investmentStage.map((stage, index) => (
@@ -122,7 +122,7 @@ export const InvestorProfile: React.FC = () => {
               <h2 className="text-lg font-medium text-gray-900">About</h2>
             </CardHeader>
             <CardBody>
-              <p className="text-gray-700">{investor.bio}</p>
+              <p className="text-gray-700">{investor.bio || "Say something about u..?"}</p>
             </CardBody>
           </Card>
 
@@ -145,7 +145,7 @@ export const InvestorProfile: React.FC = () => {
                         <Badge key={index} variant="primary" size="md">
                           {interest}
                         </Badge>
-                      ))}
+                      )) || "Add some industries..?"}
                   </div>
                 </div>
 
@@ -159,7 +159,7 @@ export const InvestorProfile: React.FC = () => {
                         <Badge key={index} variant="secondary" size="md">
                           {stage}
                         </Badge>
-                      ))}
+                      )) || "Add investment stages..?"}
                   </div>
                 </div>
 
@@ -173,7 +173,7 @@ export const InvestorProfile: React.FC = () => {
                         <span className="inline-block w-2 h-2 bg-primary-600 rounded-full mt-1.5 mr-2"></span>
                         {ic}
                       </li>
-                    ))}
+                    )) || "Set investment criteria..?"}
                   </ul>
                 </div>
               </div>
@@ -188,7 +188,7 @@ export const InvestorProfile: React.FC = () => {
               </h2>
               <span className="text-sm text-gray-500">
                 {investor.portfolioCompanies &&
-                  investor.portfolioCompanies.length}{" "}
+                  investor.portfolioCompanies.length || 0}{" "}
                 companies
               </span>
             </CardHeader>
@@ -212,7 +212,7 @@ export const InvestorProfile: React.FC = () => {
                         </p>
                       </div>
                     </div>
-                  ))}
+                  )) || "You don't invest in any company yet.."}
               </div>
             </CardBody>
           </Card>
@@ -236,8 +236,8 @@ export const InvestorProfile: React.FC = () => {
                   <p className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                     <DollarSign size={16} className="text-red-500" />
                     {investor.minimumInvestment &&
-                      investor.minimumInvestment} -{" "}
-                    {investor.maximumInvestment && investor.maximumInvestment}
+                      investor.minimumInvestment || 0} - {" "}
+                    {investor.maximumInvestment || 0}
                   </p>
                 </div>
 
@@ -246,7 +246,7 @@ export const InvestorProfile: React.FC = () => {
                     Total Investments
                   </span>
                   <p className="text-md font-medium text-gray-900">
-                    {investor.totalInvestments} companies
+                    {investor.totalInvestments || 0} companies
                   </p>
                 </div>
 
@@ -255,7 +255,7 @@ export const InvestorProfile: React.FC = () => {
                     Typical Investment Timeline
                   </span>
                   <p className="text-md font-medium text-gray-900">
-                    {investor.minTimline}-{investor.maxTimline} years
+                    {investor.minTimline || 0}-{investor.maxTimline || 0} years
                   </p>
                 </div>
 
@@ -280,7 +280,7 @@ export const InvestorProfile: React.FC = () => {
                             ></div>
                           </div>
                         </div>
-                      ))}
+                      )) || "--"}
                   </div>
                 </div>
               </div>
@@ -303,7 +303,7 @@ export const InvestorProfile: React.FC = () => {
                         Successful Exits
                       </h3>
                       <p className="text-xl font-semibold text-primary-700 mt-1">
-                        {formData.successfullExits}
+                        {investor.successfullExits || 0}
                       </p>
                     </div>
                     <BarChart3 size={24} className="text-primary-600" />
@@ -332,7 +332,7 @@ export const InvestorProfile: React.FC = () => {
                       </h3>
                       <p className="text-xl font-semibold text-primary-700 mt-1">
                         {investor.portfolioCompanies &&
-                          investor.portfolioCompanies.length}
+                          investor.portfolioCompanies.length || 0}
                       </p>
                     </div>
                     <BarChart3 size={24} className="text-primary-600" />
