@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { User, Lock, Bell, Globe, Palette, CreditCard } from "lucide-react";
 import { Card, CardHeader, CardBody } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
@@ -7,40 +7,70 @@ import { Badge } from "../../components/ui/Badge";
 import { Avatar } from "../../components/ui/Avatar";
 import { useAuth } from "../../context/AuthContext";
 import { Navigate } from "react-router-dom";
+import { getEnterpreneurById, getInvestorById } from "../../data/users";
+import { Entrepreneur, Investor, UserRole } from "../../types";
+import { InvestorSettings } from "../../components/settings/InvestorSettings";
+import { EntrepreneurSettings } from "../../components/settings/EntrepreneurSettings";
 
 export const SettingsPage: React.FC = () => {
-  const { user, updateProfile} = useAuth();
+  const { user: currentUser, updateProfile } = useAuth();
+  const [user, setUser] = useState<Entrepreneur | Investor>();
 
-  if (!user ) return null;
+  useEffect(() => {
+    const fetchUser = async () => {
+      let fetchedUser = null;
+      if (currentUser?.role === "investor")
+        fetchedUser = await getInvestorById(currentUser?.userId);
+      else if (currentUser?.role === "entrepreneur")
+        fetchedUser = await getEnterpreneurById(currentUser?.userId);
 
-  const initialValues = {
-    name: user?.name,
-    email: user?.email,
-    role: user?.role,
-    bio: user?.bio || "",
-    location: user?.location || "",
-    avatarUrl: user?.avatarUrl || "",
+      setUser(fetchedUser);
+    };
+    fetchUser();
+  }, [currentUser]);
+
+  type UserDetails = {
+    name?: string;
+    email?: string;
+    role?: UserRole | undefined;
+    bio: string;
+    location: string;
+    avatarUrl?: string | File | null;
   };
-  const [userDetails, setUserDetails] = useState(initialValues);
-  const [isFileUploaded, setIsFileUploaded] = useState(false);
-  const handleChange = (e: Event) => {
-    const { name, value, files } = e.target;
+
+  const initialValues: UserDetails = {
+    name: currentUser?.name,
+    email: currentUser?.email,
+    role: currentUser?.role,
+    bio: currentUser?.bio || "",
+    location: currentUser?.location || "",
+    avatarUrl: currentUser?.avatarUrl || "",
+  };
+
+  const [userDetails, setUserDetails] = useState<UserDetails>(initialValues);
+  const [isFileUploaded, setIsFileUploaded] = useState<boolean>(false);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const target = e.target as HTMLInputElement & { files?: FileList };
+    const { name, value, files } = target;
     if (name === "avatarUrl") {
-      setUserDetails({ ...userDetails, [name]: files[0] });
-      setIsFileUploaded(true);
+      const file = files?.[0] ?? null;
+      setUserDetails((prev) => ({ ...prev, avatarUrl: file }));
+      setIsFileUploaded(!!file);
     } else {
-      setUserDetails({ ...userDetails, [name]: value });
+      setUserDetails((prev) => ({ ...prev, [name]: value } as UserDetails));
     }
   };
-  const handleSubmit = async (e: Event) => {
-    e.preventDefault();
 
-    updateProfile(user?.userId, userDetails);
-  };
-  const handleCancel = (e) => {
+  const handleSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    setUserDetails(initialValues);
+    if (!user) return;
+    // userId guaranteed because of the guard
+    updateProfile(user.userId, userDetails);
   };
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
@@ -104,7 +134,7 @@ export const SettingsPage: React.FC = () => {
             </CardHeader>
             <CardBody className="space-y-6">
               <div className="flex items-center gap-6">
-                <Avatar src={user.avatarUrl} alt={user.name} size="xl" />
+                <Avatar src={user?.avatarUrl} alt={user?.name} size="xl" />
 
                 <div>
                   <Button variant="outline" size="sm">
@@ -161,11 +191,24 @@ export const SettingsPage: React.FC = () => {
               </div>
 
               <div className="flex justify-end gap-3">
-                <Button variant="outline" onClick={handleCancel}>
-                  Cancel
-                </Button>
                 <Button onClick={handleSubmit}>Save Changes</Button>
               </div>
+            </CardBody>
+          </Card>
+
+          {/* Update profile */}
+          <Card>
+            <CardHeader>
+              <h2 className="text-lg font-medium text-gray-900">
+                Profile Details
+              </h2>
+            </CardHeader>
+            <CardBody>
+              {currentUser?.role === "investor" ? (
+                <InvestorSettings />
+              ) : (
+                <EntrepreneurSettings />
+              )}
             </CardBody>
           </Card>
 

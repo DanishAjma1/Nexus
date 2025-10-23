@@ -1,11 +1,12 @@
-export type UserRole = "entrepreneur" | "investor";
+export type UserRole = 'entrepreneur' | 'investor' | 'admin';
+
 
 export interface User {
   userId: string;
   name: string;
   email: string;
   role: UserRole;
-  avatarUrl: string;
+  avatarUrl: string | File | null;
   location: string;
   bio: string;
   isOnline?: boolean;
@@ -14,14 +15,15 @@ export interface User {
 export interface Entrepreneur extends User {
   startupName: string | undefined;
   pitchSummary: string | undefined;
-  fundingNeeded: string | undefined;
+  fundingNeeded: number | undefined;
   industry: string | undefined;
   foundedYear: number | undefined;
   teamSize: number | undefined;
-  minValuation: string | undefined;
-  maxValuation: string | undefined;
-  marketOpportunity: string | undefined;
-  advantage: string | undefined;
+  revenue:string | undefined;
+  profitMargin:number | undefined;
+  growthRate:number | undefined;
+  marketOpportunity:string | undefined;
+  advantage:string | undefined;
 }
 
 export interface Investor extends User {

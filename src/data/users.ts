@@ -92,3 +92,8 @@ export const getUserFromDb = async (id) => {
     console.log(err);
   }
 };
+
+
+export const getSuccessfulEntrepreneurs = ()=>{
+  
+}

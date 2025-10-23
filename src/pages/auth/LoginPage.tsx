@@ -8,6 +8,9 @@ import {
   AlertCircle,
   Globe,
   Linkedin,
+  Shield,
+  LogIn,
+  AlertCircle,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { Button } from "../../components/ui/Button";
@@ -32,25 +35,26 @@ export const LoginPage: React.FC = () => {
 
     try {
       await login(email, password, role);
+
       // Redirect based on user role
-      navigate(
-        role === "entrepreneur"
-          ? "/dashboard/entrepreneur"
-          : "/dashboard/investor"
-      );
+      if (role === "entrepreneur") navigate("/dashboard/entrepreneur");
+      else if (role === "investor") navigate("/dashboard/investor");
+      else if (role === "admin") navigate("/dashboard/admin");
     } catch (err) {
       setError((err as Error).message);
       setIsLoading(false);
     }
   };
-
-  // For demo purposes, pre-filled credentials
+  
   const fillDemoCredentials = (userRole: UserRole) => {
     if (userRole === "entrepreneur") {
       setEmail("en@gmail.com");
       setPassword("123");
-    } else {
+    } else if (userRole === "investor") {
       setEmail("in@gmail.com");
+      setPassword("123");
+    } else {
+      setEmail("admin@gmail.com");
       setPassword("123");
     }
     setRole(userRole);
@@ -65,36 +69,14 @@ export const LoginPage: React.FC = () => {
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center">
           <div className="w-12 h-12 bg-primary-600 rounded-md flex items-center justify-center">
-            <svg
-              width="32"
-              height="32"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              className="text-white"
-            >
-              <path
-                d="M20 7H4C2.89543 7 2 7.89543 2 9V19C2 20.1046 2.89543 21 4 21H20C21.1046 21 22 20.1046 22 19V9C22 7.89543 21.1046 7 20 7Z"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M16 21V5C16 3.89543 15.1046 3 14 3H10C8.89543 3 8 3.89543 8 5V21"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            <Shield size={28} className="text-white" />
           </div>
         </div>
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
           Sign in to Business Nexus
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
-          Connect with investors and entrepreneurs
+          Connect with entrepreneurs, investors, and admins
         </p>
       </div>
 
@@ -112,7 +94,8 @@ export const LoginPage: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 I am a
               </label>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
+                {/* Entrepreneur */}
                 <button
                   type="button"
                   className={`py-3 px-4 border rounded-md flex items-center justify-center transition-colors ${
@@ -126,6 +109,7 @@ export const LoginPage: React.FC = () => {
                   Entrepreneur
                 </button>
 
+                {/* Investor */}
                 <button
                   type="button"
                   className={`py-3 px-4 border rounded-md flex items-center justify-center transition-colors ${
@@ -137,6 +121,20 @@ export const LoginPage: React.FC = () => {
                 >
                   <CircleDollarSign size={18} className="mr-2" />
                   Investor
+                </button>
+
+                {/* Admin */}
+                <button
+                  type="button"
+                  className={`py-3 px-4 border rounded-md flex items-center justify-center transition-colors ${
+                    role === "admin"
+                      ? "border-primary-500 bg-primary-50 text-primary-700"
+                      : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                  }`}
+                  onClick={() => setRole("admin")}
+                >
+                  <Shield size={18} className="mr-2" />
+                  Admin
                 </button>
               </div>
             </div>
@@ -196,6 +194,7 @@ export const LoginPage: React.FC = () => {
             </Button>
           </form>
 
+          {/* Demo Accounts */}
           <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
@@ -208,14 +207,13 @@ export const LoginPage: React.FC = () => {
               </div>
             </div>
 
-            {/* To be deleted part */}
-            <div className="mt-4 grid grid-cols-2 gap-3">
+            <div className="mt-4 grid grid-cols-3 gap-3">
               <Button
                 variant="outline"
                 onClick={() => fillDemoCredentials("entrepreneur")}
                 leftIcon={<Building2 size={16} />}
               >
-                Entrepreneur Demo
+                Entrepreneur
               </Button>
 
               <Button
@@ -223,7 +221,15 @@ export const LoginPage: React.FC = () => {
                 onClick={() => fillDemoCredentials("investor")}
                 leftIcon={<CircleDollarSign size={16} />}
               >
-                Investor Demo
+                Investor
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={() => fillDemoCredentials("admin")}
+                leftIcon={<Shield size={16} />}
+              >
+                Admin
               </Button>
             </div>
           </div>
