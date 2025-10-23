@@ -53,8 +53,8 @@ export const InvestorDashboard: React.FC = () => {
       entrepreneur.startupName
         .toLowerCase()
         .includes(searchQuery.toLowerCase()) ||
-      entrepreneur.industry.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      entrepreneur.pitchSummary
+      entrepreneur?.industry.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      entrepreneur?.pitchSummary
         .toLowerCase()
         .includes(searchQuery.toLowerCase());
 
