@@ -40,6 +40,7 @@ import { ResetPasswordPage } from "./pages/auth/ResetPasswordPage";
 //import { VideoCall } from "./components/webRTC/Videocall";
 //import { AudioCall } from "./components/webRTC/AudioCall";
 import { Toaster } from "react-hot-toast";
+import { LoginWithOAuthPage } from "./pages/auth/LoginWithOAuthPage";
 import { UserManagement } from "./pages/admin/UserManagement";
 import { Activities } from "./pages/admin/activities";
 import { Entrepreneurj } from "./pages/admin/entrepreneur";
@@ -62,6 +63,7 @@ function App() {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/login-with-oauth" element={<LoginWithOAuthPage />} />
 
             {/* Dashboard Routes */}
             <Route path="/dashboard" element={<DashboardLayout />}>
