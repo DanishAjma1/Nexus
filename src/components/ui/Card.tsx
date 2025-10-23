@@ -5,6 +5,7 @@ interface CardProps {
   className?: string;
   onClick?: () => void;
   hoverable?: boolean;
+  setBanner?:boolean;
 }
 
 export const Card: React.FC<CardProps> = ({
@@ -12,6 +13,7 @@ export const Card: React.FC<CardProps> = ({
   className = '',
   onClick,
   hoverable = false,
+  setBanner = false
 }) => {
   const hoverableClass = hoverable ? 'transform hover:-translate-y-1 transition-transform duration-300 cursor-pointer' : '';
   const clickableClass = onClick ? 'cursor-pointer' : '';
@@ -21,6 +23,9 @@ export const Card: React.FC<CardProps> = ({
       className={`bg-white rounded-lg shadow-md overflow-hidden ${hoverableClass} ${clickableClass} ${className}`}
       onClick={onClick}
     >
+      <div className={`flex justify-center bg-red-600 w-full px-2 py-1  ${!setBanner && 'hidden'}`}>
+                <p className='text-sm'>Entrepreneur not set his profile yet..</p>
+              </div>
       {children}
     </div>
   );

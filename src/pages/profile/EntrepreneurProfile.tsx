@@ -21,7 +21,7 @@ import {
   createCollaborationRequest,
 } from "../../data/collaborationRequests";
 import { Entrepreneur } from "../../types";
-import { getEnterpreneurById } from "../../data/users";
+import { AmountMeasureWithTags, getEnterpreneurById } from "../../data/users";
 
 export const EntrepreneurProfile: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -58,20 +58,6 @@ export const EntrepreneurProfile: React.FC = () => {
     setValuation(base * revenue);
   }, [entrepreneur]);
 
-  const AmountMeasureWithTags = (amount: number) => {
-    if (amount !== 0) {
-      const val = amount;
-
-      let formattedVal = "";
-      formattedVal = Intl.NumberFormat("en-US", {
-        notation: "compact",
-        compactDisplay: "short",
-      }).format(val);
-
-      return formattedVal;
-    }
-    return "0";
-  };
 
   useEffect(() => {
     const checkInvestor = async () => {
@@ -143,22 +129,22 @@ export const EntrepreneurProfile: React.FC = () => {
               </h1>
               <p className="text-gray-600 flex items-center justify-center sm:justify-start mt-1">
                 <Building2 size={16} className="mr-1" />
-                Founder at {entrepreneur.startupName}
+                Founder at {entrepreneur.startupName || "--"}
               </p>
 
               <div className="flex flex-wrap gap-2 justify-center sm:justify-start mt-3">
-                <Badge variant="primary">{entrepreneur.industry}</Badge>
+                <Badge variant="primary">{entrepreneur.industry || "--"}</Badge>
                 <Badge variant="gray">
                   <MapPin size={14} className="mr-1" />
-                  {entrepreneur.location}
+                  {entrepreneur.location || "--"}
                 </Badge>
                 <Badge variant="accent">
                   <Calendar size={14} className="mr-1" />
-                  Founded {entrepreneur.foundedYear}
+                  Founded {entrepreneur.foundedYear || "--"}
                 </Badge>
                 <Badge variant="secondary">
                   <Users size={14} className="mr-1" />
-                  {entrepreneur.teamSize} team members
+                  {entrepreneur.teamSize || 0} team members
                 </Badge>
               </div>
             </div>
@@ -215,7 +201,7 @@ export const EntrepreneurProfile: React.FC = () => {
               <h2 className="text-lg font-medium text-gray-900">About</h2>
             </CardHeader>
             <CardBody>
-              <p className="text-gray-700">{entrepreneur.bio}</p>
+              <p className="text-gray-700">{entrepreneur.bio || "Say about yours..?"}</p>
             </CardBody>
           </Card>
 
@@ -233,7 +219,7 @@ export const EntrepreneurProfile: React.FC = () => {
                     Problem Statement
                   </h3>
                   <p className="text-gray-700 mt-1">
-                    {entrepreneur?.pitchSummary?.split(".")[0]}.
+                    {entrepreneur?.pitchSummary?.split(".")[0] || "--"}.
                   </p>
                 </div>
 
@@ -242,7 +228,7 @@ export const EntrepreneurProfile: React.FC = () => {
                     Solution
                   </h3>
                   <p className="text-gray-700 mt-1">
-                    {entrepreneur.pitchSummary}
+                    {entrepreneur.pitchSummary || "--"}
                   </p>
                 </div>
 
@@ -251,7 +237,7 @@ export const EntrepreneurProfile: React.FC = () => {
                     Market Opportunity
                   </h3>
                   <p className="text-gray-700 mt-1">
-                    {entrepreneur.marketOpportunity}
+                    {entrepreneur.marketOpportunity || "--"}
                   </p>
                 </div>
 
@@ -259,7 +245,7 @@ export const EntrepreneurProfile: React.FC = () => {
                   <h3 className="text-md font-medium text-gray-900">
                     Competitive Advantage
                   </h3>
-                  <p className="text-gray-700 mt-1">{entrepreneur.advantage}</p>
+                  <p className="text-gray-700 mt-1">{entrepreneur.advantage || "--"}</p>
                 </div>
               </div>
             </CardBody>
@@ -270,7 +256,7 @@ export const EntrepreneurProfile: React.FC = () => {
             <CardHeader className="flex justify-between items-center">
               <h2 className="text-lg font-medium text-gray-900">Team</h2>
               <span className="text-sm text-gray-500">
-                {entrepreneur.teamSize} members
+                {entrepreneur.teamSize || 0} members
               </span>
             </CardHeader>
             <CardBody>

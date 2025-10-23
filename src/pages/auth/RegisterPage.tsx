@@ -64,7 +64,7 @@ export const RegisterPage: React.FC = () => {
           Create your account
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
-          Join Business Nexus to connect with partners
+          Join TrustBridge AI to connect with partners
         </p>
       </div>
 
