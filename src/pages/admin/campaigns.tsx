@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { motion, AnimatePresence } from "framer-motion";
 import CampForm from "../../components/camp/CampForm";
 
+const URL = import.meta.env.VITE_BACKEND_URL;
 interface Campaign {
   _id: string;
   title: string;
@@ -20,21 +22,22 @@ export const Campaigns: React.FC = () => {
 
   const fetchCampaigns = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/admin/campaigns");
+      const res = await axios.get(`${URL}/admin/campaigns`);
       setCampaigns(res.data);
     } catch {
-      toast.error("Failed to fetch campaigns");
+      toast.error("⚠️ Failed to fetch campaigns");
     }
   };
 
   const updateStatus = async (id: string, status: string) => {
     try {
-      await axios.put(`http://localhost:5000/admin/campaigns/${id}/status`, { status });
-
-      toast.success("Status updated!");
+      await axios.put(`${URL}/admin/campaigns/${id}/status`, {
+        status,
+      });
+      toast.success("✅ Status updated!");
       fetchCampaigns();
     } catch {
-      toast.error("Failed to update status");
+      toast.error("⚠️ Failed to update status");
     }
   };
 
@@ -43,59 +46,109 @@ export const Campaigns: React.FC = () => {
   }, []);
 
   return (
-    <div className="p-6">
+    <div className="p-6 relative min-h-screen bg-gradient-to-br from-black via-gray-900 to-gray-800 text-white">
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Manage Campaigns</h1>
+        <h1 className="text-3xl font-bold text-gold">Manage Campaigns</h1>
         <button
-          onClick={() => setShowForm(!showForm)}
-          className="bg-green-600 text-white px-4 py-2 rounded"
+          onClick={() => setShowForm(true)}
+          className="bg-gradient-to-r from-yellow-500 to-yellow-700 text-black font-semibold px-4 py-2 rounded-xl hover:from-yellow-400 hover:to-yellow-600 transition"
         >
-          {showForm ? "Close Form" : "Add New Campaign"}
+          + Add New Campaign
         </button>
       </div>
 
-      {showForm && <CampForm onSuccess={fetchCampaigns} />}
+      {/* 🔹 Popup Modal */}
+      <AnimatePresence>
+        {showForm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 backdrop-blur-md flex justify-center items-center z-50"
+          >
+            <motion.div
+              initial={{ scale: 0.85, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.85, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="relative w-full max-w-xl"
+            >
+              {/* ❌ Close Button */}
+              <button
+                onClick={() => setShowForm(false)}
+                className="absolute top-6 right-3 text-yellow-400 text-3xl font-bold hover:text-yellow-300 transition"
+              >
+                ×
+              </button>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+              <CampForm
+                onSuccess={() => {
+                  fetchCampaigns();
+                  setShowForm(false); 
+                }}
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 🔹 Campaign List */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
         {campaigns.map((c) => (
-          <div key={c._id} className="bg-white rounded-xl shadow p-4">
+          <motion.div
+            key={c._id}
+            whileHover={{ scale: 1.02 }}
+            className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl shadow-lg p-4 border border-yellow-700/40"
+          >
             {c.images && c.images.length > 0 && (
-              <div className="flex overflow-x-auto gap-2 mb-2">
+              <div className="flex overflow-x-auto gap-2 mb-3">
                 {c.images.map((img, i) => (
                   <img
                     key={i}
-                    src={`http://localhost:5000${img}`}
+                    src={`${URL}${img}`}
                     alt={c.title}
-                    className="w-24 h-24 object-cover rounded"
+                    className="w-24 h-24 object-cover rounded-lg border border-yellow-600/40"
                   />
                 ))}
               </div>
             )}
-            <h2 className="text-lg font-semibold">{c.title}</h2>
-            <p className="text-sm text-gray-600">{c.description}</p>
-            <p className="mt-2 text-sm">
-              Goal: <b>${c.goalAmount}</b> | Raised: <b>${c.raisedAmount}</b>
+            <h2 className="text-lg font-semibold text-yellow-400 mb-1">
+              {c.title}
+            </h2>
+            <p className="text-sm text-gray-300">{c.description}</p>
+            <p className="mt-2 text-sm text-gray-200">
+              🎯 Goal: <b>${c.goalAmount}</b> | 💰 Raised:{" "}
+              <b>${c.raisedAmount}</b>
             </p>
-            <p className="text-sm mt-1">Status: <b>{c.status}</b></p>
+            <p className="text-sm mt-1">
+              Status:{" "}
+              <b
+                className={`${
+                  c.status === "active" ? "text-green-400" : "text-red-400"
+                }`}
+              >
+                {c.status}
+              </b>
+            </p>
 
             <div className="flex gap-2 mt-3">
               {c.status === "active" ? (
                 <button
                   onClick={() => updateStatus(c._id, "stopped")}
-                  className="bg-red-500 text-white px-3 py-1 rounded"
+                  className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg transition"
                 >
                   Stop
                 </button>
               ) : (
                 <button
                   onClick={() => updateStatus(c._id, "active")}
-                  className="bg-blue-500 text-white px-3 py-1 rounded"
+                  className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg transition"
                 >
                   Run
                 </button>
               )}
             </div>
-          </div>
+          </motion.div>
         ))}
       </div>
     </div>
