@@ -50,10 +50,6 @@ import { LoginWithOAuthPage } from "./pages/auth/LoginWithOAuthPage";
 
 function App() {
   return (
-    //  <div>
-    //   <h1>WebRTC Test</h1>
-    //   <VideoCall roomId="room123" />
-    // </div>
     <AuthProvider>
       <SocketProvider>
         <Router>

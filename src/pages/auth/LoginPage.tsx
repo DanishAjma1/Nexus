@@ -4,6 +4,8 @@ import {
   User,
   CircleDollarSign,
   Building2,
+  LogIn,
+  AlertCircle,
   Globe,
   Linkedin,
   Shield,
@@ -32,12 +34,12 @@ export const LoginPage: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const fetchedRole = await login(email, password, role);
+      await login(email, password, role);
 
       // Redirect based on user role
-      if (fetchedRole === "entrepreneur") navigate("/dashboard/entrepreneur");
-      else if (fetchedRole === "investor") navigate("/dashboard/investor");
-      else if (fetchedRole === "admin") navigate("/dashboard/admin");
+      if (role === "entrepreneur") navigate("/dashboard/entrepreneur");
+      else if (role === "investor") navigate("/dashboard/investor");
+      else if (role === "admin") navigate("/dashboard/admin");
     } catch (err) {
       setError((err as Error).message);
       setIsLoading(false);
