@@ -93,7 +93,19 @@ export const getUserFromDb = async (id) => {
   }
 };
 
+export const getSuccessfulEntrepreneurs = () => {};
 
-export const getSuccessfulEntrepreneurs = ()=>{
-  
-}
+export const AmountMeasureWithTags = (amount: number) => {
+  if (amount !== 0) {
+    const val = amount;
+
+    let formattedVal = "";
+    formattedVal = Intl.NumberFormat("en-US", {
+      notation: "compact",
+      compactDisplay: "short",
+    }).format(val);
+
+    return formattedVal;
+  }
+  return "0";
+};

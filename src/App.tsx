@@ -46,13 +46,10 @@ import { Entrepreneurj } from "./pages/admin/entrepreneur";
 import { Investors } from "./pages/admin/investors";
 import { Campaigns } from "./pages/admin/campaigns";
 import { HomePage } from "./pages/home/HomePage";
+import { LoginWithOAuthPage } from "./pages/auth/LoginWithOAuthPage";
 
 function App() {
   return (
-    //  <div>
-    //   <h1>WebRTC Test</h1>
-    //   <VideoCall roomId="room123" />
-    // </div>
     <AuthProvider>
       <SocketProvider>
         <Router>
@@ -62,6 +59,7 @@ function App() {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/login-with-oauth" element={<LoginWithOAuthPage />} />
 
             {/* Dashboard Routes */}
             <Route path="/dashboard" element={<DashboardLayout />}>
@@ -69,13 +67,13 @@ function App() {
               <Route path="investor" element={<InvestorDashboard />} />
               <Route path="admin" element={<AdminDashboard />} />
             </Route>
-            
-        <Route path="/admin" element={<DashboardLayout />}>
-            <Route path="users" element={<UserManagement />} />
-             <Route path="activities" element={<Activities />} />
-           <Route path="entrepreneur" element={<Entrepreneurj />} />
-           <Route path="investors" element={<Investors />} />
-            <Route path="campaigns" element={<Campaigns />} />
+
+            <Route path="/admin" element={<DashboardLayout />}>
+              <Route path="users" element={<UserManagement />} />
+              <Route path="activities" element={<Activities />} />
+              <Route path="entrepreneur" element={<Entrepreneurj />} />
+              <Route path="investors" element={<Investors />} />
+              <Route path="campaigns" element={<Campaigns />} />
             </Route>
 
             {/* Profile Routes */}
@@ -124,7 +122,6 @@ function App() {
 
             {/* Chat Routes */}
             <Route path="/chat" element={<DashboardLayout />}>
-             
               <Route path=":userId" element={<ChatPage />} />
             </Route>
 

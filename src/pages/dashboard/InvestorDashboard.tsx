@@ -53,8 +53,8 @@ export const InvestorDashboard: React.FC = () => {
       entrepreneur.startupName
         .toLowerCase()
         .includes(searchQuery.toLowerCase()) ||
-      entrepreneur.industry.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      entrepreneur.pitchSummary
+      entrepreneur?.industry.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      entrepreneur?.pitchSummary
         .toLowerCase()
         .includes(searchQuery.toLowerCase());
 
@@ -207,8 +207,8 @@ export const InvestorDashboard: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {entrepreneurs &&
                   entrepreneurs.map((entrepreneur) => (
-                    <div key={entrepreneur._id}>
-                      <EntrepreneurCard entrepreneur={entrepreneur} />
+                    <div key={entrepreneur.userId}>
+                      <EntrepreneurCard entrepreneur={entrepreneur} isProfileSet={entrepreneur?.startupName? true : false} />
                     </div>
                   ))}
               </div>

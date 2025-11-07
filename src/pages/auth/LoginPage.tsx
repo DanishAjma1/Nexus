@@ -4,6 +4,10 @@ import {
   User,
   CircleDollarSign,
   Building2,
+  LogIn,
+  AlertCircle,
+  Globe,
+  Linkedin,
   Shield,
   LogIn,
   AlertCircle,
@@ -19,6 +23,7 @@ export const LoginPage: React.FC = () => {
   const [role, setRole] = useState<UserRole>("entrepreneur");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const URL = import.meta.env.VITE_BACKEND_URL;
 
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -40,8 +45,7 @@ export const LoginPage: React.FC = () => {
       setIsLoading(false);
     }
   };
-
-  // Demo credentials for testing
+  
   const fillDemoCredentials = (userRole: UserRole) => {
     if (userRole === "entrepreneur") {
       setEmail("en@gmail.com");
@@ -54,6 +58,10 @@ export const LoginPage: React.FC = () => {
       setPassword("admin123");
     }
     setRole(userRole);
+  };
+
+  const loginWith = (provider: string) => {
+    window.location.href = `${URL}/auth/${provider}`;
   };
 
   return (
@@ -193,7 +201,9 @@ export const LoginPage: React.FC = () => {
                 <div className="w-full border-t border-gray-300"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Demo Accounts</span>
+                <span className="px-2 bg-white text-gray-500">
+                  Demo Accounts
+                </span>
               </div>
             </div>
 
@@ -224,17 +234,55 @@ export const LoginPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Register Option */}
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              Don't have an account?{" "}
-              <Link
-                to="/register"
-                className="font-medium text-primary-600 hover:text-primary-500"
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">Or</span>
+              </div>
+            </div>
+
+            {/* end */}
+
+            <div className="mt-2 text-center">
+              <p className="text-sm text-gray-600">
+                Don't have an account?{" "}
+                <Link
+                  to="/register"
+                  className="font-medium text-primary-600 hover:text-primary-500"
+                >
+                  Sign up
+                </Link>
+              </p>
+            </div>
+
+            <div className="relative mt-10">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">Or</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col justify-center gap-y-2 p-4 items-center">
+              <button
+                className="bg-transparent inline-flex justify-center border-2 w-fit px-3 py-1 rounded-full gap-2"
+                onClick={() => loginWith("google")}
               >
-                Sign up
-              </Link>
-            </p>
+                <Globe />
+                Login with Google
+              </button>
+              <button
+                onClick={() => loginWith("linkedin")}
+                className="bg-transparent inline-flex justify-center border-2 w-fit px-3 py-1 rounded-full gap-2"
+              >
+                <Linkedin />
+                Login with LinkedIn
+              </button>
+            </div>
           </div>
         </div>
       </div>
