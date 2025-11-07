@@ -63,10 +63,11 @@ export const EntrepreneurProfile: React.FC = () => {
     const checkInvestor = async () => {
       if (currentUser?.userId && id) {
         const request = await checkRequestsFromInvestor(
-          currentUser?.userId,
+          currentUser.userId,
           id
         );
-        setHasRequestedCollaboration(request);
+        console.log(request);
+        setHasRequestedCollaboration(Boolean(request));
       }
     };
     checkInvestor();

@@ -1,17 +1,25 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { User, Mail, Lock, CircleDollarSign, Building2, Shield, AlertCircle } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
-import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
-import { UserRole } from '../../types';
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  User,
+  Mail,
+  Lock,
+  CircleDollarSign,
+  Building2,
+  Shield,
+  AlertCircle,
+} from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
+import { Button } from "../../components/ui/Button";
+import { Input } from "../../components/ui/Input";
+import { UserRole } from "../../types";
 
 export const RegisterPage: React.FC = () => {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [role, setRole] = useState<UserRole>('entrepreneur');
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [role, setRole] = useState<UserRole>("entrepreneur");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -24,22 +32,28 @@ export const RegisterPage: React.FC = () => {
 
     // Validate passwords match
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError("Passwords do not match");
       return;
     }
 
     setIsLoading(true);
 
     try {
-      await register(name, email, password, role);
-      // Redirect based on role
-      if (role === 'admin') {
-        navigate('/dashboard/admin');
-      } else if (role === 'entrepreneur') {
-        navigate('/dashboard/entrepreneur');
-      } else {
-        navigate('/dashboard/investor');
-      }
+      localStorage.setItem(
+        "userInfo",
+        JSON.stringify({ name, email, password, role })
+      );
+      console.log("hello");
+      navigate("/fill-details");
+      // await register(name, email, password, role);
+      // // Redirect based on role
+      // if (role === 'admin') {
+      //   navigate('/dashboard/admin');
+      // } else if (role === 'entrepreneur') {
+      //   navigate('/dashboard/entrepreneur');
+      // } else {
+      //   navigate('/dashboard/investor');
+      // }
     } catch (err) {
       setError((err as Error).message);
       setIsLoading(false);
@@ -51,8 +65,7 @@ export const RegisterPage: React.FC = () => {
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center">
           <div className="w-12 h-12 bg-primary-600 rounded-md flex items-center justify-center">
-                        <Shield size={28} className="text-white" />
-            
+            <Shield size={28} className="text-white" />
           </div>
         </div>
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
@@ -82,11 +95,11 @@ export const RegisterPage: React.FC = () => {
                 <button
                   type="button"
                   className={`py-3 px-4 border rounded-md flex items-center justify-center transition-colors ${
-                    role === 'entrepreneur'
-                      ? 'border-primary-500 bg-primary-50 text-primary-700'
-                      : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                    role === "entrepreneur"
+                      ? "border-primary-500 bg-primary-50 text-primary-700"
+                      : "border-gray-300 text-gray-700 hover:bg-gray-50"
                   }`}
-                  onClick={() => setRole('entrepreneur')}
+                  onClick={() => setRole("entrepreneur")}
                 >
                   <Building2 size={18} className="mr-2" />
                   Entrepreneur
@@ -96,11 +109,11 @@ export const RegisterPage: React.FC = () => {
                 <button
                   type="button"
                   className={`py-3 px-4 border rounded-md flex items-center justify-center transition-colors ${
-                    role === 'investor'
-                      ? 'border-primary-500 bg-primary-50 text-primary-700'
-                      : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                    role === "investor"
+                      ? "border-primary-500 bg-primary-50 text-primary-700"
+                      : "border-gray-300 text-gray-700 hover:bg-gray-50"
                   }`}
-                  onClick={() => setRole('investor')}
+                  onClick={() => setRole("investor")}
                 >
                   <CircleDollarSign size={18} className="mr-2" />
                   Investor
@@ -110,11 +123,11 @@ export const RegisterPage: React.FC = () => {
                 <button
                   type="button"
                   className={`py-3 px-4 border rounded-md flex items-center justify-center transition-colors ${
-                    role === 'admin'
-                      ? 'border-primary-500 bg-primary-50 text-primary-700'
-                      : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                    role === "admin"
+                      ? "border-primary-500 bg-primary-50 text-primary-700"
+                      : "border-gray-300 text-gray-700 hover:bg-gray-50"
                   }`}
-                  onClick={() => setRole('admin')}
+                  onClick={() => setRole("admin")}
                 >
                   <Shield size={18} className="mr-2" />
                   Admin
@@ -170,13 +183,22 @@ export const RegisterPage: React.FC = () => {
                 required
                 className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
               />
-              <label htmlFor="terms" className="ml-2 block text-sm text-gray-900">
-                I agree to the{' '}
-                <a href="#" className="font-medium text-primary-600 hover:text-primary-500">
+              <label
+                htmlFor="terms"
+                className="ml-2 block text-sm text-gray-900"
+              >
+                I agree to the{" "}
+                <a
+                  href="#"
+                  className="font-medium text-primary-600 hover:text-primary-500"
+                >
                   Terms of Service
-                </a>{' '}
-                and{' '}
-                <a href="#" className="font-medium text-primary-600 hover:text-primary-500">
+                </a>{" "}
+                and{" "}
+                <a
+                  href="#"
+                  className="font-medium text-primary-600 hover:text-primary-500"
+                >
                   Privacy Policy
                 </a>
               </label>
@@ -199,8 +221,11 @@ export const RegisterPage: React.FC = () => {
 
             <div className="mt-2 text-center">
               <p className="text-sm text-gray-600">
-                Already have an account?{' '}
-                <Link to="/login" className="font-medium text-primary-600 hover:text-primary-500">
+                Already have an account?{" "}
+                <Link
+                  to="/login"
+                  className="font-medium text-primary-600 hover:text-primary-500"
+                >
                   Sign in
                 </Link>
               </p>
