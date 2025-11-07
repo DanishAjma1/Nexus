@@ -1,127 +1,157 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { User, Mail, Lock, CircleDollarSign, Building2, AlertCircle } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
-import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
-import { UserRole } from '../../types';
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  User,
+  Mail,
+  Lock,
+  CircleDollarSign,
+  Building2,
+  AlertCircle,
+} from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
+import { Button } from "../../components/ui/Button";
+import { Input } from "../../components/ui/Input";
+import { UserRole } from "../../types";
 
 export const RegisterPage: React.FC = () => {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [role, setRole] = useState<UserRole>('entrepreneur');
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [role, setRole] = useState<UserRole>("entrepreneur");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const { register } = useAuth();
   const navigate = useNavigate();
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    
-    // Validate passwords match
+
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError("Passwords do not match");
       return;
     }
-    
+
     setIsLoading(true);
-    
     try {
       await register(name, email, password, role);
-      // Redirect based on user role
-      navigate(role === 'entrepreneur' ? '/dashboard/entrepreneur' : '/dashboard/investor');
+      navigate(
+        role === "entrepreneur"
+          ? "/dashboard/entrepreneur"
+          : "/dashboard/investor"
+      );
     } catch (err) {
       setError((err as Error).message);
       setIsLoading(false);
     }
   };
-  
-  return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="flex justify-center">
-          <div className="w-12 h-12 bg-primary-600 rounded-md flex items-center justify-center">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-white">
-              <path d="M20 7H4C2.89543 7 2 7.89543 2 9V19C2 20.1046 2.89543 21 4 21H20C21.1046 21 22 20.1046 22 19V9C22 7.89543 21.1046 7 20 7Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M16 21V5C16 3.89543 15.1046 3 14 3H10C8.89543 3 8 3.89543 8 5V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </div>
-        </div>
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          Create your account
-        </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
-          Join Business Nexus to connect with partners
-        </p>
-      </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-black via-neutral-900 to-black flex items-center justify-center px-4 py-12">
+      <div className="w-full max-w-md">
+        <div className="backdrop-blur-2xl bg-black/60 border border-yellow-500/20 shadow-[0_0_30px_rgba(255,215,0,0.1)] rounded-3xl p-8">
+          <div className="text-center mb-8">
+            <div className="mx-auto w-16 h-16 bg-gradient-to-br from-yellow-500 to-yellow-300 rounded-2xl flex items-center justify-center shadow-lg">
+              <svg
+                width="36"
+                height="36"
+                viewBox="0 0 24 24"
+                fill="none"
+                className="text-black"
+              >
+                <path
+                  d="M20 7H4C2.89543 7 2 7.89543 2 9V19C2 20.1046 2.89543 21 4 21H20C21.1046 21 22 20.1046 22 19V9C22 7.89543 21.1046 7 20 7Z"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M16 21V5C16 3.89543 15.1046 3 14 3H10C8.89543 3 8 3.89543 8 5V21"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+            <h2 className="mt-6 text-3xl font-extrabold text-yellow-400">
+              Create Your Account
+            </h2>
+            <p className="mt-2 text-gray-400 text-sm">
+              Join Business Nexus to connect with partners
+            </p>
+          </div>
+
           {error && (
-            <div className="mb-4 bg-error-50 border border-error-500 text-error-700 px-4 py-3 rounded-md flex items-start">
+            <div className="mb-4 bg-red-500/10 border border-red-500 text-red-400 px-4 py-3 rounded-md flex items-start">
               <AlertCircle size={18} className="mr-2 mt-0.5" />
               <span>{error}</span>
             </div>
           )}
-          
+
           <form className="space-y-6" onSubmit={handleSubmit}>
+            {/* Role Selection */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
                 I am registering as a
               </label>
               <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
-                  className={`py-3 px-4 border rounded-md flex items-center justify-center transition-colors ${
-                    role === 'entrepreneur'
-                      ? 'border-primary-500 bg-primary-50 text-primary-700'
-                      : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                  className={`py-3 px-4 rounded-xl flex items-center justify-center transition-all duration-200 ${
+                    role === "entrepreneur"
+                      ? "bg-gradient-to-r from-yellow-500 to-yellow-400 text-black font-semibold shadow-lg"
+                      : "bg-neutral-800 text-gray-300 hover:bg-neutral-700"
                   }`}
-                  onClick={() => setRole('entrepreneur')}
+                  onClick={() => setRole("entrepreneur")}
                 >
                   <Building2 size={18} className="mr-2" />
                   Entrepreneur
                 </button>
-                
+
                 <button
                   type="button"
-                  className={`py-3 px-4 border rounded-md flex items-center justify-center transition-colors ${
-                    role === 'investor'
-                      ? 'border-primary-500 bg-primary-50 text-primary-700'
-                      : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                  className={`py-3 px-4 rounded-xl flex items-center justify-center transition-all duration-200 ${
+                    role === "investor"
+                      ? "bg-gradient-to-r from-yellow-500 to-yellow-400 text-black font-semibold shadow-lg"
+                      : "bg-neutral-800 text-gray-300 hover:bg-neutral-700"
                   }`}
-                  onClick={() => setRole('investor')}
+                  onClick={() => setRole("investor")}
                 >
                   <CircleDollarSign size={18} className="mr-2" />
                   Investor
                 </button>
               </div>
             </div>
-            
+
+            {/* Name */}
             <Input
-              label="Full name"
+              label="Full Name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
               fullWidth
-              startAdornment={<User size={18} />}
+              startAdornment={<User size={18} className="text-yellow-400" />}
+              className="bg-neutral-800 text-gray-100 placeholder-gray-500 border border-neutral-700 focus:border-yellow-400 focus:ring-yellow-400"
             />
-            
+
+            {/* Email */}
             <Input
-              label="Email address"
+              label="Email Address"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
               fullWidth
-              startAdornment={<Mail size={18} />}
+              startAdornment={<Mail size={18} className="text-yellow-400" />}
+              className="bg-neutral-800 text-gray-100 placeholder-gray-500 border border-neutral-700 focus:border-yellow-400 focus:ring-yellow-400"
             />
-            
+
+            {/* Password */}
             <Input
               label="Password"
               type="password"
@@ -129,66 +159,77 @@ export const RegisterPage: React.FC = () => {
               onChange={(e) => setPassword(e.target.value)}
               required
               fullWidth
-              startAdornment={<Lock size={18} />}
+              startAdornment={<Lock size={18} className="text-yellow-400" />}
+              className="bg-neutral-800 text-gray-100 placeholder-gray-500 border border-neutral-700 focus:border-yellow-400 focus:ring-yellow-400"
             />
-            
+
+            {/* Confirm Password */}
             <Input
-              label="Confirm password"
+              label="Confirm Password"
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
               fullWidth
-              startAdornment={<Lock size={18} />}
+              startAdornment={<Lock size={18} className="text-yellow-400" />}
+              className="bg-neutral-800 text-gray-100 placeholder-gray-500 border border-neutral-700 focus:border-yellow-400 focus:ring-yellow-400"
             />
-            
-            <div className="flex items-center">
+
+            {/* Terms Checkbox */}
+            <div className="flex items-start text-sm text-gray-400">
               <input
                 id="terms"
                 name="terms"
                 type="checkbox"
                 required
-                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                className="h-4 w-4 text-yellow-400 focus:ring-yellow-500 border-neutral-700 rounded mt-1"
               />
-              <label htmlFor="terms" className="ml-2 block text-sm text-gray-900">
-                I agree to the{' '}
-                <a href="#" className="font-medium text-primary-600 hover:text-primary-500">
+              <label htmlFor="terms" className="ml-2">
+                I agree to the{" "}
+                <a
+                  href="#"
+                  className="text-yellow-400 hover:underline font-medium"
+                >
                   Terms of Service
-                </a>{' '}
-                and{' '}
-                <a href="#" className="font-medium text-primary-600 hover:text-primary-500">
+                </a>{" "}
+                and{" "}
+                <a
+                  href="#"
+                  className="text-yellow-400 hover:underline font-medium"
+                >
                   Privacy Policy
                 </a>
               </label>
             </div>
-            
+
+            {/* Submit */}
             <Button
               type="submit"
               fullWidth
               isLoading={isLoading}
+              className="bg-gradient-to-r from-yellow-500 to-yellow-400 hover:from-yellow-400 hover:to-yellow-300 text-black font-semibold py-3 rounded-xl shadow-lg transition-transform hover:scale-[1.02]"
             >
-              Create account
+              Create Account
             </Button>
           </form>
-          
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Or</span>
-              </div>
+
+          {/* Divider */}
+          <div className="mt-8 text-center text-sm text-gray-400">
+            <div className="flex items-center my-4">
+              <div className="flex-1 h-px bg-neutral-700"></div>
+              <span className="px-3 text-neutral-500">Or</span>
+              <div className="flex-1 h-px bg-neutral-700"></div>
             </div>
-            
-            <div className="mt-2 text-center">
-              <p className="text-sm text-gray-600">
-                Already have an account?{' '}
-                <Link to="/login" className="font-medium text-primary-600 hover:text-primary-500">
-                  Sign in
-                </Link>
-              </p>
-            </div>
+
+            <p>
+              Already have an account?{" "}
+              <Link
+                to="/login"
+                className="text-yellow-400 hover:underline font-semibold"
+              >
+                Sign in
+              </Link>
+            </p>
           </div>
         </div>
       </div>

@@ -15,7 +15,10 @@ import { CollaborationRequestCard } from "../../components/collaboration/Collabo
 import { InvestorCard } from "../../components/investor/InvestorCard";
 import { useAuth } from "../../context/AuthContext";
 import { CollaborationRequest } from "../../types";
-import { getRequestsForEntrepreneur, updateRequestStatus } from "../../data/collaborationRequests";
+import {
+  getRequestsForEntrepreneur,
+  updateRequestStatus,
+} from "../../data/collaborationRequests";
 import { getInvestorsFromDb } from "../../data/users";
 
 export const EntrepreneurDashboard: React.FC = () => {
@@ -24,7 +27,7 @@ export const EntrepreneurDashboard: React.FC = () => {
     CollaborationRequest[]
   >([]);
   const [recommendedInvestors, setRecommendedInvestors] = useState([]);
-  
+
   useEffect(() => {
     const fetchData = async () => {
       if (user) {
@@ -33,24 +36,22 @@ export const EntrepreneurDashboard: React.FC = () => {
       }
     };
     fetchData();
-  }, []);
-
-  if (!user) return null;
+  }, [user]);
 
   useEffect(() => {
     const fetchRequests = async () => {
-      const requests = await getRequestsForEntrepreneur(user?.userId);
-      setCollaborationRequests(Array.isArray(requests) ? requests : []);
+      if (user?.userId) {
+        const requests = await getRequestsForEntrepreneur(user.userId);
+        setCollaborationRequests(Array.isArray(requests) ? requests : []);
+      }
     };
     fetchRequests();
   }, [user?.userId]);
 
+  if (!user) return null;
+
   const pendingRequests =
-    collaborationRequests.length > 0 &&
-    Array.isArray(collaborationRequests) &&
-    collaborationRequests.length > 0
-      ? collaborationRequests.filter((req) => req.requestStatus === "pending")
-      : [];
+    collaborationRequests?.filter((req) => req.requestStatus === "pending") || [];
 
   const handleRequestStatusUpdate = (
     requestId: string,
@@ -58,113 +59,82 @@ export const EntrepreneurDashboard: React.FC = () => {
   ) => {
     setCollaborationRequests((prevRequests) =>
       prevRequests.map((req) =>
-        req._id === requestId ? { ...req, requestStatus:status } : req
+        req._id === requestId ? { ...req, requestStatus: status } : req
       )
     );
-    updateRequestStatus(requestId,status)
+    updateRequestStatus(requestId, status);
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex justify-between items-center">
+    <div className="space-y-6 animate-fade-in bg-black min-h-screen text-yellow-100 p-6">
+      {/* Header */}
+      <div className="flex justify-between items-center border-b border-yellow-700 pb-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold text-yellow-400">
             Welcome, {user.name}
           </h1>
-          <p className="text-gray-600">
-            Here's what's happening with your startup today
+          <p className="text-yellow-600">
+            Here’s what’s happening with your startup today
           </p>
         </div>
 
         <Link to="/investors">
-          <Button leftIcon={<PlusCircle size={18} />}>Find Investors</Button>
+          <Button className="bg-yellow-500 hover:bg-yellow-400 text-black font-semibold rounded-full px-5 py-2 flex items-center space-x-2 transition">
+            <PlusCircle size={18} />
+            <span>Find Investors</span>
+          </Button>
         </Link>
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-primary-50 border border-primary-100">
-          <CardBody>
-            <div className="flex items-center">
-              <div className="p-3 bg-primary-100 rounded-full mr-4">
-                <Bell size={20} className="text-primary-700" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+        {[
+          {
+            icon: Bell,
+            label: "Pending Requests",
+            value: pendingRequests.length,
+          },
+          {
+            icon: Users,
+            label: "Total Connections",
+            value: collaborationRequests.filter(
+              (req) => req.requestStatus === "accepted"
+            ).length,
+          },
+          { icon: Calendar, label: "Upcoming Meetings", value: 2 },
+          { icon: TrendingUp, label: "Profile Views", value: 24 },
+        ].map(({ icon: Icon, label, value }) => (
+          <Card
+            key={label}
+            className="bg-neutral-900 border border-yellow-700 shadow-lg hover:shadow-yellow-700/30 hover:scale-[1.02] transition"
+          >
+            <CardBody>
+              <div className="flex items-center">
+                <div className="p-3 bg-yellow-500 rounded-full mr-4">
+                  <Icon size={20} className="text-black" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-yellow-400">{label}</p>
+                  <h3 className="text-xl font-bold text-yellow-300">{value}</h3>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-medium text-primary-700">
-                  Pending Requests
-                </p>
-                <h3 className="text-xl font-semibold text-primary-900">
-                  {pendingRequests.length}
-                </h3>
-              </div>
-            </div>
-          </CardBody>
-        </Card>
-
-        <Card className="bg-secondary-50 border border-secondary-100">
-          <CardBody>
-            <div className="flex items-center">
-              <div className="p-3 bg-secondary-100 rounded-full mr-4">
-                <Users size={20} className="text-secondary-700" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-secondary-700">
-                  Total Connections
-                </p>
-                <h3 className="text-xl font-semibold text-secondary-900">
-                  {
-                    collaborationRequests.filter(
-                      (req) => req.requestStatus === "accepted"
-                    ).length
-                  }
-                </h3>
-              </div>
-            </div>
-          </CardBody>
-        </Card>
-
-        <Card className="bg-accent-50 border border-accent-100">
-          <CardBody>
-            <div className="flex items-center">
-              <div className="p-3 bg-accent-100 rounded-full mr-4">
-                <Calendar size={20} className="text-accent-700" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-accent-700">
-                  Upcoming Meetings
-                </p>
-                <h3 className="text-xl font-semibold text-accent-900">2</h3>
-              </div>
-            </div>
-          </CardBody>
-        </Card>
-
-        <Card className="bg-success-50 border border-success-100">
-          <CardBody>
-            <div className="flex items-center">
-              <div className="p-3 bg-green-100 rounded-full mr-4">
-                <TrendingUp size={20} className="text-success-700" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-success-700">
-                  Profile Views
-                </p>
-                <h3 className="text-xl font-semibold text-success-900">24</h3>
-              </div>
-            </div>
-          </CardBody>
-        </Card>
+            </CardBody>
+          </Card>
+        ))}
       </div>
 
+      {/* Main section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Collaboration requests */}
         <div className="lg:col-span-2 space-y-4">
-          <Card>
-            <CardHeader className="flex justify-between items-center">
-              <h2 className="text-lg font-medium text-gray-900">
+          <Card className="bg-neutral-900 border border-yellow-700 shadow-lg">
+            <CardHeader className="flex justify-between items-center border-b border-yellow-700 pb-2">
+              <h2 className="text-lg font-semibold text-yellow-400">
                 Collaboration Requests
               </h2>
-              <Badge variant="primary">{pendingRequests.length} pending</Badge>
+              <Badge className="bg-yellow-500 text-black font-semibold rounded-full px-3 py-1">
+                {pendingRequests.length} pending
+              </Badge>
             </CardHeader>
 
             <CardBody>
@@ -179,14 +149,16 @@ export const EntrepreneurDashboard: React.FC = () => {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
-                    <AlertCircle size={24} className="text-gray-500" />
+                <div className="text-center py-10">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-yellow-900 mb-4">
+                    <AlertCircle size={28} className="text-yellow-500" />
                   </div>
-                  <p className="text-gray-600">No collaboration requests yet</p>
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className="text-yellow-400 font-medium">
+                    No collaboration requests yet
+                  </p>
+                  <p className="text-sm text-yellow-600 mt-1">
                     When investors are interested in your startup, their
-                    requests will appear here
+                    requests will appear here.
                   </p>
                 </div>
               )}
@@ -196,14 +168,14 @@ export const EntrepreneurDashboard: React.FC = () => {
 
         {/* Recommended investors */}
         <div className="space-y-4">
-          <Card>
-            <CardHeader className="flex justify-between items-center">
-              <h2 className="text-lg font-medium text-gray-900">
+          <Card className="bg-neutral-900 border border-yellow-700 shadow-lg">
+            <CardHeader className="flex justify-between items-center border-b border-yellow-700 pb-2">
+              <h2 className="text-lg font-semibold text-yellow-400">
                 Recommended Investors
               </h2>
               <Link
                 to="/investors"
-                className="text-sm font-medium text-primary-600 hover:text-primary-500"
+                className="text-sm font-medium text-yellow-500 hover:text-yellow-400 transition"
               >
                 View all
               </Link>
@@ -217,7 +189,7 @@ export const EntrepreneurDashboard: React.FC = () => {
                   </div>
                 ))
               ) : (
-                <div>No investors found</div>
+                <div className="text-yellow-600">No investors found</div>
               )}
             </CardBody>
           </Card>
