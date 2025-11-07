@@ -51,14 +51,15 @@ export const RegisterPage: React.FC = () => {
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center">
           <div className="w-12 h-12 bg-primary-600 rounded-md flex items-center justify-center">
-            <Shield size={28} className="text-white" />
+                        <Shield size={28} className="text-white" />
+            
           </div>
         </div>
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
           Create your account
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
-          Join TrrustBridge AI to connect with partners
+          Join TrustBridge AI to connect with partners
         </p>
       </div>
 
