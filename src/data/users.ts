@@ -83,6 +83,22 @@ export const updateInvestorData = async (formData: any) => {
   }
 };
 
+export const sendMailToUser = async (message:string,sub:string,email: string) => {
+  try {
+    const res = await axios.post(
+      `${URL}/auth/send-mail`,
+      { email, message, sub },
+      {
+        withCredentials: true,
+      }
+    );
+
+    if (res.status === 200) toast.success("User data updated successfully.");
+  } catch (err) {
+    console.log(err);
+  }
+};
+
 export const getUserFromDb = async (id) => {
   try {
     const res = await axios.get(`${URL}/user/get-user-by-id/${id}`);
