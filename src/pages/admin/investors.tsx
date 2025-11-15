@@ -13,6 +13,12 @@ export const Investors: React.FC = () => {
   const [investors, setInvestors] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Dummy pending entrepreneurs (NO API TOUCH)
+  const pendingEntrepreneurs = [
+    { _id: "1", name: "John Doe", business: "TechWave Solutions" },
+    { _id: "2", name: "Sarah Khan", business: "Green Foods Pvt Ltd" },
+  ];
+
   // Fetch investors
   const fetchInvestors = async () => {
     try {
@@ -20,7 +26,6 @@ export const Investors: React.FC = () => {
       const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/admin/users`);
       const data = await res.json();
 
-      // Filter only investor users
       const filtered = data.filter((u: User) => u.role === "investor");
       setInvestors(filtered);
     } catch (error) {
@@ -61,7 +66,9 @@ export const Investors: React.FC = () => {
   return (
     <div className="p-4">
       <h1 className="text-xl font-bold mb-4">Investor Management</h1>
-      <div className="overflow-x-auto bg-white rounded-lg shadow border">
+
+      {/* EXISTING TABLE (UNCHANGED) */}
+      <div className="overflow-x-auto bg-white rounded-lg shadow border mb-10">
         <table className="min-w-full text-sm text-left text-gray-700">
           <thead className="bg-gray-100 text-gray-800 uppercase text-xs font-semibold">
             <tr>
@@ -83,6 +90,34 @@ export const Investors: React.FC = () => {
                     className="text-red-600 hover:text-red-800 font-medium"
                   >
                     Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* NEW DUMMY TABLE */}
+      <h2 className="text-lg font-semibold mb-3">Pending Entrepreneurs</h2>
+
+      <div className="overflow-x-auto bg-white rounded-lg shadow border">
+        <table className="min-w-full text-sm text-left text-gray-700">
+          <thead className="bg-gray-100 text-gray-800 uppercase text-xs font-semibold">
+            <tr>
+              <th className="px-4 py-3">Name</th>
+              <th className="px-4 py-3">Business Name</th>
+              <th className="px-4 py-3 text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {pendingEntrepreneurs.map((user) => (
+              <tr key={user._id} className="border-t hover:bg-gray-50">
+                <td className="px-4 py-2">{user.name}</td>
+                <td className="px-4 py-2">{user.business}</td>
+                <td className="px-4 py-2 text-center">
+                  <button className="text-green-600 hover:text-green-800 font-medium">
+                    Accept
                   </button>
                 </td>
               </tr>
