@@ -65,7 +65,7 @@ export const Sidebar: React.FC = () => {
     
     { to: '/admin/campaigns', icon: <Rocket size={20} />, text: 'Active Campaigns' },
     
-    { to: '/admin/fraud/accounts', icon: <AlertTriangle size={20} />, text: 'Flagged Accounts' },
+    { to: '/admin/flaggedAccounts', icon: <AlertTriangle size={20} />, text: 'Flagged Accounts' },
   ];
 
   const commonItems = [
