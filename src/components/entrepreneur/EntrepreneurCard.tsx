@@ -1,92 +1,123 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { MessageCircle, ExternalLink } from 'lucide-react';
-import { Entrepreneur } from '../../types';
-import { Card, CardBody, CardFooter } from '../ui/Card';
-import { Avatar } from '../ui/Avatar';
-import { Badge } from '../ui/Badge';
-import { Button } from '../ui/Button';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import { MessageCircle, ExternalLink, DollarSign } from "lucide-react";
+import { Entrepreneur } from "../../types";
+import { Card, CardBody, CardFooter } from "../ui/Card";
+import { Avatar } from "../ui/Avatar";
+import { Badge } from "../ui/Badge";
+import { Button } from "../ui/Button";
+import { AmountMeasureWithTags } from "../../data/users";
 
 interface EntrepreneurCardProps {
   entrepreneur: Entrepreneur;
   showActions?: boolean;
+  isProfileSet: boolean;
 }
 
 export const EntrepreneurCard: React.FC<EntrepreneurCardProps> = ({
   entrepreneur,
-  showActions = true
+  showActions = true,
+  isProfileSet = true,
 }) => {
   const navigate = useNavigate();
-  
+
   const handleViewProfile = () => {
-    navigate(`/profile/entrepreneur/${entrepreneur.userId ||entrepreneur._id}`);
+    navigate(`/profile/entrepreneur/${entrepreneur.userId}`);
   };
-  
+
   const handleMessage = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click
-    navigate(`/chat/${entrepreneur.userId ||entrepreneur._id}`);
+    navigate(`/chat/${entrepreneur.userId}`);
   };
-  
+
   return (
-    <Card 
-      hoverable 
-      className="transition-all duration-300 h-full"
-      onClick={handleViewProfile}
+    <Card
+      hoverable={isProfileSet}
+      className={`transition-all duration-300 h-full ${
+        isProfileSet
+          ? "cursor-pointer"
+          : "cursor-not-allowed pointer-events-none"
+      }`}
+      onClick={isProfileSet ? handleViewProfile : undefined}
+      setBanner={!isProfileSet}
     >
-      <CardBody className="flex flex-col">
+      <CardBody
+        className={`flex flex-col ${!isProfileSet ? "bg-gray-200" : ""}`}
+      >
         <div className="flex items-start">
           <Avatar
             src={entrepreneur.avatarUrl}
             alt={entrepreneur.name}
             size="lg"
-            status={entrepreneur.isOnline ? 'online' : 'offline'}
+            status={entrepreneur.isOnline ? "online" : "offline"}
             className="mr-4"
           />
-          
+
           <div className="flex-1">
-            <h3 className="text-lg font-semibold text-gray-900 mb-1">{entrepreneur.name}</h3>
-            <p className="text-sm text-gray-500 mb-2">{entrepreneur.startupName}</p>
-            
+            <h3 className="text-lg font-semibold text-gray-900 mb-1">
+              {entrepreneur.name}
+            </h3>
+            <p className="text-sm text-gray-500 mb-2">
+              {entrepreneur?.startupName || "--"}
+            </p>
+
             <div className="flex flex-wrap gap-2 mb-3">
-              <Badge variant="primary" size="sm">{entrepreneur.industry}</Badge>
-              <Badge variant="gray" size="sm">{entrepreneur.location}</Badge>
-              <Badge variant="accent" size="sm">Founded {entrepreneur.foundedYear}</Badge>
+              <Badge variant="primary" size="sm">
+                {entrepreneur.industry || "--"}
+              </Badge>
+              <Badge variant="gray" size="sm">
+                {entrepreneur.teamSize || "--"}
+              </Badge>
+              <Badge variant="accent" size="sm">
+                Founded in {entrepreneur.foundedYear || "--"}
+              </Badge>
             </div>
           </div>
         </div>
-        
+
         <div className="mt-3">
-          <h4 className="text-sm font-medium text-gray-900 mb-1">Pitch Summary</h4>
-          <p className="text-sm text-gray-600 line-clamp-3">{entrepreneur.pitchSummary}</p>
+          <h4 className="text-sm font-medium text-gray-900 mb-1">
+            Pitch Summary
+          </h4>
+          <p className="text-sm text-gray-600 line-clamp-3">
+            {entrepreneur.pitchSummary || "--"}
+          </p>
         </div>
-        
+
         <div className="mt-3 flex justify-between items-center">
           <div>
             <span className="text-xs text-gray-500">Funding Need</span>
-            <p className="text-sm font-medium text-gray-900">{entrepreneur.fundingNeeded}</p>
+            <p className="text-sm font-medium text-gray-900 flex items-center">
+              <DollarSign className="w-4 text-red-600" />
+              {AmountMeasureWithTags(entrepreneur?.fundingNeeded || 0)}
+            </p>
           </div>
-          
+
           <div>
             <span className="text-xs text-gray-500">Team Size</span>
-            <p className="text-sm font-medium text-gray-900">{entrepreneur.teamSize} people</p>
+            <p className="text-sm font-medium text-gray-900">
+              {entrepreneur.teamSize || "0"} people
+            </p>
           </div>
         </div>
       </CardBody>
-      
+
       {showActions && (
         <CardFooter className="border-t border-gray-100 bg-gray-50 flex justify-between">
           <Button
             variant="outline"
             size="sm"
+            disabled={!isProfileSet}
             leftIcon={<MessageCircle size={16} />}
             onClick={handleMessage}
           >
             Message
           </Button>
-          
+
           <Button
             variant="primary"
             size="sm"
+            disabled={!isProfileSet}
             rightIcon={<ExternalLink size={16} />}
             onClick={handleViewProfile}
           >

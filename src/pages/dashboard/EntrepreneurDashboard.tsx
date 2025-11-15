@@ -20,6 +20,7 @@ import { getInvestorsFromDb } from "../../data/users";
 
 export const EntrepreneurDashboard: React.FC = () => {
   const { user } = useAuth();
+  console.log(user)
   const [collaborationRequests, setCollaborationRequests] = useState<
     CollaborationRequest[]
   >([]);

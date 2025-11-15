@@ -1,5 +1,6 @@
 import axios from "axios";
 const URL = import.meta.env.VITE_BACKEND_URL;
+
 // Helper function to get messages between two users
 export const getMessagesBetweenUsers = async (
   user1Id: string,
@@ -15,6 +16,7 @@ export const getMessagesBetweenUsers = async (
   return messages;
 };
 
+//   save Messages btw users
 export const saveMessagesBetweenUsers = async (newMessage: Any) => {
   try {
     const res = await axios.post(`${URL}/message/save-message`, newMessage, {
@@ -26,9 +28,10 @@ export const saveMessagesBetweenUsers = async (newMessage: Any) => {
     console.log(err);
   }
 };
+
 // Helper function to get conversations for a user
 export const getConversationsForUser = async (
-  currentUserId: string | undefined,
+  currentUserId: string | undefined
 ) => {
   // Get unique conversation partners
   const res = await axios.get(
@@ -41,20 +44,8 @@ export const getConversationsForUser = async (
   return conversation;
 };
 
-export const addConversationsForUser = async (con: object): any[] => {
-  // Get unique conversation partners
-  const res = await axios.post(
-    `${URL}/conversation/add-conversations-for-user`,
-    con,
-    {
-      withCredentials: true,
-    }
-  );
-  const { conversationForSender } = res.data;
-  return conversationForSender;
-};
-
-export const updateConversationsForUser = async (con: object): any[] => {
+//  Update conversations dynamically
+export const updateConversationsForUser = async (con: object): any => {
   // Get unique conversation partners
   const res = await axios.post(
     `${URL}/conversation/update-conversations-for-user`,

@@ -32,9 +32,9 @@ export const getRequestsFromInvestor = async (
   return requests;
 };
 export const checkRequestsFromInvestor = async (
-  inves_id: string,
-  enter_id: string
-): Promise<boolean> => {
+  inves_id: string | undefined,
+  enter_id: string | undefined
+): Promise<string> => {
   try {
     const body = { inves_id, enter_id };
     const res = await axios.post(
@@ -44,10 +44,11 @@ export const checkRequestsFromInvestor = async (
     );
 
     const { request } = res.data;
-    return !!request; // true if found, false otherwise
+    console.log(request);
+    return request.requestStatus; // true if found, false otherwise
   } catch (error) {
     console.error("checkRequestsFromInvestor error:", error);
-    return false;
+    return "pending";
   }
 };
 
@@ -61,7 +62,7 @@ export const updateRequestStatus = async (
     { requestId, newStatus },
     { withCredentials: true }
   );
-  const {request} = res.data;
+  const { request } = res.data;
   toast.success("request status updated");
   return request;
 };

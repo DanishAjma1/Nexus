@@ -8,7 +8,6 @@ type SocketContextType = {
 };
 
 const SocketContext = createContext<SocketContextType>({ socket: null });
-export const useSocket = () => useContext(SocketContext);
 
 export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -47,3 +46,5 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
     </SocketContext.Provider>
   );
 };
+export const useSocket = () => useContext(SocketContext);
+
