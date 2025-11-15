@@ -50,7 +50,7 @@ import { HomePage } from "./pages/home/HomePage";
 import { LoginWithOAuthPage } from "./pages/auth/LoginWithOAuthPage";
 import { UserDetails } from "./components/user/UserDetails";
 import { Supporters } from './pages/admin/supporters';
-import { FlaggedAccounts } from "./pages/admin/FlaggedAccounts";
+import { FlaggedAccounts } from "./pages/admin/flaggedAccounts";
 
 function App() {
   return (
