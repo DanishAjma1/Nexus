@@ -17,6 +17,7 @@ import { RegisterPage } from "./pages/auth/RegisterPage";
 // Dashboard Pages
 import { EntrepreneurDashboard } from "./pages/dashboard/EntrepreneurDashboard";
 import { InvestorDashboard } from "./pages/dashboard/InvestorDashboard";
+import { AdminDashboard } from "./pages/dashboard/AdminDashboard";
 
 // Profile Pages
 import { EntrepreneurProfile } from "./pages/profile/EntrepreneurProfile";
@@ -36,9 +37,17 @@ import { DealsPage } from "./pages/deals/DealsPage";
 import { ChatPage } from "./pages/chat/ChatPage";
 import { ForgotPasswordPage } from "./pages/auth/ForgotPasswordPage";
 import { ResetPasswordPage } from "./pages/auth/ResetPasswordPage";
-import { VideoCall } from "./pages/webRTC/Videocall";
-import { AudioCall } from "./pages/webRTC/AudioCall";
+//import { VideoCall } from "./components/webRTC/Videocall";
+//import { AudioCall } from "./components/webRTC/AudioCall";
 import { Toaster } from "react-hot-toast";
+import { UserManagement } from "./pages/admin/UserManagement";
+import { Activities } from "./pages/admin/activities";
+import { Entrepreneurj } from "./pages/admin/entrepreneur";
+import { Investors } from "./pages/admin/investors";
+import { Campaigns } from "./pages/admin/campaigns";
+import { HomePage } from "./pages/home/HomePage";
+import { LoginWithOAuthPage } from "./pages/auth/LoginWithOAuthPage";
+import { UserDetails } from "./components/user/UserDetails";
 
 function App() {
   return (
@@ -49,13 +58,24 @@ function App() {
             {/* Authentication Routes */}
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/fill-details" element={<UserDetails />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/login-with-oauth" element={<LoginWithOAuthPage />} />
 
             {/* Dashboard Routes */}
             <Route path="/dashboard" element={<DashboardLayout />}>
               <Route path="entrepreneur" element={<EntrepreneurDashboard />} />
               <Route path="investor" element={<InvestorDashboard />} />
+              <Route path="admin" element={<AdminDashboard />} />
+            </Route>
+
+            <Route path="/admin" element={<DashboardLayout />}>
+              <Route path="users" element={<UserManagement />} />
+              <Route path="activities" element={<Activities />} />
+              <Route path="entrepreneur" element={<Entrepreneurj />} />
+              <Route path="investors" element={<Investors />} />
+              <Route path="campaigns" element={<Campaigns />} />
             </Route>
 
             {/* Profile Routes */}
@@ -104,13 +124,11 @@ function App() {
 
             {/* Chat Routes */}
             <Route path="/chat" element={<DashboardLayout />}>
-              <Route path=":userId/audio-call/:roomId" element={<AudioCall />} />
-              <Route path=":userId/video-call/:roomId" element={<VideoCall />} />
               <Route path=":userId" element={<ChatPage />} />
             </Route>
 
             {/* Redirect root to login */}
-            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="/" element={<HomePage />} />
 
             {/* Catch all other routes and redirect to login */}
             <Route

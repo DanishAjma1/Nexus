@@ -19,12 +19,12 @@ export const InvestorCard: React.FC<InvestorCardProps> = ({
   const navigate = useNavigate();
 
   const handleViewProfile = () => {
-    navigate(`/profile/investor/${investor.userId || investor._id}`);
+    navigate(`/profile/investor/${investor.userId}`);
   };
 
   const handleMessage = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click
-    navigate(`/chat/${investor.userId || investor._id}`);
+    navigate(`/chat/${investor.userId}`);
   };
 
   return (
@@ -48,15 +48,16 @@ export const InvestorCard: React.FC<InvestorCardProps> = ({
               {investor.name}
             </h3>
             <p className="text-sm text-gray-500 mb-2">
-              Investor • {investor.totalInvestments} investments
+              Investor • {investor.totalInvestments || "0"} investments
             </p>
 
             <div className="flex flex-wrap gap-2 mb-3">
-              {investor.investmentStage && investor.investmentStage.map((stage, index) => (
-                <Badge key={index} variant="secondary" size="sm">
-                  {stage}
-                </Badge>
-              ))}
+              {investor.investmentStage &&
+                investor.investmentStage.map((stage, index) => (
+                  <Badge key={index} variant="secondary" size="sm">
+                    {stage}
+                  </Badge>
+                ))}
             </div>
           </div>
         </div>
@@ -66,11 +67,12 @@ export const InvestorCard: React.FC<InvestorCardProps> = ({
             Investment Interests
           </h4>
           <div className="flex flex-wrap gap-2">
-            {investor.investmentInterests && investor.investmentInterests.map((interest, index) => (
-              <Badge key={index} variant="primary" size="sm">
-                {interest}
-              </Badge>
-            ))}
+            {investor.investmentInterests &&
+              investor.investmentInterests.map((interest, index) => (
+                <Badge key={index} variant="primary" size="sm">
+                  {interest}
+                </Badge>
+              ))}
           </div>
         </div>
 
