@@ -56,7 +56,9 @@ export const Entrepreneurj: React.FC = () => {
 
   return (
     <div className="p-4">
+      {/* ✔️ Entrepreneurs Table */}
       <h1 className="text-xl font-bold mb-4">Entrepreneur Management</h1>
+
       <div className="overflow-x-auto bg-white rounded-lg shadow border">
         <table className="min-w-full text-sm text-left text-gray-700">
           <thead className="bg-gray-100 text-gray-800 uppercase text-xs font-semibold">
@@ -91,6 +93,57 @@ export const Entrepreneurj: React.FC = () => {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* ✔️ Pending Entrepreneurs Section */}
+      <div className="mt-10">
+        <h2 className="text-xl font-bold text-gray-900 mb-4">
+          Pending Entrepreneur Approvals
+        </h2>
+
+        <div className="overflow-hidden rounded-lg border border-gray-200">
+          <table className="min-w-full bg-white">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Name</th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Business Name</th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-700">Action</th>
+              </tr>
+            </thead>
+
+            <tbody className="divide-y divide-gray-200">
+              <tr>
+                <td className="px-6 py-4 text-sm text-gray-900">John Carter</td>
+                <td className="px-6 py-4 text-sm text-gray-700">Carter Tech</td>
+                <td className="px-6 py-4">
+                  <button className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700">
+                    Accept
+                  </button>
+                </td>
+              </tr>
+
+              <tr>
+                <td className="px-6 py-4 text-sm text-gray-900">Sarah Khan</td>
+                <td className="px-6 py-4 text-sm text-gray-700">SK Enterprises</td>
+                <td className="px-6 py-4">
+                  <button className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700">
+                    Accept
+                  </button>
+                </td>
+              </tr>
+
+              <tr>
+                <td className="px-6 py-4 text-sm text-gray-900">Alex Reed</td>
+                <td className="px-6 py-4 text-sm text-gray-700">Reed Innovations</td>
+                <td className="px-6 py-4">
+                  <button className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700">
+                    Accept
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

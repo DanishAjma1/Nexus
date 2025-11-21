@@ -114,7 +114,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     email: string,
     password: string,
     role: UserRole
-  ): Promise<void> => {
+  ): Promise<string | null> => {
     setIsLoading(true);
 
     try {
@@ -136,10 +136,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         const { token, user } = res.data;
         localStorage.setItem("token", token);
         setUser(user);
+        return user.userId;
       }
+      else
+        return null;
     } catch (error) {
       toast.error((error as Error).message);
-      throw error;
+      return null;
     } finally {
       setIsLoading(false);
     }

@@ -45,8 +45,12 @@ import { Activities } from "./pages/admin/activities";
 import { Entrepreneurj } from "./pages/admin/entrepreneur";
 import { Investors } from "./pages/admin/investors";
 import { Campaigns } from "./pages/admin/campaigns";
+
 import { HomePage } from "./pages/home/HomePage";
 import { LoginWithOAuthPage } from "./pages/auth/LoginWithOAuthPage";
+import { UserDetails } from "./components/user/UserDetails";
+import { Supporters } from './pages/admin/supporters';
+import { FlaggedAccounts } from "./pages/admin/flaggedAccounts";
 
 function App() {
   return (
@@ -57,6 +61,7 @@ function App() {
             {/* Authentication Routes */}
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/fill-details" element={<UserDetails />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/login-with-oauth" element={<LoginWithOAuthPage />} />
@@ -74,6 +79,8 @@ function App() {
               <Route path="entrepreneur" element={<Entrepreneurj />} />
               <Route path="investors" element={<Investors />} />
               <Route path="campaigns" element={<Campaigns />} />
+              <Route path="supporters" element={<Supporters />} />
+              <Route path="flaggedAccounts" element={<FlaggedAccounts />} />
             </Route>
 
             {/* Profile Routes */}
@@ -126,7 +133,7 @@ function App() {
             </Route>
 
             {/* Redirect root to login */}
-            <Route path="/home" element={<HomePage />} />
+            <Route path="/" element={<HomePage />} />
 
             {/* Catch all other routes and redirect to login */}
             <Route

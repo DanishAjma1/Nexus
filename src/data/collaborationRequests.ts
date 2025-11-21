@@ -34,7 +34,7 @@ export const getRequestsFromInvestor = async (
 export const checkRequestsFromInvestor = async (
   inves_id: string | undefined,
   enter_id: string | undefined
-): Promise<boolean> => {
+): Promise<string> => {
   try {
     const body = { inves_id, enter_id };
     const res = await axios.post(
@@ -44,10 +44,11 @@ export const checkRequestsFromInvestor = async (
     );
 
     const { request } = res.data;
-    return !!request; // true if found, false otherwise
+    console.log(request);
+    return request.requestStatus; // true if found, false otherwise
   } catch (error) {
     console.error("checkRequestsFromInvestor error:", error);
-    return false;
+    return "pending";
   }
 };
 

@@ -1,20 +1,35 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { Investor } from "../../types";
-import { getInvestorById, updateInvestorData } from "../../data/users";
+import { Investor, UserRole } from "../../types";
+import {
+  getInvestorById,
+  sendMailToUser,
+  updateInvestorData,
+} from "../../data/users";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { Eraser } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Card, CardHeader } from "../ui/Card";
+
+type User = {
+  name: string;
+  email: string;
+  password: string;
+  role: UserRole;
+};
 
 export const InvestorSettings: React.FC = () => {
-  const { user } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const checkIfSettingPage = location.pathname === "/settings" ? true : false;
+  const { user, register } = useAuth();
 
   const [investor, setInvestor] = useState<Investor>();
   const initialInvestorData = useMemo(
     () => ({
-      userId: investor?.userId,
+      userId: investor?.userId || user?.userId,
       investmentInterests: investor?.investmentInterests || [],
-      investmentStage: investor?.investmentStage || [],
       minimumInvestment: investor?.minimumInvestment,
       totalInvestments: investor?.totalInvestments,
       maximumInvestment: investor?.maximumInvestment,
@@ -25,15 +40,17 @@ export const InvestorSettings: React.FC = () => {
       interest: "",
       criteria: "",
     }),
-    [investor]
+    [investor, user]
   );
 
   const [investorFormData, setInvestorFormData] = useState(initialInvestorData);
   // Fetch investor data
   useEffect(() => {
     const fetchInvestors = async () => {
-      const investor = await getInvestorById(user?.userId);
-      setInvestor(investor);
+      if (user?.userId) {
+        const investor = await getInvestorById(user?.userId);
+        setInvestor(investor);
+      }
     };
     fetchInvestors();
   }, [user]);
@@ -42,59 +59,77 @@ export const InvestorSettings: React.FC = () => {
     setInvestorFormData(initialInvestorData);
   }, [initialInvestorData]);
 
-  const handleInvestorChange = (e) => {
-    const { checked, name, value } = e.target;
-    if (name === "investmentStage") {
-      setInvestorFormData((prev) => {
-        const current = prev.investmentStage;
-
-        if (checked) {
-          return { ...prev, investmentStage: [...current, value] };
-        } else {
-          return {
-            ...prev,
-            investmentStage: current.filter((item) => item !== value),
-          };
-        }
-      });
-    } else {
-      setInvestorFormData({ ...investorFormData, [name]: value });
-    }
+  const handleInvestorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setInvestorFormData({ ...investorFormData, [name]: value });
   };
-  const handleInvestorSubmit = async (e) => {
+  const handleInvestorSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (
-      investorFormData.maximumInvestment === "" ||
-      investorFormData.minimumInvestment === "" ||
-      investorFormData.investmentInterests?.length === 0 ||
-      investorFormData.investmentStage?.length === 0
-    ) {
-      alert("Please input the rquired data...");
-      return;
+    try {
+      if (
+        investorFormData.maximumInvestment === "" ||
+        investorFormData.minimumInvestment === "" ||
+        investorFormData.investmentInterests?.length === 0
+      ) {
+        alert("Please input the rquired data...");
+        return;
+      }
+
+      if (!checkIfSettingPage) {
+        const userInfoString = localStorage.getItem("userInfo");
+        if (!userInfoString) {
+          return;
+        }
+        try {
+          const parsed = JSON.parse(userInfoString) as User;
+          const { name, email, password, role } = parsed;
+          const userId = await register(name, email, password, role);
+          if (userId) {
+            await updateInvestorData({ ...investorFormData, userId: userId });
+
+            const message = `
+            <p>Hello,</p>
+            <p>Your account is currently under review by our administrators. You will be notified about your account activation within 24 hours.</p>
+            <p>If you have any questions, reply to this email or contact support at <a href="mailto:trustbridgeai@gmail.com">trustbridgeai@gmail</a>.</p>
+            <p>Thank you for your patience.</p>
+            <p>Regards<br/>TrustBridgeAi Support Team</p>
+            `;
+            const sub = "Under Review Account Activation ";
+            sendMailToUser(message, sub, email);
+
+            navigate("/", { replace: true });
+          }
+        } catch (e) {
+          console.error("Failed to parse userInfo from localStorage", e);
+        } finally {
+          localStorage.removeItem("userInfo");
+        }
+      } else {
+        updateInvestorData(investorFormData);
+        const {
+          investmentInterests,
+          minimumInvestment,
+          maximumInvestment,
+          investmentCriteria,
+          successfullExits,
+          minTimline,
+          maxTimline,
+        } = investorFormData;
+        setInvestor({
+          ...investor,
+          investmentInterests,
+          minimumInvestment,
+          maximumInvestment,
+          investmentCriteria,
+          successfullExits,
+          minTimline,
+          maxTimline,
+        } as Investor);
+        setInvestorFormData(initialInvestorData);
+      }
+    } catch (error) {
+      console.error(error);
     }
-    updateInvestorData(investorFormData);
-    const {
-      investmentInterests,
-      investmentStage,
-      minimumInvestment,
-      maximumInvestment,
-      investmentCriteria,
-      successfullExits,
-      minTimline,
-      maxTimline,
-    } = investorFormData;
-    setInvestor({
-      ...investor,
-      investmentInterests,
-      investmentStage,
-      minimumInvestment,
-      maximumInvestment,
-      investmentCriteria,
-      successfullExits,
-      minTimline,
-      maxTimline,
-    } as Investor);
-    setInvestorFormData(initialInvestorData);
   };
 
   const handleInterests = (e) => {
@@ -123,13 +158,15 @@ export const InvestorSettings: React.FC = () => {
     });
   };
   return (
-    <div>
-      <form
-        onSubmit={handleInvestorSubmit}
-        className="gap-5 flex flex-col text-sm justify-center"
-      >
-        <div className="flex flex-row">
-        <div className="flex w-1/2 gap-2 flex-col border-r-2 pr-4">
+    <Card>
+      <div className="p-4">
+        <CardHeader className="font-medium">
+          Fill the Details as an Investor...
+        </CardHeader>
+        <form
+          onSubmit={handleInvestorSubmit}
+          className="gap-5 flex flex-col text-sm justify-center mt-5"
+        >
           <div className="flex gap-2 w-full">
             <Input
               label="Investment Interests..?"
@@ -176,48 +213,6 @@ export const InvestorSettings: React.FC = () => {
               </div>
             ))}
           </div>
-
-          <label className="font-medium text-sm">Investment Stage</label>
-          <div className="flex gap-3">
-            <input
-              type="checkbox"
-              name="investmentStage"
-              value="Seed"
-              checked={investorFormData.investmentStage?.includes("Seed")}
-              onChange={handleInvestorChange}
-            />
-            <label className="text-sm border-r-2 pr-2">Seed</label>
-            <input
-              type="checkbox"
-              name="investmentStage"
-              value="Pre seed"
-              checked={investorFormData.investmentStage?.includes("Pre seed")}
-              onChange={handleInvestorChange}
-            />
-            <label className="text-sm border-r-2 pr-2">Seed</label>
-            <input
-              type="checkbox"
-              name="investmentStage"
-              value="Series A"
-              checked={investorFormData.investmentStage?.includes("Series A")}
-              onChange={handleInvestorChange}
-            />
-            <label className="text-sm border-r-2 pr-2">Series A</label>
-          </div>
-          <Input
-            label="Minimum investment..?"
-            name="minimumInvestment"
-            value={investorFormData.minimumInvestment}
-            onChange={handleInvestorChange}
-          />
-          <Input
-            label="Maximum investment..?"
-            name="maximumInvestment"
-            value={investorFormData.maximumInvestment}
-            onChange={handleInvestorChange}
-          />
-        </div>
-        <div className="flex gap-2 w-1/2 flex-col pl-4">
           <div className="flex gap-2 w-full">
             <Input
               label="Investment Criteria..?"
@@ -264,33 +259,53 @@ export const InvestorSettings: React.FC = () => {
               </div>
             ))}
           </div>
-          <Input
-            type="number"
-            label="Successfull Exits..?"
-            name="successfullExits"
-            value={investorFormData.successfullExits}
-            onChange={handleInvestorChange}
-          />
-          <Input
-            type="number"
-            label="Minimum time to invest..?"
-            name="minTimline"
-            value={investorFormData.minTimline}
-            onChange={handleInvestorChange}
-          />
-          <Input
-            type="number"
-            label="Maximum time to invest..?"
-            name="maxTimline"
-            value={investorFormData.maxTimline}
-            onChange={handleInvestorChange}
-          />
-        </div>
-        </div>
-        <div className="flex w-full justify-end pt-6 mt-6 border-t-2">
-          <Button type="submit">Save Changes</Button>
-        </div>
-      </form>
-    </div>
+
+          <div className="flex flex-row">
+            <div className="flex w-1/2 gap-5 flex-col pr-4">
+              <Input
+                type="number"
+                label="Minimum investment..?"
+                name="minimumInvestment"
+                value={investorFormData.minimumInvestment}
+                onChange={handleInvestorChange}
+              />
+              <Input
+                type="number"
+                label="Maximum investment..?"
+                name="maximumInvestment"
+                value={investorFormData.maximumInvestment}
+                onChange={handleInvestorChange}
+              />
+              <Input
+                type="number"
+                label="Successfull Exits..?"
+                name="successfullExits"
+                value={investorFormData.successfullExits}
+                onChange={handleInvestorChange}
+              />
+            </div>
+            <div className="flex gap-5 w-1/2 flex-col pl-4">
+              <Input
+                type="number"
+                label="Minimum time to invest..?"
+                name="minTimline"
+                value={investorFormData.minTimline}
+                onChange={handleInvestorChange}
+              />
+              <Input
+                type="number"
+                label="Maximum time to invest..?"
+                name="maxTimline"
+                value={investorFormData.maxTimline}
+                onChange={handleInvestorChange}
+              />
+            </div>
+          </div>
+          <div className="flex w-full justify-end pt-6 mt-6 border-t-2">
+            <Button type="submit">Save Changes</Button>
+          </div>
+        </form>
+      </div>
+    </Card>
   );
 };
