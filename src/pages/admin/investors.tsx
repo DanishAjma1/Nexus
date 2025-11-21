@@ -2,15 +2,17 @@
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
-interface User {
+interface Investor {
   _id: string;
   name: string;
   email: string;
   role: string;
+  totalInvestments?: number;
+  investmentInterests?: string[];
 }
 
 export const Investors: React.FC = () => {
-  const [investors, setInvestors] = useState<User[]>([]);
+  const [investors, setInvestors] = useState<Investor[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Dummy pending entrepreneurs (NO API TOUCH)
@@ -36,7 +38,7 @@ export const Investors: React.FC = () => {
     }
   };
 
-  // Delete investor
+  
   const deleteInvestor = async (id: string) => {
     if (!confirm("Are you sure you want to delete this investor?")) return;
 
@@ -74,19 +76,27 @@ export const Investors: React.FC = () => {
             <tr>
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Email</th>
-              <th className="px-4 py-3">Role</th>
+              <th className="px-4 py-3">Total Investments</th>
+              <th className="px-4 py-3">Investment Interests</th>
               <th className="px-4 py-3 text-center">Action</th>
             </tr>
           </thead>
           <tbody>
-            {investors.map((user) => (
-              <tr key={user._id} className="border-t hover:bg-gray-50">
-                <td className="px-4 py-2">{user.name}</td>
-                <td className="px-4 py-2">{user.email}</td>
-                <td className="px-4 py-2 capitalize">{user.role}</td>
+            {investors.map((inv) => (
+              <tr key={inv._id} className="border-t hover:bg-gray-50">
+                <td className="px-4 py-2">{inv.name}</td>
+                <td className="px-4 py-2">{inv.email}</td>
+                <td className="px-4 py-2">
+                  {inv.totalInvestments ?? 0}
+                </td>
+                <td className="px-4 py-2">
+                  {inv.investmentInterests && inv.investmentInterests.length > 0
+                    ? inv.investmentInterests.join(", ")
+                    : "—"}
+                </td>
                 <td className="px-4 py-2 text-center">
                   <button
-                    onClick={() => deleteInvestor(user._id)}
+                    onClick={() => deleteInvestor(inv._id)}
                     className="text-red-600 hover:text-red-800 font-medium"
                   >
                     Delete
