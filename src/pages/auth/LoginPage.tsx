@@ -4,8 +4,6 @@ import {
   User,
   CircleDollarSign,
   Building2,
-  LogIn,
-  AlertCircle,
   Globe,
   Linkedin,
   Shield,

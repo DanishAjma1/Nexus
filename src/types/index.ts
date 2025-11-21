@@ -28,7 +28,6 @@ export interface Entrepreneur extends User {
 
 export interface Investor extends User {
   investmentInterests: string[] | undefined;
-  investmentStage: string[] | undefined;
   portfolioCompanies: string[] | undefined;
   totalInvestments: number | undefined;
   minimumInvestment: string | undefined;
@@ -82,7 +81,7 @@ export interface AuthContextType {
     email: string,
     password: string,
     role: UserRole
-  ) => Promise<void>;
+  ) => Promise<string | null>;
   logout: () => void;
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (token: string, newPassword: string) => Promise<void>;
