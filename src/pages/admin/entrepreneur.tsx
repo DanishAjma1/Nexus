@@ -1,26 +1,27 @@
-"use client";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
-interface User {
+interface Entrepreneur {
   _id: string;
   name: string;
   email: string;
   role: string;
+  startupName?: string;
+  foundedYear?: string;
+  location?: string;
+  industry?: string;
 }
 
 export const Entrepreneurj: React.FC = () => {
-  const [entrepreneurs, setEntrepreneurs] = useState<User[]>([]);
+  const [entrepreneurs, setEntrepreneurs] = useState<Entrepreneur[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // ✅ Fetch all users and filter by role 'entrepreneur'
   const fetchEntrepreneurs = async () => {
     try {
       setLoading(true);
       const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/admin/users`);
       const data = await res.json();
-
-      const filtered = data.filter((u: User) => u.role === "entrepreneur");
+      const filtered = data.filter((u: Entrepreneur) => u.role === "entrepreneur");
       setEntrepreneurs(filtered);
     } catch (error) {
       console.error(error);
@@ -30,22 +31,17 @@ export const Entrepreneurj: React.FC = () => {
     }
   };
 
-  // ✅ Delete entrepreneur
   const deleteEntrepreneur = async (id: string) => {
     if (!confirm("Are you sure you want to delete this entrepreneur?")) return;
 
     try {
-      const res = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/admin/user/${id}`,
-        {
-          method: "DELETE",
-        }
-      );
-
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/admin/user/${id}`, {
+        method: "DELETE",
+      });
       if (!res.ok) throw new Error("Failed to delete");
       toast.success("Entrepreneur deleted successfully");
       setEntrepreneurs((prev) => prev.filter((u) => u._id !== id));
-    } catch (error) {
+    } catch {
       toast.error("Error deleting entrepreneur");
     }
   };
@@ -54,9 +50,7 @@ export const Entrepreneurj: React.FC = () => {
     fetchEntrepreneurs();
   }, []);
 
-  if (loading)
-    return <p className="p-4 text-gray-600">Loading entrepreneurs...</p>;
-
+  if (loading) return <p className="p-4 text-gray-600">Loading entrepreneurs...</p>;
   if (entrepreneurs.length === 0)
     return <p className="p-4 text-gray-600">No entrepreneurs found.</p>;
 
@@ -71,7 +65,10 @@ export const Entrepreneurj: React.FC = () => {
             <tr>
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Email</th>
-              <th className="px-4 py-3">Role</th>
+              <th className="px-4 py-3">Startup Name</th>
+              <th className="px-4 py-3">Founded Year</th>
+              <th className="px-4 py-3">Location</th>
+              <th className="px-4 py-3">Industry</th>
               <th className="px-4 py-3 text-center">Action</th>
             </tr>
           </thead>
@@ -80,7 +77,10 @@ export const Entrepreneurj: React.FC = () => {
               <tr key={user._id} className="border-t hover:bg-gray-50">
                 <td className="px-4 py-2">{user.name}</td>
                 <td className="px-4 py-2">{user.email}</td>
-                <td className="px-4 py-2 capitalize">{user.role}</td>
+                <td className="px-4 py-2">{user.startupName}</td>
+                <td className="px-4 py-2">{user.foundedYear}</td>
+                <td className="px-4 py-2">{user.location}</td>
+                <td className="px-4 py-2">{user.industry}</td>
                 <td className="px-4 py-2 text-center">
                   <button
                     onClick={() => deleteEntrepreneur(user._id)}
