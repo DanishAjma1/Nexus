@@ -1,6 +1,8 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import { Button } from "../../components/ui/Button";
+import { ThreeDotsButton } from "../../components/ui/ThreeDotsButton";
 
 interface Investor {
   _id: string;
@@ -8,12 +10,15 @@ interface Investor {
   email: string;
   role: string;
   totalInvestments?: number;
-  investmentInterests?: string[];
+  successfullExits?: number;
 }
 
 export const Investors: React.FC = () => {
   const [investors, setInvestors] = useState<Investor[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [showDialog, setShowDialog] = useState(false);
+  const [index, setIndex] = useState<number | null>(null);
 
   // Dummy pending entrepreneurs (NO API TOUCH)
   const pendingEntrepreneurs = [
@@ -25,7 +30,9 @@ export const Investors: React.FC = () => {
   const fetchInvestors = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/admin/users`);
+      const res = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/admin/users`
+      );
       const data = await res.json();
 
       const filtered = data.filter((u: User) => u.role === "investor");
@@ -38,14 +45,16 @@ export const Investors: React.FC = () => {
     }
   };
 
-  
   const deleteInvestor = async (id: string) => {
     if (!confirm("Are you sure you want to delete this investor?")) return;
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/admin/user/${id}`, {
-        method: "DELETE",
-      });
+      const res = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/admin/user/${id}`,
+        {
+          method: "DELETE",
+        }
+      );
 
       if (!res.ok) throw new Error("Failed to delete");
       toast.success("Investor deleted successfully");
@@ -59,8 +68,22 @@ export const Investors: React.FC = () => {
     fetchInvestors();
   }, []);
 
-  if (loading)
-    return <p className="p-4 text-gray-600">Loading investors...</p>;
+  const dialogRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      // Close only if click is outside dialog AND outside button
+      if (dialogRef.current && !dialogRef.current.contains(event.target)) {
+        setShowDialog(false);
+        setIndex(null);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  if (loading) return <p className="p-4 text-gray-600">Loading investors...</p>;
 
   if (investors.length === 0)
     return <p className="p-4 text-gray-600">No investors found.</p>;
@@ -77,30 +100,56 @@ export const Investors: React.FC = () => {
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Email</th>
               <th className="px-4 py-3">Total Investments</th>
-              <th className="px-4 py-3">Investment Interests</th>
-              <th className="px-4 py-3 text-center">Action</th>
+              <th className="px-4 py-3">Successful Exits</th>
             </tr>
           </thead>
           <tbody>
-            {investors.map((inv) => (
-              <tr key={inv._id} className="border-t hover:bg-gray-50">
+            {investors.map((inv, idx) => (
+              <tr
+                key={idx}
+                className="border-t hover:bg-gray-50 relative group"
+              >
                 <td className="px-4 py-2">{inv.name}</td>
                 <td className="px-4 py-2">{inv.email}</td>
-                <td className="px-4 py-2">
-                  {inv.totalInvestments ?? 0}
-                </td>
-                <td className="px-4 py-2">
-                  {inv.investmentInterests && inv.investmentInterests.length > 0
-                    ? inv.investmentInterests.join(", ")
-                    : "—"}
-                </td>
-                <td className="px-4 py-2 text-center">
-                  <button
-                    onClick={() => deleteInvestor(inv._id)}
-                    className="text-red-600 hover:text-red-800 font-medium"
-                  >
-                    Delete
-                  </button>
+                <td className="px-4 py-2">{inv.totalInvestments ?? 0}</td>
+
+                <td className="flex items-center">
+                  <span className="px-4 py-2 text-center">{inv.successfullExits ?? 0}</span>
+                  <ThreeDotsButton
+                    variant="ghost"
+                    className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIndex(idx);
+                      setShowDialog((prev) => !prev);
+                    }}
+                  />
+
+                  {showDialog && idx === index && (
+                    <div
+                      ref={dialogRef}
+                      className={`absolute right-0 w-28 bg-white shadow-md rounded-md border flex flex-col z-50
+                      ${
+                        idx >= investors.length - 2
+                          ? "bottom-full mb-2"
+                          : "top-full mt-2"
+                      }
+                      `}
+                    >
+                      <Button
+                        variant="ghost"
+                        className="border-b hover:text-yellow-500 focus:text-white focus:bg-yellow-500"
+                      >
+                        Suspend
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        className="border-b hover:text-red-500 focus:text-white focus:bg-red-500"
+                      >
+                        Block
+                      </Button>
+                    </div>
+                  )}
                 </td>
               </tr>
             ))}
@@ -109,7 +158,7 @@ export const Investors: React.FC = () => {
       </div>
 
       {/* NEW DUMMY TABLE */}
-      <h2 className="text-lg font-semibold mb-3">Pending Entrepreneurs</h2>
+      <h2 className="text-lg font-semibold mb-3">Pending Investors</h2>
 
       <div className="overflow-x-auto bg-white rounded-lg shadow border">
         <table className="min-w-full text-sm text-left text-gray-700">
