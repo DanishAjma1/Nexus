@@ -15,27 +15,42 @@ import { Button } from "../../components/ui/Button";
 import { useAuth } from "../../context/AuthContext";
 import { Link } from "react-router-dom";
 import axios from "axios";
+import StartupGrowthChart from "../../components/admin/StartupGrowthChart";
 
 export const AdminDashboard: React.FC = () => {
   const { user } = useAuth();
   const [stats, setStats] = useState({
     startups: 0,
     investors: 0,
-    supporters: 0,
+    supporters: 10,
     campaigns: 0,
     flagged: 0,
   });
 
   useEffect(() => {
     const fetchData = async () => {
-    try {
-      const res = await axios.get(`${URL}/admin/dashboard`);
-      setStats(res.data);
-    } catch (error) {
-      console.error("Error fetching admin stats:", error);
-    }
+      try {
+        const res = await axios.get(`${URL}/admin/dashboard`);
+        setStats(res.data);
+      } catch (error) {
+        console.error("Error fetching admin stats:", error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const [chartData, setChartData] = useState([]);
+
+  const fetchData = async () => {
+    const res = await fetch(
+      "http://localhost:5000/admin/users/users-last-year"
+    );
+    const data = await res.json();
+    setChartData(data);
   };
 
+  useEffect(() => {
     fetchData();
   }, []);
 
@@ -54,6 +69,10 @@ export const AdminDashboard: React.FC = () => {
         </div>
       </div>
 
+      <div className="grid grid-flow-col grid-cols-3">
+        <StartupGrowthChart data={chartData} />
+      </div>
+
       {/* Top summary cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card className="bg-blue-50 border border-blue-100">
@@ -62,10 +81,10 @@ export const AdminDashboard: React.FC = () => {
               <div className="p-3 bg-blue-100 rounded-full mr-4">
                 <Rocket size={20} className="text-blue-700" />
               </div>
-              <div>
+              <div className="flex gap-2 items-center">
                 <p className="text-sm font-medium text-blue-700">Startups</p>
-                <h3 className="text-xl font-semibold text-blue-900">
-                  {stats.startups}
+                <h3 className="font-semibold text-blue-900">
+                  {stats.startups || 10}
                 </h3>
               </div>
             </div>
@@ -78,10 +97,10 @@ export const AdminDashboard: React.FC = () => {
               <div className="p-3 bg-purple-100 rounded-full mr-4">
                 <Users size={20} className="text-purple-700" />
               </div>
-              <div>
+              <div className="flex gap-2 items-center">
                 <p className="text-sm font-medium text-purple-700">Investors</p>
-                <h3 className="text-xl font-semibold text-purple-900">
-                  {stats.investors}
+                <h3 className="font-semibold text-purple-900">
+                  {stats.investors || 10}
                 </h3>
               </div>
             </div>
@@ -94,10 +113,10 @@ export const AdminDashboard: React.FC = () => {
               <div className="p-3 bg-amber-100 rounded-full mr-4">
                 <Users size={20} className="text-amber-700" />
               </div>
-              <div>
+              <div className="flex gap-2 items-center">
                 <p className="text-sm font-medium text-amber-700">Supporters</p>
-                <h3 className="text-xl font-semibold text-amber-900">
-                  {stats.supporters}
+                <h3 className="font-semibold text-amber-900">
+                  {stats.supporters || 10}
                 </h3>
               </div>
             </div>
@@ -110,10 +129,10 @@ export const AdminDashboard: React.FC = () => {
               <div className="p-3 bg-green-100 rounded-full mr-4">
                 <TrendingUp size={20} className="text-green-700" />
               </div>
-              <div>
+              <div className="flex gap-2 items-center">
                 <p className="text-sm font-medium text-green-700">Campaigns</p>
-                <h3 className="text-xl font-semibold text-green-900">
-                  {stats.campaigns}
+                <h3 className="font-semibold text-green-900">
+                  {stats.campaigns || 10}
                 </h3>
               </div>
             </div>
@@ -126,10 +145,10 @@ export const AdminDashboard: React.FC = () => {
               <div className="p-3 bg-red-100 rounded-full mr-4">
                 <AlertTriangle size={20} className="text-red-700" />
               </div>
-              <div>
+              <div className="flex gap-2 items-center">
                 <p className="text-sm font-medium text-red-700">Flagged</p>
-                <h3 className="text-xl font-semibold text-red-900">
-                  {stats.flagged}
+                <h3 className="font-semibold text-red-900">
+                  {stats.flagged || 10}
                 </h3>
               </div>
             </div>
