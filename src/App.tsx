@@ -44,7 +44,7 @@ import { UserManagement } from "./pages/admin/UserManagement";
 import { Activities } from "./pages/admin/activities";
 import { Entrepreneurj } from "./pages/admin/entrepreneur";
 import { Investors } from "./pages/admin/investors";
-import { Campaigns } from "./pages/admin/campaigns";
+import Campaigns from "./pages/admin/campaigns";
 
 import { HomePage } from "./pages/home/HomePage";
 import { LoginWithOAuthPage } from "./pages/auth/LoginWithOAuthPage";
