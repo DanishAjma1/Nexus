@@ -17,13 +17,13 @@ const data = [
 
 export default function StartupIndustryChart() {
   return (
-    <ResponsiveContainer>
+    <ResponsiveContainer width="100%" height="100%">
       <BarChart width={500} height={300} data={data}>
-        <XAxis dataKey="industry" />
+        <XAxis dataKey="industry" tickMargin={8} />
         <YAxis allowDecimals={false} />
         <Tooltip />
         <CartesianGrid stroke="#ddd" />
-        <Bar type="monotone" dataKey="count" stroke="#4f4293" strokeWidth={3} />
+        <Bar type="monotype" dataKey="count" stroke="lime" strokeWidth={3} />
       </BarChart>
     </ResponsiveContainer>
   );

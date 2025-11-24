@@ -35,7 +35,7 @@ export const Investors: React.FC = () => {
     try {
       setLoading(true);
       const res = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/admin/users`
+        `${import.meta.env.VITE_BACKEND_URL}/admin/get-users`
       );
       const data = await res.json();
 

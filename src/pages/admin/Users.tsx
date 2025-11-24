@@ -4,50 +4,20 @@ import { ThreeDotsButton } from "../../components/ui/ThreeDotsButton";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { SearchIcon } from "lucide-react";
+import { User } from "../../types";
+import { formatDistanceToNow } from "date-fns";
 
-interface Entrepreneur {
-  _id: string;
-  name: string;
-  email: string;
-  role: string;
-  startupName?: string;
-  foundedYear?: string;
-  location?: string;
-  industry?: string;
-}
-
-export const Entrepreneurj: React.FC = () => {
-  const [entrepreneurs, setEntrepreneurs] = useState<Entrepreneur[]>([]);
-  const [searchedentrepreneurs, setSearchedEntrepreneurs] = useState<
-    Entrepreneur[]
-  >([]);
+export const Users: React.FC = () => {
+  const [users, setUsers] = useState<User[]>([]);
+  const [searchedusers, setSearchedUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
   const [index, setIndex] = useState<number | null>(null);
   const [query, setQuery] = useState<string>("");
   const [searched, setSearched] = useState<string>("");
 
-  const fetchEntrepreneurs = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/admin/users/entrepreneurs`
-      );
-      const data = await res.json();
-      const filtered = data.filter(
-        (u: Entrepreneur) => u.role === "entrepreneur"
-      );
-      setEntrepreneurs(filtered);
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to load entrepreneurs");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const deleteEntrepreneur = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this entrepreneur?")) return;
+  const deleteUser = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this user?")) return;
 
     try {
       const res = await fetch(
@@ -57,15 +27,30 @@ export const Entrepreneurj: React.FC = () => {
         }
       );
       if (!res.ok) throw new Error("Failed to delete");
-      toast.success("Entrepreneur deleted successfully");
-      setEntrepreneurs((prev) => prev.filter((u) => u._id !== id));
+      toast.success("User deleted successfully");
+      setUsers((prev) => prev.filter((u) => u._id !== id));
     } catch {
-      toast.error("Error deleting entrepreneur");
+      toast.error("Error deleting user");
     }
   };
 
   useEffect(() => {
-    fetchEntrepreneurs();
+    const fetchUsers = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/admin/get-users`
+        );
+        const data = await res.json();
+        setUsers(data);
+      } catch (error) {
+        console.error(error);
+        toast.error("Failed to load users");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUsers();
   }, []);
 
   const dialogRef = useRef(null);
@@ -95,16 +80,29 @@ export const Entrepreneurj: React.FC = () => {
     return (
       <>
         <tr key={idx} className="border-t hover:bg-gray-50 relative group">
-          <td className="px-4 py-2">{user.name}</td>
+          <td className="px-4 py-2 flex items-center">
+            <span>{idx + 1}.</span>
+            <p className="ml-5">{user.name}</p>
+          </td>
           <td className="px-4 py-2">{user.email}</td>
-          <td className="px-4 py-2">{user.startupName}</td>
-          <td className="px-4 py-2">{user.foundedYear}</td>
+          <td className="px-4 py-2">{user.role}</td>
           <td className="px-4 py-2">{user.location}</td>
+          <td className={`px-4 py-2 `}>
+            <span
+              className={`px-2 text-gray-200 py-1 rounded-full ${
+                user.isOnline ? "bg-green-500" : "bg-red-500"
+              }`}
+            >
+              {user.isOnline ? "Online" : "Offline"}
+            </span>
+          </td>
 
           {/* This td holds industry + 3-dots at far right */}
           <td className="flex items-center relative">
             {/* Industry text */}
-            <span className="px-4 py-2">{user.industry || "Gujrat fans"}</span>
+            <span className="px-4 py-2">
+              {formatDistanceToNow(user.createdAt)}
+            </span>
 
             {/* 3-dots — hidden normally, visible on row hover */}
             <ThreeDotsButton
@@ -122,7 +120,7 @@ export const Entrepreneurj: React.FC = () => {
                 ref={dialogRef}
                 className={`absolute right-0 w-28 bg-white shadow-md rounded-md border flex flex-col z-50
                       ${
-                        idx >= entrepreneurs.length - 2
+                        idx >= users.length - 2
                           ? "bottom-full mb-2"
                           : "top-full mt-2"
                       }
@@ -148,16 +146,15 @@ export const Entrepreneurj: React.FC = () => {
     );
   };
 
-  if (loading)
-    return <p className="p-4 text-gray-600">Loading entrepreneurs...</p>;
-  if (entrepreneurs.length === 0)
-    return <p className="p-4 text-gray-600">No entrepreneurs found.</p>;
+  if (loading) return <p className="p-4 text-gray-600">Loading users...</p>;
+  if (users.length === 0)
+    return <p className="p-4 text-gray-600">No users found.</p>;
 
   return (
     <div className="p-4">
-      {/* ✔️ Entrepreneurs Table */}
+      {/* ✔️ Users Table */}
       <h1 className="text-xl font-bold mb-10 underline underline-offset-8">
-        Manange Entrepreneurs
+        Manange Users
       </h1>
 
       <div className="w-full">
@@ -166,24 +163,23 @@ export const Entrepreneurj: React.FC = () => {
           onSubmit={(e) => {
             e.preventDefault();
             setSearched(query);
-            const filterEntrepreneurs = entrepreneurs.filter((ent) =>
+            const filterUsers = users.filter((ent) =>
               ent.name.toLowerCase().includes(query.toLowerCase())
             );
 
-            if (filterEntrepreneurs.length !== 0)
-              setSearchedEntrepreneurs([...filterEntrepreneurs]);
-            else setSearchedEntrepreneurs([]);
+            if (filterUsers.length !== 0) setSearchedUsers([...filterUsers]);
+            else setSearchedUsers([]);
           }}
         >
           <Input
             type="text"
-            placeholder="Search entrepreneurs with name email or company.."
+            placeholder="Search users with name email or company.."
             className="w-1/2"
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);
               if (e.target.value === "") {
-                setSearchedEntrepreneurs([]);
+                setSearchedUsers([]);
                 setSearched("");
               }
             }}
@@ -200,36 +196,32 @@ export const Entrepreneurj: React.FC = () => {
       </div>
       <div className="flex justify-end text-xs p-2 gap-2">
         <span>
-          {searched
-            ? `Results '${searched}' searched count: `
-            : "Total Entrepreneurs:"}{" "}
+          {searched ? `Results '${searched}' searched count: ` : "Total Users:"}{" "}
         </span>
-        {searched ? searchedentrepreneurs.length : entrepreneurs.length}
+        {searched ? searchedusers.length : users.length}
       </div>
 
-      <div className="overflow-x-auto bg-white rounded-lg shadow border">
+      <div className="overflow-x-auto bg-white rounded-lg shadow border overflow-scroll max-h-80 scroll-smooth">
         <table className="min-w-full text-sm text-left text-gray-700">
           <thead className="bg-gray-100 text-gray-800 uppercase text-xs font-semibold">
             <tr>
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Email</th>
-              <th className="px-4 py-3">Startup Name</th>
-              <th className="px-4 py-3">Founded Year</th>
+              <th className="px-4 py-3">Role</th>
               <th className="px-4 py-3">Location</th>
-              <th className="px-4 py-3">Industry</th>
+              <th className="px-4 py-3">Is Online</th>
+              <th className="px-4 py-3">When Registered</th>
             </tr>
           </thead>
           <tbody>
-            {searchedentrepreneurs.length !== 0 ? (
-              searchedentrepreneurs.map((user, idx) => (
+            {searchedusers.length !== 0 ? (
+              searchedusers.map((user, idx) => (
                 <TableRow user={user} idx={idx} />
               ))
             ) : searched ? (
               <div className="flex justify-center py-5">No records found..</div>
-            ) : entrepreneurs.length !== 0 ? (
-              entrepreneurs.map((user, idx) => (
-                <TableRow user={user} idx={idx} />
-              ))
+            ) : users.length !== 0 ? (
+              users.map((user, idx) => <TableRow user={user} idx={idx} />)
             ) : (
               <div className="flex justify-center py-5">No records found..</div>
             )}
@@ -237,10 +229,10 @@ export const Entrepreneurj: React.FC = () => {
         </table>
       </div>
 
-      {/* ✔️ Pending Entrepreneurs Section */}
+      {/* ✔️ Pending Users Section */}
       <div className="mt-10">
         <h2 className="text-xl font-bold text-gray-900 mb-4">
-          Pending Entrepreneur Approvals
+          Pending User Approvals
         </h2>
 
         <div className="overflow-hidden rounded-lg border border-gray-200">
