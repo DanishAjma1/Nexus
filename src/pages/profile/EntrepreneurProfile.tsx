@@ -58,14 +58,10 @@ export const EntrepreneurProfile: React.FC = () => {
     setValuation(base * revenue);
   }, [entrepreneur]);
 
-
   useEffect(() => {
     const checkInvestor = async () => {
       if (currentUser?.userId && id) {
-        const request = await checkRequestsFromInvestor(
-          currentUser.userId,
-          id
-        );
+        const request = await checkRequestsFromInvestor(currentUser.userId, id);
         console.log(request);
         setHasRequestedCollaboration(Boolean(request));
       }
@@ -83,7 +79,8 @@ export const EntrepreneurProfile: React.FC = () => {
         <p className="text-gray-600 mt-2">
           The entrepreneur profile you're looking for doesn't exist or has been
           removed.
-        </p>s
+        </p>
+        s
         <Link to="/dashboard/investor">
           <Button variant="outline" className="mt-4">
             Back to Dashboard
@@ -93,7 +90,6 @@ export const EntrepreneurProfile: React.FC = () => {
     );
   }
 
-  console.log(entrepreneur);
   const isCurrentUser = currentUser?.userId === entrepreneur?.userId;
   const isInvestor = currentUser?.role === "investor";
   // Check if the current investor has already sent a request to this entrepreneur
@@ -203,7 +199,9 @@ export const EntrepreneurProfile: React.FC = () => {
               <h2 className="text-lg font-medium text-gray-900">About</h2>
             </CardHeader>
             <CardBody>
-              <p className="text-gray-700">{entrepreneur.bio || "Say about yours..?"}</p>
+              <p className="text-gray-700">
+                {entrepreneur.bio || "Say about yours..?"}
+              </p>
             </CardBody>
           </Card>
 
@@ -247,7 +245,9 @@ export const EntrepreneurProfile: React.FC = () => {
                   <h3 className="text-md font-medium text-gray-900">
                     Competitive Advantage
                   </h3>
-                  <p className="text-gray-700 mt-1">{entrepreneur.advantage || "--"}</p>
+                  <p className="text-gray-700 mt-1">
+                    {entrepreneur.advantage || "--"}
+                  </p>
                 </div>
               </div>
             </CardBody>
@@ -330,7 +330,7 @@ export const EntrepreneurProfile: React.FC = () => {
             <CardBody>
               <div className="space-y-4">
                 <div>
-                  <span className="text-sm text-gray-500">Current Round</span>
+                  <span className="text-sm text-gray-500">Fund needed</span>
                   <div className="flex items-center mt-1">
                     <DollarSign size={18} className="text-accent-600 mr-1" />
                     <p className="text-lg font-semibold text-gray-900">
@@ -364,36 +364,36 @@ export const EntrepreneurProfile: React.FC = () => {
                       <span className="text-xs font-medium">Pre-seed</span>
                       <span
                         className={`text-xs ${
-                          fundAmount > 10000
+                          fundAmount > 100000
                             ? " text-green-800 bg-green-100"
                             : "text-yellow-800 bg-yellow-100"
                         } px-2 py-0.5 rounded-full`}
                       >
-                        {fundAmount > 10000 ? "Completed" : "In progress"}
+                        {fundAmount > 100000 ? "Completed" : "In progress"}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-xs font-medium">Seed</span>
                       <span
                         className={`text-xs  ${
-                          fundAmount > 250000
+                          fundAmount > 2500000
                             ? " text-green-800 bg-green-100"
                             : "text-yellow-800 bg-yellow-100"
                         } px-2 py-0.5 rounded-full`}
                       >
-                        {fundAmount > 250000 ? "Completed" : "In progress"}
+                        {fundAmount > 2500000 ? "Completed" : "In progress"}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-xs font-medium">Series A</span>
                       <span
                         className={`text-xs ${
-                          fundAmount > 2000000
+                          fundAmount > 20000000
                             ? " text-green-800 bg-green-100"
                             : "text-yellow-800 bg-yellow-100"
                         } px-2 py-0.5 rounded-full`}
                       >
-                        {fundAmount > 2000000 ? "Completed" : "In progress"}
+                        {fundAmount > 20000000 ? "Completed" : "In progress"}
                       </span>
                     </div>
                   </div>

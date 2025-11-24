@@ -42,15 +42,15 @@ import { ResetPasswordPage } from "./pages/auth/ResetPasswordPage";
 import { Toaster } from "react-hot-toast";
 import { UserManagement } from "./pages/admin/UserManagement";
 import { Activities } from "./pages/admin/activities";
-import { Entrepreneurj } from "./pages/admin/entrepreneur";
 import { Investors } from "./pages/admin/investors";
 import { Campaigns } from "./pages/admin/campaigns";
 
 import { HomePage } from "./pages/home/HomePage";
 import { LoginWithOAuthPage } from "./pages/auth/LoginWithOAuthPage";
 import { UserDetails } from "./components/user/UserDetails";
-import { Supporters } from './pages/admin/supporters';
+import { Supporters } from "./pages/admin/supporters";
 import { FlaggedAccounts } from "./pages/admin/flaggedAccounts";
+import { Users } from "./pages/admin/Users";
 
 function App() {
   return (
@@ -76,7 +76,7 @@ function App() {
             <Route path="/admin" element={<DashboardLayout />}>
               <Route path="users" element={<UserManagement />} />
               <Route path="activities" element={<Activities />} />
-              <Route path="entrepreneur" element={<Entrepreneurj />} />
+              <Route path="all-users" element={<Users />} />
               <Route path="investors" element={<Investors />} />
               <Route path="campaigns" element={<Campaigns />} />
               <Route path="supporters" element={<Supporters />} />
