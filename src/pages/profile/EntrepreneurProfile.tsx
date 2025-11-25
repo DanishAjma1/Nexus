@@ -23,23 +23,31 @@ import {
 import { Entrepreneur } from "../../types";
 import { AmountMeasureWithTags, getEnterpreneurById } from "../../data/users";
 
-export const EntrepreneurProfile: React.FC = () => {
+type Props = {
+  userId: string | undefined;
+};
+export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
   const { id } = useParams<{ id: string }>();
   const { user: currentUser } = useAuth();
   const [entrepreneur, setEnterpreneur] = useState<Entrepreneur>();
-  const navigate = useNavigate();
   const [hasRequestedCollaboration, setHasRequestedCollaboration] =
     useState<boolean>();
+  const navigate = useNavigate();
 
   const [valuation, setValuation] = useState<number | undefined>(0);
 
   useEffect(() => {
     const fetchEntrepreneur = async () => {
-      const entrepreneur = await getEnterpreneurById(id);
-      setEnterpreneur(entrepreneur);
+      if (id) {
+        const entrepreneur = await getEnterpreneurById(id);
+        setEnterpreneur(entrepreneur);
+      } else {
+        const entrepreneur = await getEnterpreneurById(userId);
+        setEnterpreneur(entrepreneur);
+      }
     };
     fetchEntrepreneur();
-  }, [id]);
+  }, [id, userId]);
 
   useEffect(() => {
     const calculateValuation = () => {
@@ -92,6 +100,7 @@ export const EntrepreneurProfile: React.FC = () => {
 
   const isCurrentUser = currentUser?.userId === entrepreneur?.userId;
   const isInvestor = currentUser?.role === "investor";
+  const isAdmin = currentUser?.role === "admin";
   // Check if the current investor has already sent a request to this entrepreneur
 
   const handleSendRequest = async () => {
@@ -149,29 +158,33 @@ export const EntrepreneurProfile: React.FC = () => {
           </div>
 
           <div className="mt-6 sm:mt-0 flex flex-col sm:flex-row gap-2 justify-center sm:justify-end">
-            {!isCurrentUser && (
-              <>
-                <Link to={`/chat/${entrepreneur.userId}`}>
-                  <Button
-                    variant="outline"
-                    leftIcon={<MessageCircle size={18} />}
-                  >
-                    Message
-                  </Button>
-                </Link>
+            {!isAdmin ? (
+              !isCurrentUser && (
+                <>
+                  <Link to={`/chat/${entrepreneur.userId}`}>
+                    <Button
+                      variant="outline"
+                      leftIcon={<MessageCircle size={18} />}
+                    >
+                      Message
+                    </Button>
+                  </Link>
 
-                {isInvestor && (
-                  <Button
-                    leftIcon={<Send size={18} />}
-                    disabled={hasRequestedCollaboration}
-                    onClick={handleSendRequest}
-                  >
-                    {hasRequestedCollaboration
-                      ? "Request Sent"
-                      : "Request Collaboration"}
-                  </Button>
-                )}
-              </>
+                  {isInvestor && (
+                    <Button
+                      leftIcon={<Send size={18} />}
+                      disabled={hasRequestedCollaboration}
+                      onClick={handleSendRequest}
+                    >
+                      {hasRequestedCollaboration
+                        ? "Request Sent"
+                        : "Request Collaboration"}
+                    </Button>
+                  )}
+                </>
+              )
+            ) : (
+              <></>
             )}
 
             {isCurrentUser && (

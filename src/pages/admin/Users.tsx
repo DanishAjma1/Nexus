@@ -3,9 +3,15 @@ import toast from "react-hot-toast";
 import { ThreeDotsButton } from "../../components/ui/ThreeDotsButton";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
-import { SearchIcon } from "lucide-react";
+import { SearchIcon, X } from "lucide-react";
 import { User } from "../../types";
 import { formatDistanceToNow } from "date-fns";
+import { StartupIndustryChart } from "../../components/admin/StartupIndustryChart";
+import { StartupGrowthChart } from "../../components/admin/StartupGrowthChart";
+import { Card, CardHeader } from "../../components/ui/Card";
+import { useNavigate } from "react-router-dom";
+import { EntrepreneurProfile } from "../profile/EntrepreneurProfile";
+import { InvestorProfile } from "../profile/InvestorProfile";
 
 export const Users: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -15,6 +21,30 @@ export const Users: React.FC = () => {
   const [index, setIndex] = useState<number | null>(null);
   const [query, setQuery] = useState<string>("");
   const [searched, setSearched] = useState<string>("");
+
+  const [startupGrowthChartData, setStartupGrowthChartData] = useState([]);
+  const [industryGrowthChartData, setIndustryGrowthChartData] = useState([]);
+
+  const fetchStartupGrowthChartData = async () => {
+    const res = await fetch(
+      "http://localhost:5000/admin/users/users-last-year"
+    );
+    const data = await res.json();
+    setStartupGrowthChartData(data);
+  };
+
+  const fetchIndustryGrowthChartData = async () => {
+    const res = await fetch(
+      "http://localhost:5000/admin/users/startup-by-industry"
+    );
+    const data = await res.json();
+    setIndustryGrowthChartData(data);
+  };
+
+  useEffect(() => {
+    fetchStartupGrowthChartData();
+    fetchIndustryGrowthChartData();
+  }, []);
 
   const deleteUser = async (id: string) => {
     if (!confirm("Are you sure you want to delete this user?")) return;
@@ -75,6 +105,17 @@ export const Users: React.FC = () => {
       </div>
     );
   };
+  type UserData = {
+    userId: string;
+    role: string;
+  };
+  type GraphData = {
+    type?: "startup" | "industry";
+    show: boolean;
+  };
+  const [viewUser, setViewUser] = useState<UserData | null>(null);
+  const [profileModal, setProfileModal] = useState<boolean>(false);
+  const [graphViewModal, setGraphViewModal] = useState<GraphData | null>(null);
 
   const TableRow = ({ user, idx }) => {
     return (
@@ -89,8 +130,8 @@ export const Users: React.FC = () => {
           <td className="px-4 py-2">{user.location}</td>
           <td className={`px-4 py-2 `}>
             <span
-              className={`px-2 text-gray-200 py-1 rounded-full ${
-                user.isOnline ? "bg-green-500" : "bg-red-500"
+              className={`px-2 ${
+                user.isOnline ? "text-green-500" : "text-red-500"
               }`}
             >
               {user.isOnline ? "Online" : "Offline"}
@@ -128,13 +169,25 @@ export const Users: React.FC = () => {
               >
                 <Button
                   variant="ghost"
-                  className="border-b hover:text-yellow-500 focus:text-white focus:bg-yellow-500"
+                  className="border-b text-xs hover:text-blue-500 focus:text-white focus:bg-blue-500"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setProfileModal(true);
+                    setViewUser({ userId: user._id, role: user.role });
+                    setShowDialog(false);
+                  }}
+                >
+                  View Profile
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="border-b text-xs hover:text-yellow-500 focus:text-white focus:bg-yellow-500"
                 >
                   Suspend
                 </Button>
                 <Button
                   variant="ghost"
-                  className="border-b hover:text-red-500 focus:text-white focus:bg-red-500"
+                  className="border-b text-xs hover:text-red-500 focus:text-white focus:bg-red-500"
                 >
                   Block
                 </Button>
@@ -152,12 +205,59 @@ export const Users: React.FC = () => {
 
   return (
     <div className="p-4">
+      {/* {profileModal && ( */}
+      <div
+        className={`fixed transition-all ease-in-out z-10 inset-0 bg-black bg-opacity-20 overflow-scroll scroll-smooth duration-300 p-10 ${
+          profileModal
+            ? "pointer-events-auto opacity-100"
+            : "pointer-events-none opacity-0"
+        }`}
+      >
+        <div className="flex flex-col items-end">
+          <X
+            className="w-12 h-12 bg-white rounded-full hover:cursor-pointer p-3 mb-2"
+            onClick={() => setProfileModal(false)}
+          />
+          <div className="w-full">
+            {viewUser?.role === "investor" ? (
+              <InvestorProfile userId={viewUser?.userId} />
+            ) : (
+              <EntrepreneurProfile userId={viewUser?.userId} />
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* GraphViewModal */}
+      <div
+        className={`fixed z-10 inset-0 transition-all duration-300 bg-black bg-opacity-35 p-10 ${
+          graphViewModal?.show
+            ? "pointer-events-auto opacity-100"
+            : "pointer-events-none opacity-0"
+        }`}
+      >
+        <div className="flex w-full justify-end">
+          <X
+            className="w-12 h-12 bg-white rounded-full hover:cursor-pointer p-3 mb-2"
+            onClick={() => setGraphViewModal({ show: false })}
+          />
+        </div>
+
+        <div className="w-full h-[80vh] bg-white rounded-xl p-10">
+          {graphViewModal?.type === "startup" ? (
+            <StartupGrowthChart data={startupGrowthChartData} />
+          ) : (
+            <StartupIndustryChart data={industryGrowthChartData} />
+          )}
+        </div>
+      </div>
+
       {/* ✔️ Users Table */}
       <h1 className="text-xl font-bold mb-10 underline underline-offset-8">
         Manange Users
       </h1>
 
-      <div className="w-full">
+      <div className="w-full mb-10">
         <form
           className=" flex items-start gap-2"
           onSubmit={(e) => {
@@ -173,7 +273,7 @@ export const Users: React.FC = () => {
         >
           <Input
             type="text"
-            placeholder="Search users with name email or company.."
+            placeholder="Search users with name, email or company.."
             className="w-1/2"
             value={query}
             onChange={(e) => {
@@ -194,6 +294,57 @@ export const Users: React.FC = () => {
           </div>
         </form>
       </div>
+
+      <div
+        className={`grid-col-10 gap-6 grid-flow-col ${
+          query ? "hidden" : "grid"
+        }`}
+      >
+        <Card className="col-span-7">
+          <CardHeader className="flex justify-between items-center">
+            <h2 className="text-lg font-medium text-gray-900">
+              Users Analytics
+            </h2>
+            <p
+              className="text-sm font-medium text-primary-600 hover:text-primary-500 hover:cursor-pointer"
+              onClick={(e) => {
+                e.preventDefault();
+                setGraphViewModal({ show: true, type: "startup" });
+              }}
+            >
+              View
+            </p>
+          </CardHeader>
+          <div className="grid grid-flow-col font-medium h-[60vh] bg-white shadow-md py-10 pr-5">
+            <div className="col-span-2">
+              <StartupGrowthChart data={startupGrowthChartData} />
+            </div>
+          </div>
+        </Card>
+
+        <Card className="col-span-3">
+          <CardHeader className="flex justify-between items-center">
+            <h2 className="text-lg font-medium text-gray-900">
+              Startup Industry Analytics
+            </h2>
+            <p
+              className="text-sm font-medium text-primary-600 hover:text-primary-500 hover:cursor-pointer"
+              onClick={(e) => {
+                e.preventDefault();
+                setGraphViewModal({ show: true, type: "industry" });
+              }}
+            >
+              View
+            </p>
+          </CardHeader>
+          <div className="grid grid-flow-col font-medium h-[60vh] bg-white shadow-md py-10 pr-5">
+            <div className="">
+              <StartupIndustryChart data={industryGrowthChartData} />
+            </div>
+          </div>
+        </Card>
+      </div>
+
       <div className="flex justify-end text-xs p-2 gap-2">
         <span>
           {searched ? `Results '${searched}' searched count: ` : "Total Users:"}{" "}
@@ -201,8 +352,12 @@ export const Users: React.FC = () => {
         {searched ? searchedusers.length : users.length}
       </div>
 
-      <div className="overflow-x-auto bg-white rounded-lg shadow border overflow-scroll max-h-80 scroll-smooth">
-        <table className="min-w-full text-sm text-left text-gray-700">
+      <h2 className="text-xl font-bold text-gray-900 mb-4">
+        All Users Details
+      </h2>
+
+      <div className="overflow-x-auto bg-white rounded-lg shadow border overflow-scroll max-h-[60vh] scroll-smooth">
+        <table className="w-full text-sm text-left text-gray-700 px-10">
           <thead className="bg-gray-100 text-gray-800 uppercase text-xs font-semibold">
             <tr>
               <th className="px-4 py-3">Name</th>

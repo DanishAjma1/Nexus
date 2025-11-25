@@ -8,21 +8,42 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-export default function StartupGrowthChart({ data }) {
+type ChartData = {
+  month: string;
+  inv?: number;
+  ent?: number;
+};
+
+type Props = {
+  data: ChartData[];
+};
+
+export const StartupGrowthChart: React.FC<Props> = ({ data }) => {
   return (
-    <ResponsiveContainer width="100%" height="100%">
-      <LineChart data={data}>
-        <XAxis dataKey="month" tickMargin={8} />
-        <YAxis allowDecimals={false} />
-        <Tooltip />
-        <CartesianGrid stroke="#ddd" />
-        <Line
-          type="monotone"
-          dataKey="count"
-          stroke="#4f4293"
-          strokeWidth={3}
-        />
-      </LineChart>
-    </ResponsiveContainer>
+    <div style={{ width: "100%", height: "100%" }}>
+      <ResponsiveContainer>
+        <LineChart data={data}>
+          <XAxis dataKey="month" />
+          <YAxis allowDecimals={false} />
+          <Tooltip />
+          <CartesianGrid stroke="#ddd" />
+
+          <Line
+            type="monotone"
+            dataKey="entrepreneur"
+            stroke="blue"
+            strokeWidth={3}
+            name="Entrepreneurs"
+          />
+          <Line
+            type="monotone"
+            dataKey="investor"
+            stroke="yellow"
+            strokeWidth={3}
+            name="Investors"
+          />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
   );
-}
+};
