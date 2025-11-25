@@ -3,9 +3,7 @@ import {
   Users,
   TrendingUp,
   AlertTriangle,
-  BarChart3,
   Shield,
-  FileText,
   MessageSquare,
 } from "lucide-react";
 import { Card, CardBody, CardHeader } from "../../components/ui/Card";
@@ -14,10 +12,16 @@ import { Button } from "../../components/ui/Button";
 import { useAuth } from "../../context/AuthContext";
 import { Link } from "react-router-dom";
 import axios from "axios";
-import StartupGrowthChart from "../../components/admin/StartupGrowthChart";
-import StartupIndustryChart from "../../components/admin/StartupIndustryChart";
-import FundingChart from "../../components/admin/FundingChart";
-import StageDistributionChart from "../../components/admin/StageDistributionChart";
+import { FraudAndRiskDetectionChart } from "../../components/admin/FraudAndRiskDetectionChart";
+import { StartupGrowthChart } from "../../components/admin/StartupGrowthChart";
+import { StartupIndustryChart } from "../../components/admin/StartupIndustryChart";
+import { FundingChart } from "../../components/admin/FundingChart";
+
+type ChartData = {
+  month: string;
+  inv?: number;
+  ent?: number;
+};
 
 export const AdminDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -42,18 +46,46 @@ export const AdminDashboard: React.FC = () => {
     fetchData();
   }, []);
 
-  const [chartData, setChartData] = useState([]);
+  const [startupGrowthChartData, setStartupGrowthChartData] = useState<
+    ChartData[]
+  >([]);
+  const [industryGrowthChartData, setIndustryGrowthChartData] = useState([]);
+  const [fraudGrowthChartData, setFraudGrowthChartData] = useState([]);
 
-  const fetchData = async () => {
+  const fetchStartupGrowthChartData = async () => {
     const res = await fetch(
       "http://localhost:5000/admin/users/users-last-year"
     );
     const data = await res.json();
-    setChartData(data);
+    setStartupGrowthChartData(data);
+  };
+  // const fetchFundingChartData = async () => {
+  //   const res = await fetch(
+  //     "http://localhost:5000/admin/users/users-last-year"
+  //   );
+  //   const data = await res.json();
+  //   setStartupGrowthChartData(data);
+  // };
+
+  const fetchIndustryGrowthChartData = async () => {
+    const res = await fetch(
+      "http://localhost:5000/admin/users/startup-by-industry"
+    );
+    const data = await res.json();
+    setIndustryGrowthChartData(data);
+  };
+
+  const fetchFraudGrowthChartData = async () => {
+    const res = await fetch("http://localhost:5000/admin/risk-detection-flags");
+    const data = await res.json();
+    const { finalData } = data;
+    setFraudGrowthChartData(finalData);
   };
 
   useEffect(() => {
-    fetchData();
+    fetchStartupGrowthChartData();
+    fetchIndustryGrowthChartData();
+    fetchFraudGrowthChartData();
   }, []);
 
   if (!user) return null;
@@ -140,9 +172,11 @@ export const AdminDashboard: React.FC = () => {
 
       <Card>
         <CardHeader className="flex justify-between items-center">
-          <h2 className="text-lg font-medium text-gray-900">Analytics & Reports</h2>
+          <h2 className="text-lg font-medium text-gray-900">
+            Analytics & Reports
+          </h2>
           <Link
-            to="/admin/users"
+            to="/admin/all-users"
             className="text-sm font-medium text-primary-600 hover:text-primary-500"
           >
             Manage
@@ -151,25 +185,24 @@ export const AdminDashboard: React.FC = () => {
 
         <div className="grid grid-flow-col font-medium grid-cols-3 h-[60vh] bg-white shadow-md py-10 px-5">
           <div className=" col-span-2">
-            <StartupGrowthChart data={chartData} />
+            <StartupGrowthChart data={startupGrowthChartData} />
             <h3 className="mb-2 justify-center flex font-light text-sm underline text-blue-700">
               User Growth Chart
             </h3>
           </div>
 
           <div className="">
-            <StartupIndustryChart />
+            <StartupIndustryChart data={industryGrowthChartData} />
             <h3 className="ml-10 mb-2 justify-center flex font-light text-sm underline text-blue-700">
-              Entrepreneur industry growthRate
+              Startup industry growthRate
             </h3>
           </div>
         </div>
       </Card>
 
       {/* Management sections */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-      {/* Campaign Oversight */}
+      <div className="flex flex-col gap-6">
+        {/* Campaign Oversight */}
         <Card className="col-span-2">
           <CardHeader className="flex justify-between items-center">
             <h2 className="text-lg font-medium text-gray-900">
@@ -200,7 +233,40 @@ export const AdminDashboard: React.FC = () => {
               </h3>
             </div>
           </CardBody>
-        </Card>        
+        </Card>
+
+        {/* Fraud Detection */}
+        <Card className="col-span-2">
+          <CardHeader className="flex justify-between items-center">
+            <h2 className="text-lg font-medium text-gray-900">
+              Fraud & Risk Detection
+            </h2>
+            <Badge variant="warning">Security</Badge>
+          </CardHeader>
+          <CardBody className="flex flex-row pb-10 gap-5">
+            <div className="w-2/5 flex flex-col justify-evenly">
+              <p className="text-gray-600">
+                Edit, approve, or remove user accounts. Monitor activity and
+                handle reports of fraudulent behavior.The user catched by
+                suspicious activity could be responsible for its own acts. the
+                admin will always viewing your activities either you are
+                approaching well and structured way or not .This info is just
+                filling the blanks.
+              </p>
+              <div className="mt-4 flex gap-2">
+                <Button leftIcon={<Shield size={16} />}>View Reports</Button>
+                <Button variant="outline">Take Action</Button>
+              </div>
+            </div>
+            <div className="h-[50vh] w-3/5">
+              <FraudAndRiskDetectionChart data={fraudGrowthChartData} />
+
+              <h3 className="ml-10 mb-1 justify-center flex font-light text-sm underline text-blue-700">
+                Fraud and Risk Detection GrowthRate
+              </h3>
+            </div>
+          </CardBody>
+        </Card>
 
         {/* AI Assistant Moderation */}
         <Card>
@@ -219,26 +285,6 @@ export const AdminDashboard: React.FC = () => {
               <Button leftIcon={<MessageSquare size={16} />}>
                 Review Responses
               </Button>
-            </div>
-          </CardBody>
-        </Card>
-
-        {/* Fraud Detection */}
-        <Card>
-          <CardHeader className="flex justify-between items-center">
-            <h2 className="text-lg font-medium text-gray-900">
-              Fraud & Risk Detection
-            </h2>
-            <Badge variant="warning">Security</Badge>
-          </CardHeader>
-          <CardBody>
-            <p className="text-gray-600">
-              Monitor flagged activities and take corrective actions like
-              freezing accounts or suspending suspicious campaigns.
-            </p>
-            <div className="mt-4 flex gap-2">
-              <Button leftIcon={<Shield size={16} />}>View Reports</Button>
-              <Button variant="outline">Take Action</Button>
             </div>
           </CardBody>
         </Card>

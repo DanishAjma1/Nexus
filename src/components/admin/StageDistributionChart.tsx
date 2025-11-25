@@ -9,7 +9,7 @@ const data = [
 
 const COLORS = ["#6366f1", "#22c55e", "#f97316", "#3b82f6"];
 
-export default function StageDistributionChart() {
+export const StageDistributionChart = () => {
   return (
     <ResponsiveContainer width={"100%"} height={"92%"}>
       <PieChart>
@@ -28,4 +28,4 @@ export default function StageDistributionChart() {
       </PieChart>
     </ResponsiveContainer>
   );
-}
+};

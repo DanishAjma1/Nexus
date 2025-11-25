@@ -8,14 +8,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-const data = [
-  { industry: "Fintech", count: 12 },
-  { industry: "Health", count: 8 },
-  { industry: "EdTech", count: 15 },
-  { industry: "SaaS", count: 20 },
-];
-
-export default function StartupIndustryChart() {
+export const StartupIndustryChart = ({ data }) => {
   return (
     <ResponsiveContainer width="100%" height="100%">
       <BarChart width={500} height={300} data={data}>
@@ -27,4 +20,4 @@ export default function StartupIndustryChart() {
       </BarChart>
     </ResponsiveContainer>
   );
-}
+};

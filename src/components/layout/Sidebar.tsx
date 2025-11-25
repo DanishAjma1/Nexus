@@ -13,6 +13,10 @@ import {
   HelpCircle,
   AlertTriangle,
   Rocket,
+  Shield,
+  Users2Icon,
+  Briefcase,
+  ShieldBan,
 } from "lucide-react";
 
 interface SidebarItemProps {
@@ -84,14 +88,14 @@ export const Sidebar: React.FC = () => {
   const adminItems = [
     {
       to: "/dashboard/admin",
-      icon: <Home size={20} />,
+      icon: <Shield size={20} />,
       text: "Dashboard Overview",
     },
 
     {
       to: "/admin/all-users",
-      icon: <Building2 size={20} />,
-      text: "Manage entrepreneur",
+      icon: <Briefcase size={20} />,
+      text: "Manage Users",
     },
     {
       to: "/admin/investors",
@@ -100,7 +104,7 @@ export const Sidebar: React.FC = () => {
     },
     {
       to: "/admin/supporters",
-      icon: <Users size={20} />,
+      icon: <Users2Icon size={20} />,
       text: "Manage Supporters",
     },
 
@@ -109,7 +113,11 @@ export const Sidebar: React.FC = () => {
       icon: <Rocket size={20} />,
       text: "Active Campaigns",
     },
-
+    {
+      to: "/admin/flaggedAccounts",
+      icon: <ShieldBan size={20} />,
+      text: "Fraud and Risk Detection",
+    },
     {
       to: "/admin/flaggedAccounts",
       icon: <AlertTriangle size={20} />,

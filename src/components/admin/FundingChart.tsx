@@ -10,12 +10,12 @@ import {
 
 const data = [
   { month: "Jan", funding: 20000 },
-  { month: "Feb", funding: 50000 },
-  { month: "Mar", funding: 80000 },
-  { month: "Apr", funding: 120000 },
+  { month: "Feb", funding: 80000 },
+  { month: "Mar", funding: 40000 },
+  { month: "Apr", funding: 100000 },
 ];
 
-export default function FundingChart() {
+export const FundingChart = () => {
   return (
     <ResponsiveContainer width={"100%"} height={"100%"}>
       <AreaChart data={data}>
@@ -32,4 +32,4 @@ export default function FundingChart() {
       </AreaChart>
     </ResponsiveContainer>
   );
-}
+};
