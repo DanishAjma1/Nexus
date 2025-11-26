@@ -45,7 +45,7 @@ import {
 } from "./pages/admin/FraudAndRiskDetection";
 import { Activities } from "./pages/admin/activities";
 import { Investors } from "./pages/admin/investors";
-import { Campaigns } from "./pages/admin/campaigns";
+import Campaigns from "./pages/admin/campaigns";
 
 import { HomePage } from "./pages/home/HomePage";
 import { LoginWithOAuthPage } from "./pages/auth/LoginWithOAuthPage";
