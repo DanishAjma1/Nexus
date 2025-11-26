@@ -18,7 +18,7 @@ import { getInvestorById } from "../../data/users";
 import { Investor } from "../../types";
 
 type Props = {
-  userId: string | undefined;
+  userId?: string | undefined;
 };
 export const InvestorProfile: React.FC<Props> = ({ userId }) => {
   const { id } = useParams<{ id: string }>();

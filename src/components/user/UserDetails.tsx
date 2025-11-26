@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { InvestorSettings } from "../settings/InvestorSettings";
 import { EntrepreneurSettings } from "../settings/EntrepreneurSettings";
 import { useAuth } from "../../context/AuthContext";
+import { Card } from "../ui/Card";
 
 export const UserDetails: React.FC = () => {
   const [role, setRole] = useState<string | null>(null);
@@ -25,17 +26,21 @@ export const UserDetails: React.FC = () => {
   return (
     <>
       <div className="absolute inset-0 w-full h-full ">
-        <img src="/app logo.jpeg" alt="background" className="w-full h-full object-cover" />
+        {/* <img
+          src="/app logo.jpeg"
+          alt="background"
+          className="w-full h-full object-cover"
+        /> */}
       </div>
       <div className="flex flex-col items-center justify-center min-h-screen w-full">
-        <div className="flex gap-5 w-9/12 relative justify-end">
-          <div className="w-1/2">
+        <div className="flex gap-5 w-10/12 relative justify-end">
+          <Card className="w-1/2">
             {role === "investor" ? (
               <InvestorSettings />
             ) : (
               <EntrepreneurSettings />
             )}
-          </div>
+          </Card>
         </div>
       </div>
     </>

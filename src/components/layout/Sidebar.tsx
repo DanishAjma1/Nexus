@@ -114,7 +114,7 @@ export const Sidebar: React.FC = () => {
       text: "Active Campaigns",
     },
     {
-      to: "/admin/flaggedAccounts",
+      to: "/admin/fraud-and-risk-detection",
       icon: <ShieldBan size={20} />,
       text: "Fraud and Risk Detection",
     },
