@@ -24,7 +24,7 @@ import { Entrepreneur } from "../../types";
 import { AmountMeasureWithTags, getEnterpreneurById } from "../../data/users";
 
 type Props = {
-  userId: string | undefined;
+  userId?: string | undefined;
 };
 export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
   const { id } = useParams<{ id: string }>();
