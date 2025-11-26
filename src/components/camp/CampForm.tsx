@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 
 const URL = import.meta.env.VITE_BACKEND_URL;
 
+
 interface CampFormProps {
   onSuccess: () => void;
 }
@@ -18,6 +19,7 @@ const CampForm: React.FC<CampFormProps> = ({ onSuccess }) => {
     endDate: "",
     category: "Other",
   });
+
   const [images, setImages] = useState<FileList | null>(null);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -25,10 +27,7 @@ const CampForm: React.FC<CampFormProps> = ({ onSuccess }) => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       setImages(e.target.files);
-      const urls = Array.from(e.target.files).map((file) =>
-        URL.createObjectURL(file)
-      );
-      setPreviewUrls(urls);
+      setPreviewUrls(Array.from(e.target.files).map((file) => URL.createObjectURL(file)));
     }
   };
 
@@ -40,8 +39,97 @@ const CampForm: React.FC<CampFormProps> = ({ onSuccess }) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const validateForm = () => {
+  const { title, description, goalAmount, startDate, endDate, category } = formData;
+
+  // Title validations
+  if (!title.trim()) {
+    toast.error("Title is required");
+    return false;
+  }
+
+  // Only letters and spaces allowed for title
+  if (!/^[A-Za-z\s]+$/.test(title)) {
+    toast.error("Title must contain only letters and spaces");
+    return false;
+  }
+
+  // Description validations
+  if (!description.trim()) {
+    toast.error("Description is required");
+    return false;
+  }
+
+  // Only letters and spaces allowed for description
+  if (!/^[A-Za-z\s]+$/.test(description)) {
+    toast.error("Description must contain only letters and spaces");
+    return false;
+  }
+
+  // Minimum 30 words validation
+  const wordCount = description.trim().split(/\s+/).length;
+  if (wordCount < 30) {
+    toast.error("Description must be at least 30 words");
+    return false;
+  }
+
+  // Goal amount validation
+  if (!goalAmount || isNaN(Number(goalAmount)) || Number(goalAmount) <= 0) {
+    toast.error("Goal amount must be a positive number");
+    return false;
+  }
+
+  // Date validations
+  if (!startDate) {
+    toast.error("Start date is required");
+    return false;
+  }
+
+  if (!endDate) {
+    toast.error("End date is required");
+    return false;
+  }
+
+  if (new Date(startDate) > new Date(endDate)) {
+    toast.error("Start date cannot be after end date");
+    return false;
+  }
+
+  // Category validation
+  if (!category) {
+    toast.error("Category is required");
+    return false;
+  }
+
+  // Images validation
+  if (!images || images.length === 0) {
+    toast.error("At least one image is required");
+    return false;
+  }
+
+  // Optional: Validate image types and sizes
+  for (let i = 0; i < images.length; i++) {
+    const file = images[i];
+    if (!file.type.startsWith("image/")) {
+      toast.error(`File ${file.name} is not an image`);
+      return false;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error(`File ${file.name} exceeds 5MB`);
+      return false;
+    }
+  }
+
+  return true;
+};
+
+
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!validateForm()) return;
+
     setLoading(true);
 
     try {
@@ -109,6 +197,7 @@ const CampForm: React.FC<CampFormProps> = ({ onSuccess }) => {
         placeholder="Campaign Title"
         value={formData.title}
         onChange={handleChange}
+        className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
         required
         className="w-full bg-gray-900 text-white border border-yellow-700 p-3 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:outline-none transition"
       />
@@ -120,6 +209,7 @@ const CampForm: React.FC<CampFormProps> = ({ onSuccess }) => {
         placeholder="Campaign Description"
         value={formData.description}
         onChange={handleChange}
+        className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
         required
         rows={4}
         className="w-full bg-gray-900 text-white border border-yellow-700 p-3 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:outline-none transition"
@@ -133,6 +223,7 @@ const CampForm: React.FC<CampFormProps> = ({ onSuccess }) => {
         placeholder="Goal Amount"
         value={formData.goalAmount}
         onChange={handleChange}
+        className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
         required
         className="w-full bg-gray-900 text-white border border-yellow-700 p-3 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:outline-none transition"
       />
@@ -145,6 +236,7 @@ const CampForm: React.FC<CampFormProps> = ({ onSuccess }) => {
           name="startDate"
           value={formData.startDate}
           onChange={handleChange}
+          className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
           required
           className="w-full bg-gray-900 text-white border border-yellow-700 p-3 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:outline-none transition"
         />
@@ -154,6 +246,7 @@ const CampForm: React.FC<CampFormProps> = ({ onSuccess }) => {
           name="endDate"
           value={formData.endDate}
           onChange={handleChange}
+          className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
           required
           className="w-full bg-gray-900 text-white border border-yellow-700 p-3 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:outline-none transition"
         />

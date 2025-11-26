@@ -13,17 +13,23 @@ interface Campaign {
   raisedAmount: number;
   status: string;
   category: string;
+  startDate: string;
+  endDate: string;
   images?: string[];
 }
 
-export const Campaigns: React.FC = () => {
+const Campaigns: React.FC = () => {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [filtered, setFiltered] = useState<Campaign[]>([]);
+  const [query, setQuery] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const fetchCampaigns = async () => {
     try {
       const res = await axios.get(`${URL}/admin/campaigns`);
       setCampaigns(res.data);
+      setFiltered(res.data);
     } catch {
       toast.error("⚠️ Failed to fetch campaigns");
     }
@@ -44,6 +50,34 @@ export const Campaigns: React.FC = () => {
   useEffect(() => {
     fetchCampaigns();
   }, []);
+
+  const handleSearch = (e: any) => {
+    e.preventDefault();
+    const q = query.toLowerCase();
+    const result = campaigns.filter(
+      (c) =>
+        c.title.toLowerCase().includes(q) ||
+        c.description.toLowerCase().includes(q) ||
+        c.category.toLowerCase().includes(q)
+    );
+    setFiltered(result);
+  };
+
+  const total = filtered.length;
+  const active = filtered.filter((c) => c.status === "active").length;
+  const stopped = filtered.filter((c) => c.status === "stopped").length;
+
+  const scrollLeft = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollBy({ left: -500, behavior: "smooth" });
+    }
+  };
+
+  const scrollRight = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollBy({ left: 500, behavior: "smooth" });
+    }
+  };
 
   return (
     <div className="p-6 relative min-h-screen bg-gradient-to-br from-black via-gray-900 to-gray-800 text-white">
@@ -131,7 +165,25 @@ export const Campaigns: React.FC = () => {
               </b>
             </p>
 
-            <div className="flex gap-2 mt-3">
+            <div className="flex justify-between text-xs mb-3">
+              <p>
+                <span className="font-semibold text-purple-600">Start:</span>{" "}
+                {new Date(c.startDate).toLocaleDateString()}
+              </p>
+              <p>
+                <span className="font-semibold text-purple-600">End:</span>{" "}
+                {new Date(c.endDate).toLocaleDateString()}
+              </p>
+            </div>
+
+            <p className="text-xs mb-3">
+              Status:{" "}
+              <span className={`font-semibold ${c.status === "active" ? "text-green-500" : "text-red-500"}`}>
+                {c.status}
+              </span>
+            </p>
+
+            <div className="flex gap-2 mt-auto">
               {c.status === "active" ? (
                 <button
                   onClick={() => updateStatus(c._id, "stopped")}
@@ -154,3 +206,5 @@ export const Campaigns: React.FC = () => {
     </div>
   );
 };
+
+export default Campaigns;
