@@ -1,13 +1,23 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import {
-  Menu, X, Bell, MessageCircle, User, LogOut,
-  Building2, CircleDollarSign, Shield, Users,
-  Handshake
-} from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
-import { Avatar } from '../ui/Avatar';
-import { Button } from '../ui/Button';
+  Menu,
+  X,
+  Bell,
+  MessageCircle,
+  User,
+  LogOut,
+  Building2,
+  CircleDollarSign,
+  Shield,
+  Users,
+  Handshake,
+  UsersRoundIcon,
+  Briefcase,
+} from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
+import { Avatar } from "../ui/Avatar";
+import { Button } from "../ui/Button";
 
 export const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -18,49 +28,77 @@ export const Navbar: React.FC = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate("/login");
   };
 
   // Determine dashboard route by role
   const dashboardRoute =
-    user?.role === 'entrepreneur'
-      ? '/dashboard/entrepreneur'
-      : user?.role === 'investor'
-      ? '/dashboard/investor'
-      : user?.role === 'admin'
-      ? '/dashboard/admin'
-      : '/login';
+    user?.role === "entrepreneur"
+      ? "/dashboard/entrepreneur"
+      : user?.role === "investor"
+      ? "/dashboard/investor"
+      : user?.role === "admin"
+      ? "/dashboard/admin"
+      : "/login";
 
   // Determine profile route by role
-  const profileRoute = user ? `/profile/${user.role}/${user.userId}` : '/login';
+  const profileRoute = user ? `/profile/${user.role}/${user.userId}` : "/login";
 
   // Navigation links by role
   let navLinks: { icon: JSX.Element; text: string; path: string }[] = [];
 
-  if (user?.role === 'admin') {
+  if (user?.role === "admin") {
     navLinks = [
-      { icon: <Shield size={18} />, text: 'Admin Dashboard', path: dashboardRoute },
-      { icon: <Users size={18} />, text: 'Manage Users', path: '/admin/users' },
-      { icon: <Building2 size={18} />, text: 'Startups', path: '/admin/startups' },
-      { icon: <CircleDollarSign size={18} />, text: 'Campaigns', path: '/admin/campaigns' },
-      { icon: <Bell size={18} />, text: 'Notifications', path: '/notifications' },
+      {
+        icon: <Shield size={18} />,
+        text: "Admin Dashboard",
+        path: dashboardRoute,
+      },
+      {
+        icon: <Briefcase size={18} />,
+        text: "Manage Users",
+        path: "/admin/all-users",
+      },
+      {
+        icon: <CircleDollarSign size={18} />,
+        text: "Campaigns",
+        path: "/admin/campaigns",
+      },
+      {
+        icon: <UsersRoundIcon size={18} />,
+        text: "Supporters",
+        path: "/admin/Supporters",
+      },
+      {
+        icon: <Bell size={18} />,
+        text: "Notifications",
+        path: "/notifications",
+      },
     ];
   } else {
     // Normal user (entrepreneur or investor)
     navLinks = [
       {
         icon:
-          user?.role === 'entrepreneur' ? (
+          user?.role === "entrepreneur" ? (
             <Building2 size={18} />
           ) : (
             <CircleDollarSign size={18} />
           ),
-        text: 'Dashboard',
+        text: "Dashboard",
         path: dashboardRoute,
       },
-      { icon: <MessageCircle size={18} />, text: 'Messages', path: '/messages' },
-      { icon: <Bell size={18} />, text: 'Notifications', path: '/notifications' },
-      { icon: <User size={18} />, text: 'Profile', path: profileRoute },
+      {
+        icon: <MessageCircle size={18} />,
+        text: "Messages",
+        path: "/messages",
+      },
+      {
+        icon: <Bell size={18} />,
+        text: "Notifications",
+        path: "/notifications",
+      },
+      { icon: <User size={18} />, text: "Profile", path: profileRoute },
     ];
   }
 
@@ -71,32 +109,12 @@ export const Navbar: React.FC = () => {
           {/* Logo */}
           <div className="flex-shrink-0 flex items-center">
             <Link to="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-primary-600 rounded-md flex items-center justify-center">
-                <svg
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="text-white"
-                >
-                  <path
-                    d="M20 7H4C2.89543 7 2 7.89543 2 9V19C2 20.1046 2.89543 21 4 21H20C21.1046 21 22 20.1046 22 19V9C22 7.89543 21.1046 7 20 7Z"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M16 21V5C16 3.89543 15.1046 3 14 3H10C8.89543 3 8 3.89543 8 5V21"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
+              <div className="w-10 h-10 bg-primary-600 rounded-md flex items-center justify-center">
+                <Handshake className="text-white" />
               </div>
-              <span className="text-lg font-bold text-gray-900">TrustBridge AI</span>
+              <span className="text-lg font-bold text-gray-900">
+                TrustBridge AI
+              </span>
             </Link>
           </div>
 
@@ -121,14 +139,19 @@ export const Navbar: React.FC = () => {
                 >
                   Logout
                 </Button>
-                <Link to={profileRoute} className="flex items-center space-x-2 ml-2">
+                <Link
+                  to={profileRoute}
+                  className="flex items-center space-x-2 ml-2"
+                >
                   <Avatar
                     src={user.avatarUrl}
                     alt={user.name}
                     size="sm"
-                    status={user.isOnline ? 'online' : 'offline'}
+                    status={user.isOnline ? "online" : "offline"}
                   />
-                  <span className="text-sm font-medium text-gray-700">{user.name}</span>
+                  <span className="text-sm font-medium text-gray-700">
+                    {user.name}
+                  </span>
                 </Link>
               </div>
             ) : (
@@ -149,7 +172,11 @@ export const Navbar: React.FC = () => {
               onClick={toggleMenu}
               className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-primary-600 hover:bg-gray-50 focus:outline-none"
             >
-              {isMenuOpen ? <X className="block h-6 w-6" /> : <Menu className="block h-6 w-6" />}
+              {isMenuOpen ? (
+                <X className="block h-6 w-6" />
+              ) : (
+                <Menu className="block h-6 w-6" />
+              )}
             </button>
           </div>
         </div>
@@ -166,11 +193,15 @@ export const Navbar: React.FC = () => {
                     src={user.avatarUrl}
                     alt={user.name}
                     size="sm"
-                    status={user.isOnline ? 'online' : 'offline'}
+                    status={user.isOnline ? "online" : "offline"}
                   />
                   <div>
-                    <p className="text-sm font-medium text-gray-800">{user.name}</p>
-                    <p className="text-xs text-gray-500 capitalize">{user.role}</p>
+                    <p className="text-sm font-medium text-gray-800">
+                      {user.name}
+                    </p>
+                    <p className="text-xs text-gray-500 capitalize">
+                      {user.role}
+                    </p>
                   </div>
                 </div>
 

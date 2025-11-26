@@ -17,7 +17,10 @@ import { useAuth } from "../../context/AuthContext";
 import { getInvestorById } from "../../data/users";
 import { Investor } from "../../types";
 
-export const InvestorProfile: React.FC = () => {
+type Props = {
+  userId?: string | undefined;
+};
+export const InvestorProfile: React.FC<Props> = ({ userId }) => {
   const { id } = useParams<{ id: string }>();
   const { user: currentUser } = useAuth();
   const [investor, setInvestor] = useState<Investor>();
@@ -26,11 +29,16 @@ export const InvestorProfile: React.FC = () => {
   // Fetch investor data
   useEffect(() => {
     const fetchInvestors = async () => {
-      const investor = await getInvestorById(id);
-      setInvestor(investor);
+      if (id) {
+        const investor = await getInvestorById(id);
+        setInvestor(investor);
+      } else {
+        const investor = await getInvestorById(userId);
+        setInvestor(investor);
+      }
     };
     fetchInvestors();
-  }, [id]);
+  }, [id, userId]);
 
   if (!currentUser) return null;
   if (!investor || investor.role !== "investor") {
@@ -51,6 +59,7 @@ export const InvestorProfile: React.FC = () => {
   }
 
   const isCurrentUser = currentUser?.userId === investor?.userId;
+  const isAdmin = currentUser?.role === "admin";
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -91,10 +100,16 @@ export const InvestorProfile: React.FC = () => {
           </div>
 
           <div className="mt-6 sm:mt-0 flex flex-col sm:flex-row gap-2 justify-center sm:justify-end">
-            {!isCurrentUser && (
-              <Link to={`/chat/${investor.userId}`}>
-                <Button leftIcon={<MessageCircle size={18} />}>Message</Button>
-              </Link>
+            {!isAdmin ? (
+              !isCurrentUser && (
+                <Link to={`/chat/${investor.userId}`}>
+                  <Button leftIcon={<MessageCircle size={18} />}>
+                    Message
+                  </Button>
+                </Link>
+              )
+            ) : (
+              <></>
             )}
 
             {isCurrentUser && (
@@ -122,7 +137,9 @@ export const InvestorProfile: React.FC = () => {
               <h2 className="text-lg font-medium text-gray-900">About</h2>
             </CardHeader>
             <CardBody>
-              <p className="text-gray-700">{investor.bio || "Say something about u..?"}</p>
+              <p className="text-gray-700">
+                {investor.bio || "Say something about u..?"}
+              </p>
             </CardBody>
           </Card>
 
@@ -140,12 +157,13 @@ export const InvestorProfile: React.FC = () => {
                     Industries
                   </h3>
                   <div className="flex flex-wrap gap-2 mt-2">
-                    {investor.investmentInterests &&
+                    {(investor.investmentInterests &&
                       investor.investmentInterests.map((interest, index) => (
                         <Badge key={index} variant="primary" size="md">
                           {interest}
                         </Badge>
-                      )) || "Add some industries..?"}
+                      ))) ||
+                      "Add some industries..?"}
                   </div>
                 </div>
 
@@ -154,12 +172,13 @@ export const InvestorProfile: React.FC = () => {
                     Investment Stages
                   </h3>
                   <div className="flex flex-wrap gap-2 mt-2">
-                    {investor.investmentStage &&
+                    {(investor.investmentStage &&
                       investor.investmentStage.map((stage, index) => (
                         <Badge key={index} variant="secondary" size="md">
                           {stage}
                         </Badge>
-                      )) || "Add investment stages..?"}
+                      ))) ||
+                      "Add investment stages..?"}
                   </div>
                 </div>
 
@@ -187,14 +206,15 @@ export const InvestorProfile: React.FC = () => {
                 Portfolio Companies
               </h2>
               <span className="text-sm text-gray-500">
-                {investor.portfolioCompanies &&
-                  investor.portfolioCompanies.length || 0}{" "}
+                {(investor.portfolioCompanies &&
+                  investor.portfolioCompanies.length) ||
+                  0}{" "}
                 companies
               </span>
             </CardHeader>
             <CardBody>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {investor.portfolioCompanies &&
+                {(investor.portfolioCompanies &&
                   investor.portfolioCompanies.map((company, index) => (
                     <div
                       key={index}
@@ -212,7 +232,8 @@ export const InvestorProfile: React.FC = () => {
                         </p>
                       </div>
                     </div>
-                  )) || "You don't invest in any company yet.."}
+                  ))) ||
+                  "You don't invest in any company yet.."}
               </div>
             </CardBody>
           </Card>
@@ -235,9 +256,10 @@ export const InvestorProfile: React.FC = () => {
                   </span>
                   <p className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                     <DollarSign size={16} className="text-red-500" />
-                    {investor.minimumInvestment &&
-                      investor.minimumInvestment || 0} - {" "}
-                    {investor.maximumInvestment || 0}
+                    {(investor.minimumInvestment &&
+                      investor.minimumInvestment) ||
+                      0}{" "}
+                    - {investor.maximumInvestment || 0}
                   </p>
                 </div>
 
@@ -264,7 +286,7 @@ export const InvestorProfile: React.FC = () => {
                     Investment Focus
                   </span>
                   <div className="mt-2 space-y-2">
-                    {investor.investmentInterests &&
+                    {(investor.investmentInterests &&
                       investor.investmentInterests.map((interest, index) => (
                         <div
                           key={index}
@@ -280,7 +302,8 @@ export const InvestorProfile: React.FC = () => {
                             ></div>
                           </div>
                         </div>
-                      )) || "--"}
+                      ))) ||
+                      "--"}
                   </div>
                 </div>
               </div>
@@ -331,8 +354,9 @@ export const InvestorProfile: React.FC = () => {
                         Active Investments
                       </h3>
                       <p className="text-xl font-semibold text-primary-700 mt-1">
-                        {investor.portfolioCompanies &&
-                          investor.portfolioCompanies.length || 0}
+                        {(investor.portfolioCompanies &&
+                          investor.portfolioCompanies.length) ||
+                          0}
                       </p>
                     </div>
                     <BarChart3 size={24} className="text-primary-600" />
