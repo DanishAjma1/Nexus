@@ -1,10 +1,24 @@
-import React from 'react';
-import { NavLink } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import { 
-  Home, Building2, CircleDollarSign, Users, MessageCircle, 
-  Bell, FileText, Settings, HelpCircle, AlertTriangle, Rocket , DollarSign
-} from 'lucide-react';
+import React from "react";
+import { NavLink } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import {
+  Home,
+  Building2,
+  CircleDollarSign,
+  Users,
+  MessageCircle,
+  Bell,
+  FileText,
+  Settings,
+  HelpCircle,
+  AlertTriangle,
+  Rocket,
+  DollarSign,
+  User2Icon,
+  ShieldBan,
+  Briefcase,
+  Shield,
+} from "lucide-react";
 
 interface SidebarItemProps {
   to: string;
@@ -36,19 +50,29 @@ export const Sidebar: React.FC = () => {
   if (!user) return null;
 
   // Entrepreneur Sidebar
-  
 
-const entrepreneurItems = [
-  { to: '/dashboard/entrepreneur', icon: <Home size={20} />, text: 'Dashboard' },
-  { to: '/profile/entrepreneur/' + user.userId, icon: <Building2 size={20} />, text: 'My Startup' },
-  { to: '/investors', icon: <CircleDollarSign size={20} />, text: 'Find Investors' },
-  { to: '/messages', icon: <MessageCircle size={20} />, text: 'Messages' },
-  { to: '/notifications', icon: <Bell size={20} />, text: 'Notifications' },
-  { to: '/documents', icon: <FileText size={20} />, text: 'Documents' },
-  { to: '/viewdeals', icon: <DollarSign size={20} />, text: 'View Deals' },
-];
+  const entrepreneurItems = [
+    {
+      to: "/dashboard/entrepreneur",
+      icon: <Home size={20} />,
+      text: "Dashboard",
+    },
+    {
+      to: "/profile/entrepreneur/" + user.userId,
+      icon: <Building2 size={20} />,
+      text: "My Startup",
+    },
+    {
+      to: "/investors",
+      icon: <CircleDollarSign size={20} />,
+      text: "Find Investors",
+    },
+    { to: "/messages", icon: <MessageCircle size={20} />, text: "Messages" },
+    { to: "/notifications", icon: <Bell size={20} />, text: "Notifications" },
+    { to: "/documents", icon: <FileText size={20} />, text: "Documents" },
+    { to: "/viewdeals", icon: <DollarSign size={20} />, text: "View Deals" },
+  ];
 
-  
   // Investor Sidebar
   const investorItems = [
     { to: "/dashboard/investor", icon: <Home size={20} />, text: "Dashboard" },
@@ -77,21 +101,17 @@ const entrepreneurItems = [
       text: "Manage Users",
     },
     {
-      to: "/admin/investors",
-      icon: <CircleDollarSign size={20} />,
-      text: "Manage Investors",
-    },
-    {
-      to: "/admin/supporters",
-      icon: <Users2Icon size={20} />,
-      text: "Manage Supporters",
-    },
-
-    {
       to: "/admin/campaigns",
       icon: <Rocket size={20} />,
       text: "Active Campaigns",
     },
+
+    {
+      to: "/admin/supporters",
+      icon: <User2Icon size={20} />,
+      text: "Manage Supporters",
+    },
+
     {
       to: "/admin/fraud-and-risk-detection",
       icon: <ShieldBan size={20} />,

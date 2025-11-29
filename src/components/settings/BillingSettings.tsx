@@ -84,7 +84,6 @@ export const BillingSettings: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -147,9 +146,7 @@ export const BillingSettings: React.FC = () => {
 
       <Card>
         <CardHeader>
-          <h2 className="text-lg font-medium text-gray-900">
-            Billing History
-          </h2>
+          <h2 className="text-lg font-medium text-gray-900">Billing History</h2>
         </CardHeader>
         <CardBody>
           <div className="space-y-3">
@@ -177,19 +174,6 @@ export const BillingSettings: React.FC = () => {
                   </div>
                   <p className="text-sm text-gray-600">{invoice.description}</p>
                   <p className="text-xs text-gray-500 mt-1">{invoice.date}</p>
-                </div>
-                <div className="flex items-center gap-4">
-                  <span className="text-lg font-semibold text-gray-900">
-                    ${invoice.amount.toFixed(2)}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDownloadInvoice(invoice.id)}
-                  >
-                    <Download size={16} className="mr-1" />
-                    Download
-                  </Button>
                 </div>
               </div>
             ))}
