@@ -308,3 +308,5 @@ export const DealsPage: React.FC = () => {
     </div>
   );
 };
+
+
