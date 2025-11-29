@@ -1,7 +1,9 @@
-"use client";
 import React, { useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { motion } from "framer-motion";
+
+const URL = import.meta.env.VITE_BACKEND_URL;
 
 
 interface CampFormProps {
@@ -30,7 +32,9 @@ const CampForm: React.FC<CampFormProps> = ({ onSuccess }) => {
   };
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
   ) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -116,12 +120,21 @@ const CampForm: React.FC<CampFormProps> = ({ onSuccess }) => {
 
     try {
       const data = new FormData();
-      Object.entries(formData).forEach(([k, v]) => data.append(k, v));
-      if (images) Array.from(images).forEach((file) => data.append("images", file));
+      Object.entries(formData).forEach(([key, value]) =>
+        data.append(key, value)
+      );
 
-      await axios.post("http://localhost:5000/admin/campaigns", data);
-      toast.success("Campaign created!");
+      if (images) {
+        for (let i = 0; i < images.length; i++) {
+          data.append("images", images[i]);
+        }
+      }
 
+      await axios.post(`${URL}/admin/campaigns`, data, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      toast.success("🎉 Campaign created successfully!");
       setFormData({
         title: "",
         description: "",
@@ -132,36 +145,65 @@ const CampForm: React.FC<CampFormProps> = ({ onSuccess }) => {
       });
       setImages(null);
       setPreviewUrls([]);
-
       onSuccess();
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to create campaign");
+    } catch (error: any) {
+      console.error(error);
+      toast.error(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to create campaign"
+      );
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <form className="space-y-4" onSubmit={handleSubmit}>
-      <input
+    <motion.form
+      onSubmit={handleSubmit}
+      initial={{ opacity: 0, y: 40 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      className="max-w-lg mx-auto p-6 rounded-2xl shadow-2xl bg-gradient-to-br from-black via-gray-900 to-gray-800 border border-yellow-600/40 space-y-5 text-white"
+    >
+      <motion.h2
+  className="text-2xl font-bold text-center text-yellow-400 mt-2"
+  initial={{ opacity: 0, y: -10 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ delay: 0.2, duration: 0.4 }}
+>
+  🚀 Add New Campaign
+</motion.h2>
+
+      {/* Title */}
+      <motion.input
+        whileFocus={{ scale: 1.02 }}
+        type="text"
         name="title"
-        placeholder="Title"
+        placeholder="Campaign Title"
         value={formData.title}
         onChange={handleChange}
         className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
         required
+        className="w-full bg-gray-900 text-white border border-yellow-700 p-3 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:outline-none transition"
       />
 
-      <textarea
+      {/* Description */}
+      <motion.textarea
+        whileFocus={{ scale: 1.02 }}
         name="description"
-        placeholder="Description"
+        placeholder="Campaign Description"
         value={formData.description}
         onChange={handleChange}
         className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
         required
+        rows={4}
+        className="w-full bg-gray-900 text-white border border-yellow-700 p-3 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:outline-none transition"
       />
 
-      <input
+      {/* Goal Amount */}
+      <motion.input
+        whileFocus={{ scale: 1.02 }}
         type="number"
         name="goalAmount"
         placeholder="Goal Amount"
@@ -169,67 +211,88 @@ const CampForm: React.FC<CampFormProps> = ({ onSuccess }) => {
         onChange={handleChange}
         className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
         required
-        min={1}
+        className="w-full bg-gray-900 text-white border border-yellow-700 p-3 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:outline-none transition"
       />
 
-      <div className="flex gap-2">
-        <input
+      {/* Dates */}
+      <div className="grid grid-cols-2 gap-4">
+        <motion.input
+          whileFocus={{ scale: 1.02 }}
           type="date"
           name="startDate"
           value={formData.startDate}
           onChange={handleChange}
           className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
           required
+          className="w-full bg-gray-900 text-white border border-yellow-700 p-3 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:outline-none transition"
         />
-        <input
+        <motion.input
+          whileFocus={{ scale: 1.02 }}
           type="date"
           name="endDate"
           value={formData.endDate}
           onChange={handleChange}
           className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
           required
+          className="w-full bg-gray-900 text-white border border-yellow-700 p-3 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:outline-none transition"
         />
       </div>
 
-      <select
+      {/* Category */}
+      <motion.select
+        whileFocus={{ scale: 1.02 }}
         name="category"
         value={formData.category}
         onChange={handleChange}
-        className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        required
+        className="w-full bg-gray-900 text-white border border-yellow-700 p-3 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:outline-none transition"
       >
         <option>Technology</option>
         <option>Health</option>
         <option>Education</option>
         <option>Environment</option>
         <option>Other</option>
-      </select>
+      </motion.select>
 
-      <input
-        type="file"
-        multiple
-        accept="image/*"
-        onChange={handleFileChange}
-        className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        required
-      />
+      {/* File Upload */}
+      <motion.div
+        whileHover={{ scale: 1.01 }}
+        className="border-2 border-dashed border-yellow-700 p-4 rounded-lg text-center hover:border-yellow-400 transition"
+      >
+        <input
+          type="file"
+          multiple
+          accept="image/*"
+          onChange={handleFileChange}
+          className="w-full text-gray-300"
+        />
+      </motion.div>
 
+      {/* Preview Images */}
       {previewUrls.length > 0 && (
-        <div className="flex gap-2 mt-2 overflow-x-auto">
-          {previewUrls.map((url, i) => (
-            <img key={i} src={url} className="w-20 h-20 rounded-lg object-cover border" />
+        <div className="flex gap-2 overflow-x-auto mt-2">
+          {previewUrls.map((url, idx) => (
+            <motion.img
+              key={idx}
+              src={url}
+              alt="preview"
+              className="w-20 h-20 object-cover rounded-lg border border-yellow-700 shadow-sm"
+              whileHover={{ scale: 1.05 }}
+            />
           ))}
         </div>
       )}
 
-      <button
+      {/* Submit Button */}
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
         type="submit"
         disabled={loading}
-        className="bg-indigo-600 text-white px-6 py-3 rounded-full w-full hover:bg-indigo-700 transition-colors"
+        className="w-full bg-gradient-to-r from-yellow-500 to-yellow-700 text-black py-3 rounded-lg font-semibold shadow-lg hover:from-yellow-400 hover:to-yellow-600 transition "
       >
-        {loading ? "Creating..." : "Submit"}
-      </button>
-    </form>
+        {loading ? "⏳ Creating..." : "Create Campaign"}
+      </motion.button>
+    </motion.form>
   );
 };
 
