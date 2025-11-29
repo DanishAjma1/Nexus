@@ -32,6 +32,8 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
   const [entrepreneur, setEnterpreneur] = useState<Entrepreneur>();
   const [hasRequestedCollaboration, setHasRequestedCollaboration] =
     useState<boolean>();
+  const [isDealModalOpen, setIsDealModalOpen] = useState(false);
+
   const navigate = useNavigate();
 
   const [valuation, setValuation] = useState<number | undefined>(0);
@@ -185,6 +187,102 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
               )
             ) : (
               <></>
+            )}
+
+            {hasRequestedCollaboration && (
+              <Button
+                className="ml-2 bg-blue-600 text-white hover:bg-blue-700"
+                onClick={() => setIsDealModalOpen(true)}
+              >
+                Make a Deal
+              </Button>
+            )}
+            {isDealModalOpen && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+                <div className="bg-white rounded-lg w-96 p-6 relative shadow-lg">
+                  <h2 className="text-lg font-bold mb-4">Make a Deal</h2>
+
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      alert("Deal successfully submitted");
+
+                      setIsDealModalOpen(false);
+                    }}
+                  >
+                    {/* Entrepreneur Info */}
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Entrepreneur Name
+                      </label>
+                      <input
+                        type="text"
+                        value={entrepreneur?.name || "Zain"}
+                        readOnly
+                        className="mt-1 block w-full border border-gray-300 rounded-md p-2 bg-gray-100"
+                      />
+                    </div>
+
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Business Name
+                      </label>
+                      <input
+                        type="text"
+                        value={entrepreneur?.startupName || "Abcdmedia Startup"}
+                        readOnly
+                        className="mt-1 block w-full border border-gray-300 rounded-md p-2 bg-gray-100"
+                      />
+                    </div>
+
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Deal Details
+                      </label>
+                      <textarea
+                        required
+                        defaultValue="We propose an initial investment of $100,000 for 10% equity."
+                        className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                      />
+                    </div>
+
+                    {/* Investor Input Fields */}
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Investment Amount ($)
+                      </label>
+                      <input
+                        type="number"
+                        defaultValue={50000} // dummy amount
+                        className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                      />
+                    </div>
+
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Requested Equity (%)
+                      </label>
+                      <input
+                        type="number"
+                        defaultValue={5} // dummy equity
+                        className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                      />
+                    </div>
+
+                    {/* Buttons */}
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        type="button"
+                        onClick={() => setIsDealModalOpen(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button type="submit">Send Deal</Button>
+                    </div>
+                  </form>
+                </div>
+              </div>
             )}
 
             {isCurrentUser && (
