@@ -31,7 +31,6 @@ import { NotificationsPage } from "./pages/notifications/NotificationsPage";
 import { DocumentsPage } from "./pages/documents/DocumentsPage";
 import { SettingsPage } from "./pages/settings/SettingsPage";
 import { HelpPage } from "./pages/help/HelpPage";
-import { DealsPage } from "./pages/deals/DealsPage";
 
 // Chat Pages
 import { ChatPage } from "./pages/chat/ChatPage";
@@ -52,6 +51,8 @@ import { LoginWithOAuthPage } from "./pages/auth/LoginWithOAuthPage";
 import { UserDetails } from "./components/user/UserDetails";
 import { Supporters } from "./pages/admin/supporters";
 import { FlaggedAccounts } from "./pages/admin/flaggedAccounts";
+import { Deals } from "./pages/viewdeals/ViewDeal";
+
 import { Users } from "./pages/admin/Users";
 
 function App() {
@@ -128,13 +129,13 @@ function App() {
 
             <Route path="/call" element={<DashboardLayout />}></Route>
 
-            <Route path="/deals" element={<DashboardLayout />}>
-              <Route index element={<DealsPage />} />
+            <Route path="/viewdeals" element={<DashboardLayout />}>
+              <Route index element={<Deals />} />
             </Route>
 
             {/* Chat Routes */}
             <Route path="/chat" element={<DashboardLayout />}>
-              <Route path=":userId" element={<ChatPage />} />
+              <Route path=":userId" element={ <ChatPage/>} />
             </Route>
 
             {/* Redirect root to login */}

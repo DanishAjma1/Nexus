@@ -66,7 +66,7 @@ const CampForm: React.FC<CampFormProps> = ({ onSuccess }) => {
     return false;
   }
 
-  // Minimum 30 words validation
+  // Description lenght validation
   const wordCount = description.trim().split(/\s+/).length;
   if (wordCount < 30) {
     toast.error("Description must be at least 30 words");
@@ -106,20 +106,6 @@ const CampForm: React.FC<CampFormProps> = ({ onSuccess }) => {
     toast.error("At least one image is required");
     return false;
   }
-
-  // Optional: Validate image types and sizes
-  for (let i = 0; i < images.length; i++) {
-    const file = images[i];
-    if (!file.type.startsWith("image/")) {
-      toast.error(`File ${file.name} is not an image`);
-      return false;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error(`File ${file.name} exceeds 5MB`);
-      return false;
-    }
-  }
-
   return true;
 };
 
