@@ -31,7 +31,6 @@ import { NotificationsPage } from "./pages/notifications/NotificationsPage";
 import { DocumentsPage } from "./pages/documents/DocumentsPage";
 import { SettingsPage } from "./pages/settings/SettingsPage";
 import { HelpPage } from "./pages/help/HelpPage";
-import { DealsPage } from "./pages/deals/DealsPage";
 
 // Chat Pages
 import { ChatPage } from "./pages/chat/ChatPage";
@@ -130,8 +129,8 @@ function App() {
 
             <Route path="/call" element={<DashboardLayout />}></Route>
 
-            <Route path="/deals" element={<DashboardLayout />}>
-              <Route index element={<DealsPage />} />
+            <Route path="/viewdeals" element={<DashboardLayout />}>
+              <Route index element={<Deals />} />
             </Route>
 
             {/* Chat Routes */}
