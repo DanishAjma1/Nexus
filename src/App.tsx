@@ -52,6 +52,7 @@ import { UserDetails } from "./components/user/UserDetails";
 import { Supporters } from './pages/admin/supporters';
 import { FlaggedAccounts } from "./pages/admin/flaggedAccounts";
 
+
 function App() {
   return (
     <AuthProvider>
