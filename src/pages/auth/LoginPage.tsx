@@ -52,8 +52,8 @@ export const LoginPage: React.FC = () => {
       setEmail("in@gmail.com");
       setPassword("123");
     } else {
-      setEmail("admin@gmail.com");
-      setPassword("123");
+      setEmail("admin@trust.com");
+      setPassword("admin123");
     }
     setRole(userRole);
   };
