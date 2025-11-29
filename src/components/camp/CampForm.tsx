@@ -1,9 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { motion } from "framer-motion";
 
-const URL = import.meta.env.VITE_BACKEND_URL;
 
 interface CampFormProps {
   onSuccess: () => void;
@@ -18,6 +16,7 @@ const CampForm: React.FC<CampFormProps> = ({ onSuccess }) => {
     endDate: "",
     category: "Other",
   });
+
   const [images, setImages] = useState<FileList | null>(null);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -25,42 +24,103 @@ const CampForm: React.FC<CampFormProps> = ({ onSuccess }) => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       setImages(e.target.files);
-      const urls = Array.from(e.target.files).map((file) =>
-        URL.createObjectURL(file)
-      );
-      setPreviewUrls(urls);
+      setPreviewUrls(Array.from(e.target.files).map((file) => URL.createObjectURL(file)));
     }
   };
 
   const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const validateForm = () => {
+  const { title, description, goalAmount, startDate, endDate, category } = formData;
+
+  // Title validations
+  if (!title.trim()) {
+    toast.error("Title is required");
+    return false;
+  }
+
+  // Only letters and spaces allowed for title
+  if (!/^[A-Za-z\s]+$/.test(title)) {
+    toast.error("Title must contain only letters and spaces");
+    return false;
+  }
+
+  // Description validations
+  if (!description.trim()) {
+    toast.error("Description is required");
+    return false;
+  }
+
+  // Only letters and spaces allowed for description
+  if (!/^[A-Za-z\s]+$/.test(description)) {
+    toast.error("Description must contain only letters and spaces");
+    return false;
+  }
+
+  // Description lenght validation
+  const wordCount = description.trim().split(/\s+/).length;
+  if (wordCount < 30) {
+    toast.error("Description must be at least 30 words");
+    return false;
+  }
+
+  // Goal amount validation
+  if (!goalAmount || isNaN(Number(goalAmount)) || Number(goalAmount) <= 0) {
+    toast.error("Goal amount must be a positive number");
+    return false;
+  }
+
+  // Date validations
+  if (!startDate) {
+    toast.error("Start date is required");
+    return false;
+  }
+
+  if (!endDate) {
+    toast.error("End date is required");
+    return false;
+  }
+
+  if (new Date(startDate) > new Date(endDate)) {
+    toast.error("Start date cannot be after end date");
+    return false;
+  }
+
+  // Category validation
+  if (!category) {
+    toast.error("Category is required");
+    return false;
+  }
+
+  // Images validation
+  if (!images || images.length === 0) {
+    toast.error("At least one image is required");
+    return false;
+  }
+  return true;
+};
+
+
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!validateForm()) return;
+
     setLoading(true);
 
     try {
       const data = new FormData();
-      Object.entries(formData).forEach(([key, value]) =>
-        data.append(key, value)
-      );
+      Object.entries(formData).forEach(([k, v]) => data.append(k, v));
+      if (images) Array.from(images).forEach((file) => data.append("images", file));
 
-      if (images) {
-        for (let i = 0; i < images.length; i++) {
-          data.append("images", images[i]);
-        }
-      }
+      await axios.post("http://localhost:5000/admin/campaigns", data);
+      toast.success("Campaign created!");
 
-      await axios.post(`${URL}/admin/campaigns`, data, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-
-      toast.success("🎉 Campaign created successfully!");
       setFormData({
         title: "",
         description: "",
@@ -71,149 +131,104 @@ const CampForm: React.FC<CampFormProps> = ({ onSuccess }) => {
       });
       setImages(null);
       setPreviewUrls([]);
+
       onSuccess();
-    } catch (error: any) {
-      console.error(error);
-      toast.error(
-        error.response?.data?.message ||
-          error.message ||
-          "Failed to create campaign"
-      );
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to create campaign");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <motion.form
-      onSubmit={handleSubmit}
-      initial={{ opacity: 0, y: 40 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
-      className="max-w-lg mx-auto p-6 rounded-2xl shadow-2xl bg-gradient-to-br from-black via-gray-900 to-gray-800 border border-yellow-600/40 space-y-5 text-white"
-    >
-      <motion.h2
-  className="text-2xl font-bold text-center text-yellow-400 mt-2"
-  initial={{ opacity: 0, y: -10 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ delay: 0.2, duration: 0.4 }}
->
-  🚀 Add New Campaign
-</motion.h2>
-
-      {/* Title */}
-      <motion.input
-        whileFocus={{ scale: 1.02 }}
-        type="text"
+    <form className="space-y-4" onSubmit={handleSubmit}>
+      <input
         name="title"
-        placeholder="Campaign Title"
+        placeholder="Title"
         value={formData.title}
         onChange={handleChange}
+        className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
         required
-        className="w-full bg-gray-900 text-white border border-yellow-700 p-3 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:outline-none transition"
       />
 
-      {/* Description */}
-      <motion.textarea
-        whileFocus={{ scale: 1.02 }}
+      <textarea
         name="description"
-        placeholder="Campaign Description"
+        placeholder="Description"
         value={formData.description}
         onChange={handleChange}
+        className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
         required
-        rows={4}
-        className="w-full bg-gray-900 text-white border border-yellow-700 p-3 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:outline-none transition"
       />
 
-      {/* Goal Amount */}
-      <motion.input
-        whileFocus={{ scale: 1.02 }}
+      <input
         type="number"
         name="goalAmount"
         placeholder="Goal Amount"
         value={formData.goalAmount}
         onChange={handleChange}
+        className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
         required
-        className="w-full bg-gray-900 text-white border border-yellow-700 p-3 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:outline-none transition"
+        min={1}
       />
 
-      {/* Dates */}
-      <div className="grid grid-cols-2 gap-4">
-        <motion.input
-          whileFocus={{ scale: 1.02 }}
+      <div className="flex gap-2">
+        <input
           type="date"
           name="startDate"
           value={formData.startDate}
           onChange={handleChange}
+          className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
           required
-          className="w-full bg-gray-900 text-white border border-yellow-700 p-3 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:outline-none transition"
         />
-        <motion.input
-          whileFocus={{ scale: 1.02 }}
+        <input
           type="date"
           name="endDate"
           value={formData.endDate}
           onChange={handleChange}
+          className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
           required
-          className="w-full bg-gray-900 text-white border border-yellow-700 p-3 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:outline-none transition"
         />
       </div>
 
-      {/* Category */}
-      <motion.select
-        whileFocus={{ scale: 1.02 }}
+      <select
         name="category"
         value={formData.category}
         onChange={handleChange}
-        className="w-full bg-gray-900 text-white border border-yellow-700 p-3 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:outline-none transition"
+        className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        required
       >
         <option>Technology</option>
         <option>Health</option>
         <option>Education</option>
         <option>Environment</option>
         <option>Other</option>
-      </motion.select>
+      </select>
 
-      {/* File Upload */}
-      <motion.div
-        whileHover={{ scale: 1.01 }}
-        className="border-2 border-dashed border-yellow-700 p-4 rounded-lg text-center hover:border-yellow-400 transition"
-      >
-        <input
-          type="file"
-          multiple
-          accept="image/*"
-          onChange={handleFileChange}
-          className="w-full text-gray-300"
-        />
-      </motion.div>
+      <input
+        type="file"
+        multiple
+        accept="image/*"
+        onChange={handleFileChange}
+        className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        required
+      />
 
-      {/* Preview Images */}
       {previewUrls.length > 0 && (
-        <div className="flex gap-2 overflow-x-auto mt-2">
-          {previewUrls.map((url, idx) => (
-            <motion.img
-              key={idx}
-              src={url}
-              alt="preview"
-              className="w-20 h-20 object-cover rounded-lg border border-yellow-700 shadow-sm"
-              whileHover={{ scale: 1.05 }}
-            />
+        <div className="flex gap-2 mt-2 overflow-x-auto">
+          {previewUrls.map((url, i) => (
+            <img key={i} src={url} className="w-20 h-20 rounded-lg object-cover border" />
           ))}
         </div>
       )}
 
-      {/* Submit Button */}
-      <motion.button
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
+      <button
         type="submit"
         disabled={loading}
-        className="w-full bg-gradient-to-r from-yellow-500 to-yellow-700 text-black py-3 rounded-lg font-semibold shadow-lg hover:from-yellow-400 hover:to-yellow-600 transition "
+        className="bg-indigo-600 text-white px-6 py-3 rounded-full w-full hover:bg-indigo-700 transition-colors"
       >
-        {loading ? "⏳ Creating..." : "Create Campaign"}
-      </motion.button>
-    </motion.form>
+        {loading ? "Creating..." : "Submit"}
+      </button>
+    </form>
   );
 };
 

@@ -13,6 +13,8 @@ import { CollaborationRequest, Entrepreneur } from "../../types";
 
 export const InvestorDashboard: React.FC = () => {
   const { user } = useAuth();
+  const [entrepreneurs, setEnterprenuers] = useState<Entrepreneur[]>([]);
+  const [sentRequests, setSentRequests] = useState<CollaborationRequest[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIndustries, setSelectedIndustries] = useState<string[]>([]);
   if (!user) return null;
@@ -20,8 +22,6 @@ export const InvestorDashboard: React.FC = () => {
   // Get collaboration requests sent by this investor
 
   // const requestedEntrepreneurIds = sentRequests.map(req => req.entrepreneurId);
-  const [entrepreneurs, setEnterprenuers] = useState<Entrepreneur[]>([]);
-  const [sentRequests, setSentRequests] = useState<CollaborationRequest[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -38,7 +38,7 @@ export const InvestorDashboard: React.FC = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const requests = await getRequestsFromInvestor(user.userId);
+      const requests = await getRequestsFromInvestor(user?.userId);
       setSentRequests(requests);
     };
     fetchData();
@@ -49,24 +49,27 @@ export const InvestorDashboard: React.FC = () => {
     // Search filter
     const matchesSearch =
       searchQuery === "" ||
-      entrepreneur.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      entrepreneur.startupName
-        .toLowerCase()
+      entrepreneur?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      entrepreneur?.startupName
+        ?.toLowerCase()
         .includes(searchQuery.toLowerCase()) ||
-      entrepreneur?.industry.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      entrepreneur?.industry
+        ?.toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
       entrepreneur?.pitchSummary
-        .toLowerCase()
+        ?.toLowerCase()
         .includes(searchQuery.toLowerCase());
 
     // Industry filter
     const matchesIndustry =
       selectedIndustries.length === 0 ||
-      selectedIndustries.includes(entrepreneur.industry);
+      selectedIndustries.includes(entrepreneur?.industry);
 
     return matchesSearch && matchesIndustry;
   });
-
-  const industries = entrepreneurs && entrepreneurs.map((enter) => enter.industry);
+  const industries = entrepreneurs
+    ? [...new Set(entrepreneurs.map((enter) => enter.industry))]
+    : [];
 
   // Get unique industries for filter
 
@@ -109,13 +112,13 @@ export const InvestorDashboard: React.FC = () => {
         </div>
 
         <div className="w-full md:w-1/3">
-          <div className="flex items-center space-x-2">
+          <div className="flex items-start space-x-2">
             <Filter size={18} className="text-gray-500" />
             <span className="text-sm font-medium text-gray-700">
               Filter by:
             </span>
 
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 w-3/4">
               {industries.map((industry) => (
                 <Badge
                   key={industry}
@@ -203,30 +206,31 @@ export const InvestorDashboard: React.FC = () => {
           </CardHeader>
 
           <CardBody>
-            {entrepreneurs && entrepreneurs.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {entrepreneurs &&
-                  entrepreneurs.map((entrepreneur) => (
-                    <div key={entrepreneur.userId}>
-                      <EntrepreneurCard entrepreneur={entrepreneur} isProfileSet={entrepreneur?.startupName? true : false} />
-                    </div>
-                  ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-gray-600">No startups match your filters</p>
-                <Button
-                  variant="outline"
-                  className="mt-2"
-                  onClick={() => {
-                    setSearchQuery("");
-                    setSelectedIndustries([]);
-                  }}
-                >
-                  Clear filters
-                </Button>
-              </div>
-            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredEntrepreneurs.length > 0 ? (
+                filteredEntrepreneurs.map((entrepreneur) => (
+                  <div key={entrepreneur._id}>
+                    <EntrepreneurCard entrepreneur={entrepreneur} />
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-600">
+                    No startups match your filters
+                  </p>
+                  <Button
+                    variant="outline"
+                    className="mt-2"
+                    onClick={() => {
+                      setSearchQuery("");
+                      setSelectedIndustries([]);
+                    }}
+                  >
+                    Clear filters
+                  </Button>
+                </div>
+              )}
+            </div>
           </CardBody>
         </Card>
       </div>

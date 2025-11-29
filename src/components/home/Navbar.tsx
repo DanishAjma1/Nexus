@@ -3,7 +3,7 @@ import React from "react";
 export const Navbar: React.FC = () => {
   const ListItem = ({ data }) => {
     return (
-      <li className="text-black py-5 px-2 hover:cursor-pointer hover:animate-bounce hover:text-orange-500">
+      <li className="text-black py-5 px-2 hover:cursor-pointer hover:scale-105 transition-all duration-200 hover:text-white">
         {data}
       </li>
     );
@@ -40,7 +40,7 @@ export const Navbar: React.FC = () => {
         <h1 className="text-white text-lg">Trust Bridge AI</h1>
       </div>
       <div className="w-1/2 flex justify-end">
-        <ul className="flex flex-row px-10 rounded-tl-md rounded-bl-md bg-orange-300">
+        <ul className="flex flex-row px-10 rounded-tl-md rounded-bl-md bg-blue-500">
           {navList.map((item, idx) => (
             <ListItem key={idx} data={item} />
           ))}
