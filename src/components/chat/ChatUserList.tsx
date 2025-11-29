@@ -49,11 +49,11 @@ export const ChatUserList: React.FC<ChatUserListProps> = ({ conversation }) => {
   return (
     <div className="bg-white border-r border-gray-200 w-full overflow-y-auto">
       <div className="py-4">
-        <h2 className="px-4 text-lg font-semibold text-gray-800 mb-4">
+        <h2 className="px-4 text-lg font-semibold text-gray-800 mb-4 border-b pb-5">
           Messages
         </h2>
 
-        <div className="space-y-1">
+        <div className="space-y-1 border-b-2">
           {chatPartners.length > 0 ? (
             chatPartners.map((user) => {
               const isActive = user._id === activeUserId; // highlight current open chat

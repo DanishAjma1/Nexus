@@ -10,7 +10,7 @@ import { Card, CardBody, CardHeader } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/Badge";
 import { Button } from "../../components/ui/Button";
 import { useAuth } from "../../context/AuthContext";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { FraudAndRiskDetectionChart } from "../../components/admin/FraudAndRiskDetectionChart";
 import { StartupGrowthChart } from "../../components/admin/StartupGrowthChart";
@@ -32,6 +32,7 @@ export const AdminDashboard: React.FC = () => {
     campaigns: 0,
     flagged: 0,
   });
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -282,7 +283,12 @@ export const AdminDashboard: React.FC = () => {
               responses before they are shown to users.
             </p>
             <div className="mt-4 flex gap-2">
-              <Button leftIcon={<MessageSquare size={16} />}>
+              <Button
+                leftIcon={<MessageSquare size={16} />}
+                onClick={() => {
+                  navigate("/admin/ai");
+                }}
+              >
                 Review Responses
               </Button>
             </div>

@@ -55,7 +55,7 @@ export const Users: React.FC = () => {
         {
           method: "DELETE",
         }
-      );
+      );  
       if (!res.ok) throw new Error("Failed to delete");
       toast.success("User deleted successfully");
       setUsers((prev) => prev.filter((u) => u._id !== id));
@@ -263,8 +263,11 @@ export const Users: React.FC = () => {
           onSubmit={(e) => {
             e.preventDefault();
             setSearched(query);
-            const filterUsers = users.filter((ent) =>
-              ent.name.toLowerCase().includes(query.toLowerCase())
+            const filterUsers = users.filter(
+              (ent) =>
+                ent.name.toLowerCase().includes(query.toLowerCase()) ||
+                ent.email.toLowerCase().includes(query.toLowerCase()) ||
+                ent.role.toLowerCase().includes(query.toLowerCase())
             );
 
             if (filterUsers.length !== 0) setSearchedUsers([...filterUsers]);
@@ -273,7 +276,7 @@ export const Users: React.FC = () => {
         >
           <Input
             type="text"
-            placeholder="Search users with name, email or company.."
+            placeholder="Search users with name, email or role.."
             className="w-1/2"
             value={query}
             onChange={(e) => {

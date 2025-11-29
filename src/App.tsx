@@ -45,7 +45,6 @@ import {
 } from "./pages/admin/FraudAndRiskDetection";
 import { Activities } from "./pages/admin/activities";
 import { Investors } from "./pages/admin/investors";
-import { Campaigns } from "./pages/admin/campaigns";
 
 import { HomePage } from "./pages/home/HomePage";
 import { LoginWithOAuthPage } from "./pages/auth/LoginWithOAuthPage";
@@ -53,6 +52,8 @@ import { UserDetails } from "./components/user/UserDetails";
 import { Supporters } from "./pages/admin/supporters";
 import { FlaggedAccounts } from "./pages/admin/flaggedAccounts";
 import { Users } from "./pages/admin/Users";
+import { AICommandPage } from "./pages/admin/AI";
+import Campaigns from "./pages/admin/Campaigns";
 
 function App() {
   return (
@@ -82,6 +83,7 @@ function App() {
               <Route path="campaigns" element={<Campaigns />} />
               <Route path="supporters" element={<Supporters />} />
               <Route path="flaggedAccounts" element={<FlaggedAccounts />} />
+              <Route path="ai" element={<AICommandPage />} />
               <Route
                 path="fraud-and-risk-detection"
                 element={<FraudAndRiskDetection />}

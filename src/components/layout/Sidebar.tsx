@@ -98,21 +98,17 @@ export const Sidebar: React.FC = () => {
       text: "Manage Users",
     },
     {
-      to: "/admin/investors",
-      icon: <CircleDollarSign size={20} />,
-      text: "Manage Investors",
+      to: "/admin/campaigns",
+      icon: <Rocket size={20} />,
+      text: "Active Campaigns",
     },
+
     {
       to: "/admin/supporters",
       icon: <Users2Icon size={20} />,
       text: "Manage Supporters",
     },
 
-    {
-      to: "/admin/campaigns",
-      icon: <Rocket size={20} />,
-      text: "Active Campaigns",
-    },
     {
       to: "/admin/fraud-and-risk-detection",
       icon: <ShieldBan size={20} />,

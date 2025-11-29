@@ -1,41 +1,61 @@
 import React from "react";
 import { Navbar } from "../../components/home/Navbar";
+import { Button } from "../../components/ui/Button";
 
-interface CompaignProps {
+interface CampaignProps {
   image: string;
   title: string;
+  description: string;
+  goalAmount: string;
 }
+
 interface FundraiserProps {
   image: string;
   fundNeeded: string;
   company: string;
   description: string;
 }
+
 interface SuccessfulCompanyProps {
   image: string;
   company: string;
   description: string;
   exits: number;
 }
+
 export const HomePage: React.FC = () => {
-  const CompaignDiv: React.FC<CompaignProps> = ({ image, title }) => {
+  const CampaignDiv: React.FC<CampaignProps> = ({
+    image,
+    title,
+    description,
+    goalAmount,
+  }) => {
     return (
-      <div className="flex w-full h-40 justify-center hover:scale-105 transition">
+      <div className="flex w-full h-40 justify-center hover:scale-105 transition relative">
         <img
           src={image}
           alt="pic"
           className="absolute w-60 h-40 rounded-md overflow-hidden shadow-inner"
         />
-        <div className="bg-black bg-opacity-40 w-60 h-40 absolute" />
-        <div className="flex justify-start relative w-52 mt-10">
-          <h1 className="text-white text-sm underline underline-offset-2 font-bold font-mono">
-            {title}
+        <div className="bg-black bg-opacity-40 w-60 h-40 absolute rounded-md" />
+
+        <div className="flex flex-col gap-1 relative w-52 mt-5 text-white">
+          <h1 className="text-sm font-bold font-mono underline underline-offset-2">
+            Title: {title}
           </h1>
+          <p className="text-xs">Description: {description}</p>
+
+          <p className="text-xs text-red-400 font-bold">
+            Goal Amount: ${goalAmount}
+          </p>
+
+          <div className="border-b-2 border-gray-300 w-2/3 mt-2 mx-auto" />
         </div>
       </div>
     );
   };
-  const FundeRaiserDiv: React.FC<FundraiserProps> = ({
+
+  const FundraiserDiv: React.FC<FundraiserProps> = ({
     image,
     fundNeeded,
     company,
@@ -48,21 +68,22 @@ export const HomePage: React.FC = () => {
           alt="pic"
           className="absolute w-60 h-40 rounded-md overflow-hidden shadow-inner"
         />
-        <div className="bg-black bg-opacity-40 w-60 h-40 absolute" />
+        <div className="bg-black bg-opacity-40 w-60 h-40 absolute rounded-md" />
+
         <div className="flex flex-col gap-2 relative w-52 mt-5">
           <h1 className="text-sm font-bold font-mono">{company}</h1>
           <p className="text-xs">{description}</p>
           <div className="flex text-xs justify-end items-center">
-            <span className="text-red-500 underline-offset-1 underline">
-              Fund Needed: $
-            </span>
-            <p> {fundNeeded}</p>
+            <span className="text-red-500 underline">Fund Needed: $</span>
+            <p>{fundNeeded}</p>
           </div>
-          <div className="border-b-2 border-white bottom-4 left-1/2 transform -translate-x-1/2 w-2/3 absolute" />
+
+          <div className="border-b-2 border-white w-2/3 absolute bottom-2 left-1/2 transform -translate-x-1/2" />
         </div>
       </div>
     );
   };
+
   const SuccessfulCompanyDiv: React.FC<SuccessfulCompanyProps> = ({
     image,
     company,
@@ -77,18 +98,20 @@ export const HomePage: React.FC = () => {
             alt="pic"
             className="h-80 rounded-md overflow-hidden shadow-inner"
           />
-          {/* <div className="bg-black bg-opacity-40 w-1/3 h-80 absolute" /> */}
-          <div className="flex flex-col gap-2 px-2 mt-5 justify-start">
+
+          <div className="flex flex-col gap-2 px-2 mt-5">
             <h1 className="text-lg font-bold">
               <strong className="font-serif">Company: </strong>
               {company}
             </h1>
+
             <p>
               <strong className="font-serif">Description: </strong>
               {description}
             </p>
+
             <div className="flex items-center">
-              <span className="text-green-500">Total exits:</span>
+              <span className="text-green-500 mr-1">Total exits:</span>
               <p>{exits}</p>
             </div>
           </div>
@@ -96,99 +119,119 @@ export const HomePage: React.FC = () => {
       </div>
     );
   };
+
   return (
     <div>
       <Navbar />
+
       <div className="w-full flex justify-center relative">
         <img
           src="app logo.jpeg"
           className="absolute inset-0 w-full h-screen object-cover"
         />
-        <div className="absolute w-full h-screen inset-0 bg-black bg-opacity-80" />
+
+        <div className="absolute w-full h-screen bg-black bg-opacity-80" />
+
         <div className="relative z-10 w-11/12 text-white">
-          <div className="flex flex-row ">
+          <div className="flex flex-row">
+            {/* LEFT SIDE — Recent Campaigns */}
             <div className="flex flex-col w-1/5 py-5">
-              <h1 className="text-xl font-bold font-serif p-5 underline-offset-4 underline shadow-sm">
-                Recent Compaigns..
+              <h1 className="text-xl font-bold font-serif p-5 underline underline-offset-4 shadow-sm">
+                Recent Campaigns..
               </h1>
-              <div className="flex flex-col gap-5  border-r-2">
-                <CompaignDiv image={"app logo.jpeg"} title={"Flood incident"} />
-                <CompaignDiv image={"app logo.jpeg"} title={"Flood incident"} />
-                <CompaignDiv image={"app logo.jpeg"} title={"Flood incident"} />
+
+              <div className="flex flex-col gap-5 border-r-2 pr-2">
+                <CampaignDiv
+                  image="app logo.jpeg"
+                  title="mr"
+                  description="3456"
+                  goalAmount="12345k"
+                />
+                <CampaignDiv
+                  image="app logo.jpeg"
+                  title="rfgh"
+                  description="12345"
+                  goalAmount="1234k"
+                />
+                <CampaignDiv
+                  image="app logo.jpeg"
+                  title="mr"
+                  description="rdftyu"
+                  goalAmount="1234k"
+                />
               </div>
             </div>
 
+            {/* MID CONTENT */}
             <div className="flex w-3/5 h-screen items-center py-5">
               <div className="flex flex-col h-1/3 px-5">
                 <h1 className="text-2xl text-center font-mono">
-                  The plateform where Entrepreneur and investors can
-                  collaborate,make deals and can make secure & successful
-                  transactions.{" "}
+                  The platform where Entrepreneurs and Investors collaborate,
+                  make deals and build successful ventures.
                 </h1>
+
                 <div className="flex items-center justify-center h-full gap-4">
-                  <button className="px-5 py-1 bg-orange-300">
+                  <Button className="px-5 py-1 bg-orange-300 text-black">
                     Getting started
-                  </button>
-                  <button className="px-5 py-1 bg-orange-300">About Us</button>
+                  </Button>
                 </div>
               </div>
             </div>
 
+            {/* RIGHT SIDE — Fundraisers */}
             <div className="flex flex-col w-1/5 py-5">
-              <h1 className="text-xl font-bold font-serif p-5 underline-offset-4 underline shadow-sm">
+              <h1 className="text-xl font-bold font-serif p-5 underline underline-offset-4 shadow-sm">
                 Fundraisers..
               </h1>
-              <div className="gap-5 flex flex-col border-l-2">
-                <FundeRaiserDiv
-                  image={"app logo.jpeg"}
-                  company={"Tesla"}
-                  fundNeeded={"220k"}
-                  description={"You will got huge benefits by investing in it."}
+
+              <div className="gap-5 flex flex-col border-l-2 pl-2">
+                <FundraiserDiv
+                  image="app logo.jpeg"
+                  company="Tesla"
+                  fundNeeded="220k"
+                  description="You will get huge benefits by investing."
                 />
-                <FundeRaiserDiv
-                  image={"app logo.jpeg"}
-                  company={"Tesla"}
-                  fundNeeded={"220k"}
-                  description={"You will got huge benefits by investing in it."}
+                <FundraiserDiv
+                  image="app logo.jpeg"
+                  company="Tesla"
+                  fundNeeded="220k"
+                  description="You will get huge benefits by investing."
                 />
-                <FundeRaiserDiv
-                  image={"app logo.jpeg"}
-                  fundNeeded={"220k"}
-                  company={"Tesla"}
-                  description={"You will got huge benefits by investing in it."}
+                <FundraiserDiv
+                  image="app logo.jpeg"
+                  company="Tesla"
+                  fundNeeded="220k"
+                  description="You will get huge benefits by investing."
                 />
               </div>
             </div>
           </div>
+
+          {/* SUCCESSFUL ENTREPRENEURS */}
           <div className="relative flex flex-col my-5">
-            <h1 className="text-black text-2xl font-bold w-fit font-serif my-5 p-5 underline-offset-4 underline ">
+            <h1 className="text-black text-2xl font-bold w-fit font-serif my-5 p-5 underline underline-offset-4">
               Successful Entrepreneurs..
             </h1>
-            <div className="grid grid-cols-3 grid-rows-1 border-2 p-3 rounded-md bg-white shadow-md">
-              <div className="grid grid-cols-1">
-                <SuccessfulCompanyDiv
-                  image={"/app logo.jpeg"}
-                  company={"tesla"}
-                  description={"You will got huge benefits by investing in it."}
-                  exits={4}
-                />
-              </div>
-              <div className="grid grid-cols-1">
-                <SuccessfulCompanyDiv
-                  image={"/app logo.jpeg"}
-                  company={"tesla"}
-                  description={"You will got huge benefits by investing in it."}
-                  exits={4}
-                />
-              </div>
-              <div className="grid grid-cols-1">
-                <SuccessfulCompanyDiv
-                  image={"/app logo.jpeg"}
-                  company={"tesla"}
-                  description={"You will got huge benefits by investing in it."}
-                  exits={4}
-                />
-              </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <SuccessfulCompanyDiv
+                image="app logo.jpeg"
+                company="Tesla"
+                description="You will gain huge benefits."
+                exits={4}
+              />
+              <SuccessfulCompanyDiv
+                image="app logo.jpeg"
+                company="Tesla"
+                description="You will gain huge benefits."
+                exits={4}
+              />
+              <SuccessfulCompanyDiv
+                image="app logo.jpeg"
+                company="Tesla"
+                description="You will gain huge benefits."
+                exits={4}
+              />
             </div>
           </div>
         </div>
