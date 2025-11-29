@@ -39,9 +39,7 @@ import { ResetPasswordPage } from "./pages/auth/ResetPasswordPage";
 //import { VideoCall } from "./components/webRTC/Videocall";
 //import { AudioCall } from "./components/webRTC/AudioCall";
 import { Toaster } from "react-hot-toast";
-import {
-  FraudAndRiskDetection,
-} from "./pages/admin/FraudAndRiskDetection";
+import { FraudAndRiskDetection } from "./pages/admin/FraudAndRiskDetection";
 import { Activities } from "./pages/admin/activities";
 import { Investors } from "./pages/admin/investors";
 
@@ -53,6 +51,8 @@ import { FlaggedAccounts } from "./pages/admin/flaggedAccounts";
 import { Users } from "./pages/admin/Users";
 import { AICommandPage } from "./pages/admin/AI";
 import Campaigns from "./pages/admin/Campaigns";
+import { Deals } from "./pages/viewdeals/ViewDeal";
+import { DealsPage } from "./pages/deals/DealsPage";
 
 function App() {
   return (
@@ -131,6 +131,9 @@ function App() {
 
             <Route path="/viewdeals" element={<DashboardLayout />}>
               <Route index element={<Deals />} />
+            </Route>
+            <Route path="/deals" element={<DashboardLayout />}>
+              <Route index element={<DealsPage />} />
             </Route>
 
             {/* Chat Routes */}
