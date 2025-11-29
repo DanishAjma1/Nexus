@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Input } from "../../components/ui/Input";
 import { SearchIcon, Trash } from "lucide-react";
 import { Button } from "../../components/ui/Button";
+import { ThreeDotsButton } from "../../components/ui/ThreeDotsButton";
 
 interface Supporter {
   _id: string;
@@ -44,31 +45,76 @@ export const Supporters: React.FC = () => {
     ];
     setSupportors(dumySupporters);
   }, []);
+  const [showDialog, setShowDialog] = useState(false);
+  const [index, setIndex] = useState<number | null>(null);
+  const dialogRef = useRef(null);
+
+  // close on outside click
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (dialogRef.current && !dialogRef.current.contains(e.target)) {
+        setShowDialog(false);
+        setIndex(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const TableRow = ({ sup, idx }) => {
     return (
-      <>
-        <tr key={idx} className="border-t hover:bg-gray-50 group">
-          <td className="px-4 py-2">{sup.name}</td>
-          <td className="px-4 py-2">{sup.email}</td>
-          <td className="px-4 py-2">{sup.campaign}</td>
+      <tr key={idx} className="border-t hover:bg-gray-50 relative group">
+        <td className="px-4 py-2">{sup.name}</td>
+        <td className="px-4 py-2">{sup.email}</td>
+        <td className="px-4 py-2">{sup.campaign}</td>
 
-          <td className="flex items-center">
-            <span className="px-4 py-2 font-semibold text-green-700">
-              ${sup.amount.toLocaleString()}
-            </span>
-            <Button
-              variant="ghost"
-              className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity"
-              onClick={(e) => {
-                e.stopPropagation();
-              }}
+        <td className="flex items-center relative">
+          <span className="px-4 py-2 font-semibold text-green-700">
+            ${sup.amount.toLocaleString()}
+          </span>
+
+          {/* 3-dots button */}
+          <ThreeDotsButton
+            variant="ghost"
+            className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIndex(idx);
+              setShowDialog((prev) => !prev);
+            }}
+          />
+
+          {/* dropdown menu */}
+          {showDialog && index === idx && (
+            <div
+              ref={dialogRef}
+              className="absolute right-0 top-full mt-2 w-28 bg-white border shadow-md rounded-md z-50 flex flex-col"
             >
-              <Trash className="w-4 h-4 text-red-500" />
-            </Button>
-          </td>
-        </tr>
-      </>
+              <Button
+                variant="ghost"
+                className="border-b text-xs hover:text-blue-500"
+                onClick={() => {
+                  alert(`Viewing ${sup.name}`);
+                  setShowDialog(false);
+                }}
+              >
+                Mail to
+              </Button>
+
+              <Button
+                variant="ghost"
+                className="border-b text-xs hover:text-red-500"
+                onClick={() => {
+                  alert(`Deleting supporter ${sup.name}`);
+                  setShowDialog(false);
+                }}
+              >
+                Delete
+              </Button>
+            </div>
+          )}
+        </td>
+      </tr>
     );
   };
 
@@ -117,7 +163,11 @@ export const Supporters: React.FC = () => {
         </form>
       </div>
       <div className="flex justify-end text-xs p-2 gap-2">
-        <span>{searched ? `Results '${searched}' searched count: ` : "Total Supportors:"} </span>
+        <span>
+          {searched
+            ? `Results '${searched}' searched count: `
+            : "Total Supportors:"}{" "}
+        </span>
         {searched ? searchedSupportors.length : supporters.length}
       </div>
 

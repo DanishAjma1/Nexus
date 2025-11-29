@@ -68,8 +68,8 @@ export const DocumentsPage: React.FC = () => {
               <div className="h-2 bg-gray-200 rounded-full">
                 <div
                   className="h-2 bg-primary-600 rounded-full"
-                  style={{ width: "65%" }}
-                ></div>
+                  style={{ width: "0%" }}
+                />
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Available</span>

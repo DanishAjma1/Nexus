@@ -190,7 +190,10 @@ export const SecuritySettings: React.FC = () => {
                     Set Up Two-Factor Authentication
                   </h3>
                   <ol className="text-sm text-blue-800 space-y-2 mb-4">
-                    <li>1. Download an authenticator app (Google Authenticator, Authy, etc.)</li>
+                    <li>
+                      1. Download an authenticator app (Google Authenticator,
+                      Authy, etc.)
+                    </li>
                     <li>2. Scan this QR code with your authenticator app</li>
                     <li>3. Enter the 6-digit code below to verify</li>
                   </ol>
@@ -287,38 +290,6 @@ export const SecuritySettings: React.FC = () => {
             >
               {isUpdatingPassword ? "Updating..." : "Update Password"}
             </Button>
-          </div>
-        </CardBody>
-      </Card>
-
-      {/* Login History */}
-      <Card>
-        <CardHeader>
-          <h2 className="text-lg font-medium text-gray-900">
-            Recent Login Activity
-          </h2>
-        </CardHeader>
-        <CardBody>
-          <div className="space-y-3">
-            {[
-              { date: "Nov 26, 2025 09:45 AM", location: "Lahore, PK", status: "success" },
-              { date: "Nov 25, 2025 02:30 PM", location: "Lahore, PK", status: "success" },
-              { date: "Nov 24, 2025 11:20 AM", location: "Karachi, PK", status: "success" },
-              { date: "Nov 23, 2025 08:15 PM", location: "Unknown", status: "failed" },
-            ].map((activity, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between p-3 border border-gray-200 rounded-lg"
-              >
-                <div>
-                  <p className="text-sm text-gray-900">{activity.location}</p>
-                  <p className="text-xs text-gray-500">{activity.date}</p>
-                </div>
-                <Badge variant={activity.status === "success" ? "success" : "error"}>
-                  {activity.status === "success" ? "Success" : "Failed"}
-                </Badge>
-              </div>
-            ))}
           </div>
         </CardBody>
       </Card>

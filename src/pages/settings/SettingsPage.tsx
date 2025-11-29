@@ -35,6 +35,10 @@ export const SettingsPage: React.FC = () => {
     { id: "appearance" as SettingsTab, label: "Appearance", icon: Palette },
     { id: "billing" as SettingsTab, label: "Billing", icon: CreditCard },
   ];
+  const filteredNavItems =
+    currentUser?.role === "admin"
+      ? navItems.filter((item) => item.id !== "billing")
+      : navItems;
 
   const renderContent = () => {
     switch (activeTab) {
@@ -68,7 +72,7 @@ export const SettingsPage: React.FC = () => {
           </CardHeader>
           <CardBody>
             <nav className="space-y-1">
-              {navItems.map((item) => {
+              {filteredNavItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeTab === item.id;
                 return (
