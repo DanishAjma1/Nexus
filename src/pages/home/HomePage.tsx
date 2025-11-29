@@ -114,6 +114,7 @@ export const HomePage: React.FC = () => {
               <span className="text-green-500 mr-1">Total exits:</span>
               <p>{exits}</p>
             </div>
+            {/* <div className="border-b-2 border-white bottom-4 left-1/2 transform -translate-x-1/2 w-2/3 absolute" /> */}
           </div>
         </div>
       </div>
