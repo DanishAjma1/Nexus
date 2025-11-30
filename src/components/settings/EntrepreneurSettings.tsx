@@ -1,7 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
-import { getEnterpreneurById, sendMailToUser, updateEntrepreneurData } from "../../data/users";
+import {
+  getEnterpreneurById,
+  sendMailToUser,
+  updateEntrepreneurData,
+} from "../../data/users";
 import { Entrepreneur, UserRole } from "../../types";
 import { useAuth } from "../../context/AuthContext";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -139,93 +143,88 @@ export const EntrepreneurSettings: React.FC = () => {
   };
 
   return (
-    <Card>
-      <div className="p-4">
-        <CardHeader className="font-medium">
-          Fill the Details as an Entrepreneur...
-        </CardHeader>
-        <form
-          className="flex flex-col items-center"
-          onSubmit={handleUserSubmit}
-        >
-          <div className="flex flex-row w-full gap-10 my-10">
-            <div className="flex gap-5 flex-col w-1/2">
-              <Input
-                label="Your startup name..?"
-                name="startupName"
-                value={formData.startupName}
-                onChange={handleUserChange}
-              />
-              <Input
-                label="Summary which describe your company.."
-                name="pitchSummary"
-                value={formData.pitchSummary}
-                onChange={handleUserChange}
-              />
-              <Input
-                type="number"
-                label="In which year this company found..?"
-                name="foundedYear"
-                value={formData.foundedYear}
-                onChange={handleUserChange}
-              />
+    <div className="p-4">
+      <CardHeader className="font-medium">
+        Fill the Details as an Entrepreneur...
+      </CardHeader>
+      <form className="flex flex-col items-center" onSubmit={handleUserSubmit}>
+        <div className="flex flex-row w-full gap-10 my-10">
+          <div className="flex gap-5 flex-col w-1/2">
+            <Input
+              label="Your startup name..?"
+              name="startupName"
+              value={formData.startupName}
+              onChange={handleUserChange}
+            />
+            <Input
+              label="Summary which describe your company.."
+              name="pitchSummary"
+              value={formData.pitchSummary}
+              onChange={handleUserChange}
+            />
+            <Input
+              type="number"
+              label="In which year this company found..?"
+              name="foundedYear"
+              value={formData.foundedYear}
+              onChange={handleUserChange}
+            />
 
-              <Input
-                label="Which industry..?"
-                name="industry"
-                value={formData.industry}
-                onChange={handleUserChange}
-              />
-              <Input
-                type="number"
-                label="Profit Margin..? (In persontage)"
-                name="profitMargin"
-                value={formData.profitMargin}
-                onChange={handleUserChange}
-              />
-            </div>
-            <div className="flex gap-5 flex-col w-1/2">
-              <Input
-                type="number"
-                label="How much fund you need..?"
-                name="fundingNeeded"
-                value={formData.fundingNeeded}
-                onChange={handleUserChange}
-              />
-              <Input
-                label="Market opporunity..?"
-                name="marketOpportunity"
-                value={formData.marketOpportunity}
-                onChange={handleUserChange}
-              />
-              <Input
-                label="Advantage..?"
-                name="advantage"
-                value={formData.advantage}
-                onChange={handleUserChange}
-              />
-              <Input
-                label="Revenue / worth of your company..?"
-                name="revenue"
-                type="number"
-                value={formData.revenue}
-                onChange={handleUserChange}
-              />
+            <Input
+              label="Which industry..?"
+              name="industry"
+              value={formData.industry}
+              onChange={handleUserChange}
+            />
+            <Input
+              type="number"
+              label="Profit Margin..? (In persontage)"
+              name="profitMargin"
+              value={formData.profitMargin}
+              onChange={handleUserChange}
+            />
+          </div>
+          <div className="flex gap-5 flex-col w-1/2">
+            <Input
+              type="number"
+              label="How much fund you need..?"
+              name="fundingNeeded"
+              value={formData.fundingNeeded}
+              onChange={handleUserChange}
+            />
+            <Input
+              label="Market opporunity..?"
+              name="marketOpportunity"
+              value={formData.marketOpportunity}
+              onChange={handleUserChange}
+            />
+            <Input
+              label="Advantage..?"
+              name="advantage"
+              value={formData.advantage}
+              onChange={handleUserChange}
+            />
+            <Input
+              label="Revenue / worth of your company..?"
+              name="revenue"
+              type="number"
+              value={formData.revenue}
+              onChange={handleUserChange}
+            />
 
-              <Input
-                type="number"
-                label="Enter the Growth Rate..? (In persontage)"
-                name="growthRate"
-                value={formData.growthRate}
-                onChange={handleUserChange}
-              />
-            </div>
+            <Input
+              type="number"
+              label="Enter the Growth Rate..? (In persontage)"
+              name="growthRate"
+              value={formData.growthRate}
+              onChange={handleUserChange}
+            />
           </div>
-          <div className="flex w-full justify-end pt-6 mt-6 border-t-2">
-            <Button type="submit">Save Changes</Button>
-          </div>
-        </form>
-      </div>
-    </Card>
+        </div>
+        <div className="flex w-full justify-end pt-6 mt-6 border-t-2">
+          <Button type="submit">Save Changes</Button>
+        </div>
+      </form>
+    </div>
   );
 };

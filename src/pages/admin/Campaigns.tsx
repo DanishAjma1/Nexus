@@ -17,7 +17,7 @@ interface Campaign {
   images?: string[];
 }
 
-const Campaigns: React.FC = () => {
+export const Campaigns: React.FC = () => {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [filtered, setFiltered] = useState<Campaign[]>([]);
   const [query, setQuery] = useState("");
@@ -266,4 +266,3 @@ const Campaigns: React.FC = () => {
   );
 };
 
-export default Campaigns;

@@ -2,10 +2,6 @@ import React, { useState } from "react";
 import {
   Search,
   Filter,
-  DollarSign,
-  TrendingUp,
-  Users,
-  Calendar,
 } from "lucide-react";
 import { Card, CardHeader, CardBody } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
