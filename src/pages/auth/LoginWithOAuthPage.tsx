@@ -12,35 +12,30 @@ export const LoginWithOAuthPage: React.FC = () => {
   const params = new URLSearchParams(window.location.search);
   const token = params.get("token");
 
-  console.log(token);
   useEffect(() => {
-    if (!token) {
-      alert("Missing token");
-      return;
-    }
+    if (!token) alert("Missing token");
   }, [token]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
     if (!token) {
       alert("Missing token");
       return;
     }
-    // token is guaranteed to be a string here
+
     await loginWithOauth(token, role);
     navigate(
-      role === "entrepreneur"
-        ? "/dashboard/entrepreneur"
-        : "/dashboard/investor"
+      role === "entrepreneur" ? "/dashboard/entrepreneur" : "/dashboard/investor"
     );
   };
 
   return (
-    <div className="flex min-h-screen w-full justify-center">
-      <div className="flex flex-col my-5 w-1/3 justify-center">
-        <form onSubmit={handleSubmit}>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-10 sm:px-6 lg:px-8">
+      <div className="w-full max-w-md bg-white shadow sm:rounded-lg p-6 sm:p-10">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div className="flex justify-center">
-            <div className="w-12 h-12 bg-primary-600 rounded-md flex items-center justify-center">
+            <div className="w-12 h-12 bg-primary-600 rounded-md flex items-center justify-center shadow-md">
               <svg
                 width="32"
                 height="32"
@@ -66,14 +61,16 @@ export const LoginWithOAuthPage: React.FC = () => {
               </svg>
             </div>
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 mb-2 text-center sm:text-left">
               I am a
             </label>
-            <div className="grid grid-cols-2 gap-3">
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button
                 type="button"
-                className={`py-3 px-4 border rounded-md flex items-center justify-center transition-colors ${
+                className={`py-3 px-4 border rounded-md flex items-center justify-center transition-colors text-sm sm:text-base ${
                   role === "entrepreneur"
                     ? "border-primary-500 bg-primary-50 text-primary-700"
                     : "border-gray-300 text-gray-700 hover:bg-gray-50"
@@ -86,7 +83,7 @@ export const LoginWithOAuthPage: React.FC = () => {
 
               <button
                 type="button"
-                className={`py-3 px-4 border rounded-md flex items-center justify-center transition-colors ${
+                className={`py-3 px-4 border rounded-md flex items-center justify-center transition-colors text-sm sm:text-base ${
                   role === "investor"
                     ? "border-primary-500 bg-primary-50 text-primary-700"
                     : "border-gray-300 text-gray-700 hover:bg-gray-50"
@@ -97,17 +94,18 @@ export const LoginWithOAuthPage: React.FC = () => {
                 Investor
               </button>
             </div>
-            <div className="flex justify-center my-5 ">
-              <Button
-                className="w-2/5"
-                type="submit"
-                fullWidth
-                isLoading={isLoading}
-                leftIcon={<LogIn size={18} />}
-              >
-                Sign in
-              </Button>
-            </div>
+          </div>
+
+          <div className="flex justify-center pt-4">
+            <Button
+              className="w-full sm:w-2/3"
+              type="submit"
+              fullWidth
+              isLoading={isLoading}
+              leftIcon={<LogIn size={18} />}
+            >
+              Continue
+            </Button>
           </div>
         </form>
       </div>
