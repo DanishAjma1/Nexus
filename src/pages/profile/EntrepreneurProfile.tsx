@@ -23,25 +23,33 @@ import {
 import { Entrepreneur } from "../../types";
 import { AmountMeasureWithTags, getEnterpreneurById } from "../../data/users";
 
-export const EntrepreneurProfile: React.FC = () => {
+type Props = {
+  userId?: string | undefined;
+};
+export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
   const { id } = useParams<{ id: string }>();
   const { user: currentUser } = useAuth();
   const [entrepreneur, setEnterpreneur] = useState<Entrepreneur>();
-  const navigate = useNavigate();
   const [hasRequestedCollaboration, setHasRequestedCollaboration] =
     useState<boolean>();
-    const [isDealModalOpen, setIsDealModalOpen] = useState(false);
+  const [isDealModalOpen, setIsDealModalOpen] = useState(false);
 
+  const navigate = useNavigate();
 
   const [valuation, setValuation] = useState<number | undefined>(0);
 
   useEffect(() => {
     const fetchEntrepreneur = async () => {
-      const entrepreneur = await getEnterpreneurById(id);
-      setEnterpreneur(entrepreneur);
+      if (id) {
+        const entrepreneur = await getEnterpreneurById(id);
+        setEnterpreneur(entrepreneur);
+      } else {
+        const entrepreneur = await getEnterpreneurById(userId);
+        setEnterpreneur(entrepreneur);
+      }
     };
     fetchEntrepreneur();
-  }, [id]);
+  }, [id, userId]);
 
   useEffect(() => {
     const calculateValuation = () => {
@@ -60,14 +68,10 @@ export const EntrepreneurProfile: React.FC = () => {
     setValuation(base * revenue);
   }, [entrepreneur]);
 
-
   useEffect(() => {
     const checkInvestor = async () => {
       if (currentUser?.userId && id) {
-        const request = await checkRequestsFromInvestor(
-          currentUser.userId,
-          id
-        );
+        const request = await checkRequestsFromInvestor(currentUser.userId, id);
         console.log(request);
         setHasRequestedCollaboration(Boolean(request));
       }
@@ -86,6 +90,7 @@ export const EntrepreneurProfile: React.FC = () => {
           The entrepreneur profile you're looking for doesn't exist or has been
           removed.
         </p>
+        s
         <Link to="/dashboard/investor">
           <Button variant="outline" className="mt-4">
             Back to Dashboard
@@ -97,6 +102,7 @@ export const EntrepreneurProfile: React.FC = () => {
 
   const isCurrentUser = currentUser?.userId === entrepreneur?.userId;
   const isInvestor = currentUser?.role === "investor";
+  const isAdmin = currentUser?.role === "admin";
   // Check if the current investor has already sent a request to this entrepreneur
 
   const handleSendRequest = async () => {
@@ -154,129 +160,129 @@ export const EntrepreneurProfile: React.FC = () => {
           </div>
 
           <div className="mt-6 sm:mt-0 flex flex-col sm:flex-row gap-2 justify-center sm:justify-end">
-            {!isCurrentUser && (
-              <>
-                <Link to={`/chat/${entrepreneur.userId}`}>
-                  <Button
-                    variant="outline"
-                    leftIcon={<MessageCircle size={18} />}
+            {!isAdmin ? (
+              !isCurrentUser && (
+                <>
+                  <Link to={`/chat/${entrepreneur.userId}`}>
+                    <Button
+                      variant="outline"
+                      leftIcon={<MessageCircle size={18} />}
+                    >
+                      Message
+                    </Button>
+                  </Link>
+
+                  {isInvestor && (
+                    <Button
+                      leftIcon={<Send size={18} />}
+                      disabled={hasRequestedCollaboration}
+                      onClick={handleSendRequest}
+                    >
+                      {hasRequestedCollaboration
+                        ? "Request Sent"
+                        : "Request Collaboration"}
+                    </Button>
+                  )}
+                </>
+              )
+            ) : (
+              <></>
+            )}
+
+            {hasRequestedCollaboration && (
+              <Button
+                className="ml-2 bg-blue-600 text-white hover:bg-blue-700"
+                onClick={() => setIsDealModalOpen(true)}
+              >
+                Make a Deal
+              </Button>
+            )}
+            {isDealModalOpen && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+                <div className="bg-white rounded-lg w-96 p-6 relative shadow-lg">
+                  <h2 className="text-lg font-bold mb-4">Make a Deal</h2>
+
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      alert("Deal successfully submitted");
+
+                      setIsDealModalOpen(false);
+                    }}
                   >
-                    Message
-                  </Button>
-                </Link>
+                    {/* Entrepreneur Info */}
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Entrepreneur Name
+                      </label>
+                      <input
+                        type="text"
+                        value={entrepreneur?.name || "Zain"}
+                        readOnly
+                        className="mt-1 block w-full border border-gray-300 rounded-md p-2 bg-gray-100"
+                      />
+                    </div>
 
-                {isInvestor && (
-                  <Button
-                    leftIcon={<Send size={18} />}
-                    disabled={hasRequestedCollaboration}
-                    onClick={handleSendRequest}
-                  >
-                    {hasRequestedCollaboration
-                      ? "Request Sent"
-                      : "Request Collaboration"}
-                  </Button>
-                )}
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Business Name
+                      </label>
+                      <input
+                        type="text"
+                        value={entrepreneur?.startupName || "Abcdmedia Startup"}
+                        readOnly
+                        className="mt-1 block w-full border border-gray-300 rounded-md p-2 bg-gray-100"
+                      />
+                    </div>
 
-                {hasRequestedCollaboration && (
-      <Button
-  className="ml-2 bg-blue-600 text-white hover:bg-blue-700"
-  onClick={() => setIsDealModalOpen(true)}
->
-  Make a Deal
-</Button>
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Deal Details
+                      </label>
+                      <textarea
+                        required
+                        defaultValue="We propose an initial investment of $100,000 for 10% equity."
+                        className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                      />
+                    </div>
 
-    )}
-   {isDealModalOpen && (
-  <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-    <div className="bg-white rounded-lg w-96 p-6 relative shadow-lg">
-      <h2 className="text-lg font-bold mb-4">Make a Deal</h2>
+                    {/* Investor Input Fields */}
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Investment Amount ($)
+                      </label>
+                      <input
+                        type="number"
+                        defaultValue={50000} // dummy amount
+                        className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                      />
+                    </div>
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          alert("Deal successfully submitted");
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Requested Equity (%)
+                      </label>
+                      <input
+                        type="number"
+                        defaultValue={5} // dummy equity
+                        className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                      />
+                    </div>
 
-          setIsDealModalOpen(false);
-        }}
-      >
-        {/* Entrepreneur Info */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700">
-            Entrepreneur Name
-          </label>
-          <input
-            type="text"
-            value={entrepreneur?.name || "Zain"} 
-            readOnly
-            className="mt-1 block w-full border border-gray-300 rounded-md p-2 bg-gray-100"
-          />
-        </div>
-
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700">
-            Business Name
-          </label>
-          <input
-            type="text"
-            value={entrepreneur?.startupName || "Abcdmedia Startup"} 
-            readOnly
-            className="mt-1 block w-full border border-gray-300 rounded-md p-2 bg-gray-100"
-          />
-        </div>
-
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700">
-            Deal Details
-          </label>
-          <textarea
-            required
-            defaultValue="We propose an initial investment of $100,000 for 10% equity."
-            className="mt-1 block w-full border border-gray-300 rounded-md p-2"
-          />
-        </div>
-
-        {/* Investor Input Fields */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700">
-            Investment Amount ($)
-          </label>
-          <input
-            type="number"
-            defaultValue={50000} // dummy amount
-            className="mt-1 block w-full border border-gray-300 rounded-md p-2"
-          />
-        </div>
-
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700">
-            Requested Equity (%)
-          </label>
-          <input
-            type="number"
-            defaultValue={5} // dummy equity
-            className="mt-1 block w-full border border-gray-300 rounded-md p-2"
-          />
-        </div>
-
-        {/* Buttons */}
-        <div className="flex justify-end gap-2">
-          <Button
-            variant="outline"
-            type="button"
-            onClick={() => setIsDealModalOpen(false)}
-          >
-            Cancel
-          </Button>
-          <Button type="submit">Send Deal</Button>
-        </div>
-      </form>
-    </div>
-  </div>
-)}
-
-
-
-              </>
+                    {/* Buttons */}
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        type="button"
+                        onClick={() => setIsDealModalOpen(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button type="submit">Send Deal</Button>
+                    </div>
+                  </form>
+                </div>
+              </div>
             )}
 
             {isCurrentUser && (
@@ -304,7 +310,9 @@ export const EntrepreneurProfile: React.FC = () => {
               <h2 className="text-lg font-medium text-gray-900">About</h2>
             </CardHeader>
             <CardBody>
-              <p className="text-gray-700">{entrepreneur.bio || "Say about yours..?"}</p>
+              <p className="text-gray-700">
+                {entrepreneur.bio || "Say about yours..?"}
+              </p>
             </CardBody>
           </Card>
 
@@ -348,7 +356,9 @@ export const EntrepreneurProfile: React.FC = () => {
                   <h3 className="text-md font-medium text-gray-900">
                     Competitive Advantage
                   </h3>
-                  <p className="text-gray-700 mt-1">{entrepreneur.advantage || "--"}</p>
+                  <p className="text-gray-700 mt-1">
+                    {entrepreneur.advantage || "--"}
+                  </p>
                 </div>
               </div>
             </CardBody>
@@ -431,7 +441,7 @@ export const EntrepreneurProfile: React.FC = () => {
             <CardBody>
               <div className="space-y-4">
                 <div>
-                  <span className="text-sm text-gray-500">Current Round</span>
+                  <span className="text-sm text-gray-500">Fund needed</span>
                   <div className="flex items-center mt-1">
                     <DollarSign size={18} className="text-accent-600 mr-1" />
                     <p className="text-lg font-semibold text-gray-900">
@@ -465,36 +475,36 @@ export const EntrepreneurProfile: React.FC = () => {
                       <span className="text-xs font-medium">Pre-seed</span>
                       <span
                         className={`text-xs ${
-                          fundAmount > 10000
+                          fundAmount > 100000
                             ? " text-green-800 bg-green-100"
                             : "text-yellow-800 bg-yellow-100"
                         } px-2 py-0.5 rounded-full`}
                       >
-                        {fundAmount > 10000 ? "Completed" : "In progress"}
+                        {fundAmount > 100000 ? "Completed" : "In progress"}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-xs font-medium">Seed</span>
                       <span
                         className={`text-xs  ${
-                          fundAmount > 250000
+                          fundAmount > 2500000
                             ? " text-green-800 bg-green-100"
                             : "text-yellow-800 bg-yellow-100"
                         } px-2 py-0.5 rounded-full`}
                       >
-                        {fundAmount > 250000 ? "Completed" : "In progress"}
+                        {fundAmount > 2500000 ? "Completed" : "In progress"}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-xs font-medium">Series A</span>
                       <span
                         className={`text-xs ${
-                          fundAmount > 2000000
+                          fundAmount > 20000000
                             ? " text-green-800 bg-green-100"
                             : "text-yellow-800 bg-yellow-100"
                         } px-2 py-0.5 rounded-full`}
                       >
-                        {fundAmount > 2000000 ? "Completed" : "In progress"}
+                        {fundAmount > 20000000 ? "Completed" : "In progress"}
                       </span>
                     </div>
                   </div>
