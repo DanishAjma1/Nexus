@@ -22,62 +22,110 @@ export const RegisterPage: React.FC = () => {
   const [role, setRole] = useState<UserRole>("entrepreneur");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   const { register } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-
-    // Validate passwords match
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
-      return;
+  const validateForm = () => {
+    // Name validation: letters and spaces only
+    if (!name.trim()) {
+      setError("Full name is required");
+      return false;
+    }
+    if (!/^[A-Za-z\s]+$/.test(name)) {
+      setError("Name can only contain letters and spaces");
+      return false;
     }
 
-    setIsLoading(true);
+    // Email validation
+    if (!email.trim()) {
+      setError("Email is required");
+      return false;
+    }
+    // Common email domains allowed
+const emailRegex = /^[a-zA-Z0-9._%+-]+@(gmail|yahoo|icloud|outlook|hotmail|aol|protonmail|live|msn|comcast)\.com$/;
+if (!emailRegex.test(email)) {
+  setError("Invalid Email");
+  return false;
+}
 
+
+    // Password validation
+    if (!password) {
+      setError("Password is required");
+      return false;
+    }
+    const passwordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if (!passwordRegex.test(password)) {
+      setError(
+        "Password must be at least 8 characters, include uppercase, lowercase, number and special character"
+      );
+      return false;
+    }
+
+    // Confirm password
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return false;
+    }
+
+    // Role validation
+    if (!role) {
+      setError("Select a role");
+      return false;
+    }
+
+    // Terms validation
+    if (!termsAccepted) {
+      setError("You must accept the Terms of Service and Privacy Policy");
+      return false;
+    }
+
+    // All good
+    setError(null);
+    return true;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+
+    setIsLoading(true);
     try {
+      // Save to local storage for demo purposes
       localStorage.setItem(
         "userInfo",
         JSON.stringify({ name, email, password, role })
       );
-      console.log("hello");
       navigate("/fill-details");
-      // await register(name, email, password, role);
-      // // Redirect based on role
-      // if (role === 'admin') {
-      //   navigate('/dashboard/admin');
-      // } else if (role === 'entrepreneur') {
-      //   navigate('/dashboard/entrepreneur');
-      // } else {
-      //   navigate('/dashboard/investor');
-      // }
-    } catch (err) {
-      setError((err as Error).message);
+    } catch (err: any) {
+      setError(err.message || "Something went wrong");
+      setIsLoading(false);
+    } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-8 px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-md">
         <div className="flex justify-center">
-          <div className="w-12 h-12 bg-primary-600 rounded-md flex items-center justify-center">
+          <div className="w-12 h-12 bg-primary-600 rounded-md flex items-center justify-center shadow-md">
             <Shield size={28} className="text-white" />
           </div>
         </div>
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+        <h2 className="mt-6 text-center text-2xl sm:text-3xl font-extrabold text-gray-900">
           Create your account
         </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
+        <p className="mt-2 text-center text-sm text-gray-600 px-2">
           Join TrustBridge AI to connect with partners
         </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+      <div className="mt-8 mx-auto w-full max-w-md">
+        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-8">
           {error && (
             <div className="mb-4 bg-error-50 border border-error-500 text-error-700 px-4 py-3 rounded-md flex items-start">
               <AlertCircle size={18} className="mr-2 mt-0.5" />
@@ -86,15 +134,15 @@ export const RegisterPage: React.FC = () => {
           )}
 
           <form className="space-y-6" onSubmit={handleSubmit}>
+            {/* Role selection */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 I am registering as a
               </label>
-              <div className="grid grid-cols-3 gap-3">
-                {/* Entrepreneur */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <button
                   type="button"
-                  className={`py-3 px-4 border rounded-md flex items-center justify-center transition-colors ${
+                  className={`py-3 px-4 border rounded-md flex items-center justify-center transition-colors text-sm sm:text-base ${
                     role === "entrepreneur"
                       ? "border-primary-500 bg-primary-50 text-primary-700"
                       : "border-gray-300 text-gray-700 hover:bg-gray-50"
@@ -105,10 +153,9 @@ export const RegisterPage: React.FC = () => {
                   Entrepreneur
                 </button>
 
-                {/* Investor */}
                 <button
                   type="button"
-                  className={`py-3 px-4 border rounded-md flex items-center justify-center transition-colors ${
+                  className={`py-3 px-4 border rounded-md flex items-center justify-center transition-colors text-sm sm:text-base ${
                     role === "investor"
                       ? "border-primary-500 bg-primary-50 text-primary-700"
                       : "border-gray-300 text-gray-700 hover:bg-gray-50"
@@ -119,10 +166,9 @@ export const RegisterPage: React.FC = () => {
                   Investor
                 </button>
 
-                {/* Admin */}
                 <button
                   type="button"
-                  className={`py-3 px-4 border rounded-md flex items-center justify-center transition-colors ${
+                  className={`py-3 px-4 border rounded-md flex items-center justify-center transition-colors text-sm sm:text-base ${
                     role === "admin"
                       ? "border-primary-500 bg-primary-50 text-primary-700"
                       : "border-gray-300 text-gray-700 hover:bg-gray-50"
@@ -135,6 +181,7 @@ export const RegisterPage: React.FC = () => {
               </div>
             </div>
 
+            {/* Name */}
             <Input
               label="Full name"
               type="text"
@@ -145,6 +192,7 @@ export const RegisterPage: React.FC = () => {
               startAdornment={<User size={18} />}
             />
 
+            {/* Email */}
             <Input
               label="Email address"
               type="email"
@@ -155,6 +203,7 @@ export const RegisterPage: React.FC = () => {
               startAdornment={<Mail size={18} />}
             />
 
+            {/* Password */}
             <Input
               label="Password"
               type="password"
@@ -165,6 +214,7 @@ export const RegisterPage: React.FC = () => {
               startAdornment={<Lock size={18} />}
             />
 
+            {/* Confirm Password */}
             <Input
               label="Confirm password"
               type="password"
@@ -175,18 +225,18 @@ export const RegisterPage: React.FC = () => {
               startAdornment={<Lock size={18} />}
             />
 
-            <div className="flex items-center">
+            {/* Terms checkbox */}
+            <div className="flex items-start sm:items-center gap-2">
               <input
                 id="terms"
                 name="terms"
                 type="checkbox"
+                checked={termsAccepted}
+                onChange={(e) => setTermsAccepted(e.target.checked)}
                 required
                 className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
               />
-              <label
-                htmlFor="terms"
-                className="ml-2 block text-sm text-gray-900"
-              >
+              <label htmlFor="terms" className="block text-sm text-gray-900">
                 I agree to the{" "}
                 <a
                   href="#"

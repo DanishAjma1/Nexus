@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { User, Lock, Bell, Globe, Palette, CreditCard } from "lucide-react";
+import {
+  User,
+  Lock,
+  Bell,
+  Globe,
+  Palette,
+  CreditCard,
+} from "lucide-react";
 import { Card, CardHeader, CardBody } from "../../components/ui/Card";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
@@ -7,10 +14,14 @@ import { Badge } from "../../components/ui/Badge";
 import { Avatar } from "../../components/ui/Avatar";
 import { useAuth } from "../../context/AuthContext";
 import { Navigate } from "react-router-dom";
-import { getEnterpreneurById, getInvestorById } from "../../data/users";
+import {
+  getEnterpreneurById,
+  getInvestorById,
+} from "../../data/users";
 import { Entrepreneur, Investor, UserRole } from "../../types";
 import { InvestorSettings } from "../../components/settings/InvestorSettings";
 import { EntrepreneurSettings } from "../../components/settings/EntrepreneurSettings";
+import toast from "react-hot-toast";
 
 export const SettingsPage: React.FC = () => {
   const { user: currentUser, updateProfile } = useAuth();
@@ -20,9 +31,9 @@ export const SettingsPage: React.FC = () => {
     const fetchUser = async () => {
       let fetchedUser = null;
       if (currentUser?.role === "investor")
-        fetchedUser = await getInvestorById(currentUser?.userId);
+        fetchedUser = await getInvestorById(currentUser.userId);
       else if (currentUser?.role === "entrepreneur")
-        fetchedUser = await getEnterpreneurById(currentUser?.userId);
+        fetchedUser = await getEnterpreneurById(currentUser.userId);
 
       setUser(fetchedUser);
     };
@@ -36,6 +47,7 @@ export const SettingsPage: React.FC = () => {
     bio: string;
     location: string;
     avatarUrl?: string | File | null;
+    investmentInterest?: string;
   };
 
   const initialValues: UserDetails = {
@@ -55,6 +67,14 @@ export const SettingsPage: React.FC = () => {
   ) => {
     const target = e.target as HTMLInputElement & { files?: FileList };
     const { name, value, files } = target;
+
+    // Block special characters (allow letters, numbers, spaces)
+    if (
+      ["name", "bio", "location", "investmentInterest"].includes(name)
+    ) {
+      if (!/^[A-Za-z0-9\s]*$/.test(value)) return;
+    }
+
     if (name === "avatarUrl") {
       const file = files?.[0] ?? null;
       setUserDetails((prev) => ({ ...prev, avatarUrl: file }));
@@ -64,12 +84,69 @@ export const SettingsPage: React.FC = () => {
     }
   };
 
+  const validateProfile = () => {
+    const { name, bio, location, investmentInterest } = userDetails;
+
+    if (!name?.trim()) {
+      toast.error("Name is required");
+      return false;
+    }
+    if (!/^[A-Za-z0-9\s]+$/.test(name)) {
+      toast.error("Name cannot contain special characters");
+      return false;
+    }
+
+    if (!bio.trim()) {
+      toast.error("Bio is required");
+      return false;
+    }
+    if (!/^[A-Za-z0-9\s]+$/.test(bio)) {
+      toast.error("Bio cannot contain special characters");
+      return false;
+    }
+
+    if (!location.trim()) {
+      toast.error("Location is required");
+      return false;
+    }
+    if (!/^[A-Za-z0-9\s]+$/.test(location)) {
+      toast.error("Location cannot contain special characters");
+      return false;
+    }
+
+    if (currentUser?.role === "investor") {
+      if (!investmentInterest?.trim()) {
+        toast.error("Investment Interest is required");
+        return false;
+      }
+      if (!/^[A-Za-z0-9\s]+$/.test(investmentInterest)) {
+        toast.error(
+          "Investment Interest cannot contain special characters"
+        );
+        return false;
+      }
+    }
+
+    return true;
+  };
+
   const handleSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     if (!user) return;
-    // userId guaranteed because of the guard
-    updateProfile(user.userId, userDetails);
+
+    if (!validateProfile()) return;
+
+    try {
+      await updateProfile(user.userId, userDetails);
+      toast.success("Profile updated successfully");
+    } catch (err) {
+      toast.error("Failed to update profile");
+    }
   };
+
+  if (!currentUser) {
+    return <Navigate to="/login" replace />;
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -81,40 +158,33 @@ export const SettingsPage: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Settings navigation */}
+        {/* Navigation */}
         <Card className="lg:col-span-1">
           <CardBody className="p-2">
             <nav className="space-y-1">
               <button
                 className="flex items-center w-full px-3 py-2 text-sm font-medium text-primary-700 bg-primary-50 rounded-md"
-                onClick={(e) => {
-                  <Navigate to={"/profile"} replace />;
-                }}
+                onClick={(e) => <Navigate to={"/profile"} replace />}
               >
                 <User size={18} className="mr-3" />
                 Profile
               </button>
-
               <button className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md">
                 <Lock size={18} className="mr-3" />
                 Security
               </button>
-
               <button className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md">
                 <Bell size={18} className="mr-3" />
                 Notifications
               </button>
-
               <button className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md">
                 <Globe size={18} className="mr-3" />
                 Language
               </button>
-
               <button className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md">
                 <Palette size={18} className="mr-3" />
                 Appearance
               </button>
-
               <button className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md">
                 <CreditCard size={18} className="mr-3" />
                 Billing
@@ -123,9 +193,8 @@ export const SettingsPage: React.FC = () => {
           </CardBody>
         </Card>
 
-        {/* Main settings content */}
+        {/* Main settings */}
         <div className="lg:col-span-3 space-y-6">
-          {/* Profile Settings */}
           <Card>
             <CardHeader>
               <h2 className="text-lg font-medium text-gray-900">
@@ -135,14 +204,12 @@ export const SettingsPage: React.FC = () => {
             <CardBody className="space-y-6">
               <div className="flex items-center gap-6">
                 <Avatar src={user?.avatarUrl} alt={user?.name} size="xl" />
-
                 <div>
                   <Button variant="outline" size="sm">
                     <label htmlFor="upload-file" className="cursor-pointer">
                       {isFileUploaded ? "Profile updated" : "Change Photo"}
                     </label>
                   </Button>
-
                   <input
                     type="file"
                     id="upload-file"
@@ -151,7 +218,6 @@ export const SettingsPage: React.FC = () => {
                     name="avatarUrl"
                     onChange={handleChange}
                   />
-
                   <p className="mt-2 text-sm text-gray-500">
                     JPG, GIF or PNG. Max size of 800K
                   </p>
@@ -165,16 +231,13 @@ export const SettingsPage: React.FC = () => {
                   value={userDetails.name}
                   onChange={handleChange}
                 />
-
                 <Input label="Email" value={userDetails.email} disabled />
                 <Input
                   label="Location"
-                  onChange={handleChange}
                   name="location"
                   value={userDetails.location}
+                  onChange={handleChange}
                 />
-
-                <Input label="Role" value={userDetails.role} disabled />
               </div>
 
               <div>
@@ -196,7 +259,7 @@ export const SettingsPage: React.FC = () => {
             </CardBody>
           </Card>
 
-          {/* Update profile */}
+          {/* Additional settings based on role */}
           <Card>
             <CardHeader>
               <h2 className="text-lg font-medium text-gray-900">
@@ -243,11 +306,8 @@ export const SettingsPage: React.FC = () => {
                 </h3>
                 <div className="space-y-4">
                   <Input label="Current Password" type="password" />
-
                   <Input label="New Password" type="password" />
-
                   <Input label="Confirm New Password" type="password" />
-
                   <div className="flex justify-end">
                     <Button>Update Password</Button>
                   </div>
