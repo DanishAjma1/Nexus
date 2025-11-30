@@ -158,7 +158,6 @@ export const InvestorSettings: React.FC = () => {
     });
   };
   return (
-    <Card>
       <div className="p-4">
         <CardHeader className="font-medium">
           Fill the Details as an Investor...
@@ -306,6 +305,5 @@ export const InvestorSettings: React.FC = () => {
           </div>
         </form>
       </div>
-    </Card>
   );
 };

@@ -1,5 +1,6 @@
 import React from "react";
 import { Navbar } from "../../components/home/Navbar";
+import { Button } from "../../components/ui/Button";
 
 interface CampaignProps {
   image: string;
@@ -113,6 +114,7 @@ export const HomePage: React.FC = () => {
               <span className="text-green-500 mr-1">Total exits:</span>
               <p>{exits}</p>
             </div>
+            {/* <div className="border-b-2 border-white bottom-4 left-1/2 transform -translate-x-1/2 w-2/3 absolute" /> */}
           </div>
         </div>
       </div>
@@ -170,10 +172,9 @@ export const HomePage: React.FC = () => {
                 </h1>
 
                 <div className="flex items-center justify-center h-full gap-4">
-                  <button className="px-5 py-1 bg-orange-300">
+                  <Button className="px-5 py-1 bg-orange-300 text-black">
                     Getting started
-                  </button>
-                  <button className="px-5 py-1 bg-orange-300">About Us</button>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -213,7 +214,7 @@ export const HomePage: React.FC = () => {
               Successful Entrepreneurs..
             </h1>
 
-            <div className="grid grid-cols-3 gap-4 border-2 p-3 rounded-md bg-white shadow-md">
+            <div className="grid grid-cols-3 gap-4">
               <SuccessfulCompanyDiv
                 image="app logo.jpeg"
                 company="Tesla"

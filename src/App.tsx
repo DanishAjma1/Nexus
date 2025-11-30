@@ -39,19 +39,20 @@ import { ResetPasswordPage } from "./pages/auth/ResetPasswordPage";
 //import { VideoCall } from "./components/webRTC/Videocall";
 //import { AudioCall } from "./components/webRTC/AudioCall";
 import { Toaster } from "react-hot-toast";
-import { UserManagement } from "./pages/admin/UserManagement";
+import { FraudAndRiskDetection } from "./pages/admin/FraudAndRiskDetection";
 import { Activities } from "./pages/admin/activities";
-import { Entrepreneurj } from "./pages/admin/entrepreneur";
 import { Investors } from "./pages/admin/investors";
-import Campaigns from "./pages/admin/campaigns";
 
 import { HomePage } from "./pages/home/HomePage";
 import { LoginWithOAuthPage } from "./pages/auth/LoginWithOAuthPage";
 import { UserDetails } from "./components/user/UserDetails";
-import { Supporters } from './pages/admin/supporters';
+import { Supporters } from "./pages/admin/supporters";
 import { FlaggedAccounts } from "./pages/admin/flaggedAccounts";
+import { Users } from "./pages/admin/Users";
+import { AICommandPage } from "./pages/admin/AI";
+import {Campaigns }from "./pages/admin/Campaigns";
 import { Deals } from "./pages/viewdeals/ViewDeal";
-
+import { DealsPage } from "./pages/deals/DealsPage";
 
 function App() {
   return (
@@ -75,13 +76,17 @@ function App() {
             </Route>
 
             <Route path="/admin" element={<DashboardLayout />}>
-              <Route path="users" element={<UserManagement />} />
               <Route path="activities" element={<Activities />} />
-              <Route path="entrepreneur" element={<Entrepreneurj />} />
+              <Route path="all-users" element={<Users />} />
               <Route path="investors" element={<Investors />} />
               <Route path="campaigns" element={<Campaigns />} />
               <Route path="supporters" element={<Supporters />} />
               <Route path="flaggedAccounts" element={<FlaggedAccounts />} />
+              <Route path="ai" element={<AICommandPage />} />
+              <Route
+                path="fraud-and-risk-detection"
+                element={<FraudAndRiskDetection />}
+              />
             </Route>
 
             {/* Profile Routes */}
@@ -127,10 +132,13 @@ function App() {
             <Route path="/viewdeals" element={<DashboardLayout />}>
               <Route index element={<Deals />} />
             </Route>
+            <Route path="/deals" element={<DashboardLayout />}>
+              <Route index element={<DealsPage />} />
+            </Route>
 
             {/* Chat Routes */}
             <Route path="/chat" element={<DashboardLayout />}>
-              <Route path=":userId" element={ <ChatPage/>} />
+              <Route path=":userId" element={<ChatPage />} />
             </Route>
 
             {/* Redirect root to login */}
