@@ -132,7 +132,7 @@ function App() {
             <Route path="/viewdeals" element={<DashboardLayout />}>
               <Route index element={<Deals />} />
             </Route>
-            <Route path="/deals" element={<DashboardLayout />}>
+            <Route path="/sent-deals" element={<DashboardLayout />}>
               <Route index element={<DealsPage />} />
             </Route>
 

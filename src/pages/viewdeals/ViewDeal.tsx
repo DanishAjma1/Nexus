@@ -1,4 +1,3 @@
-"use client";
 import React, { useState } from "react";
 import { Card, CardBody, CardHeader } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
