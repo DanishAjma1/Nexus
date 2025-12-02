@@ -84,7 +84,7 @@ export const Sidebar: React.FC = () => {
     { to: "/entrepreneurs", icon: <Users size={20} />, text: "Find Startups" },
     { to: "/messages", icon: <MessageCircle size={20} />, text: "Messages" },
     { to: "/notifications", icon: <Bell size={20} />, text: "Notifications" },
-    { to: "/deals", icon: <FileText size={20} />, text: "Deals" },
+    { to: "/sent-deals", icon: <FileText size={20} />, text: "Sent Deals" },
   ];
 
   //  Admin Sidebar
