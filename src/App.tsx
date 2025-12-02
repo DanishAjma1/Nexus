@@ -50,9 +50,9 @@ import { Supporters } from "./pages/admin/supporters";
 import { FlaggedAccounts } from "./pages/admin/flaggedAccounts";
 import { Users } from "./pages/admin/Users";
 import { AICommandPage } from "./pages/admin/AI";
-import {Campaigns }from "./pages/admin/Campaigns";
 import { Deals } from "./pages/viewdeals/ViewDeal";
 import { DealsPage } from "./pages/deals/DealsPage";
+import { Campaigns } from "./pages/admin/Campaigns";
 
 function App() {
   return (

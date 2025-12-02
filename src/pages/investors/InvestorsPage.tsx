@@ -6,14 +6,12 @@ import { Badge } from "../../components/ui/Badge";
 import { InvestorCard } from "../../components/investor/InvestorCard";
 import { useAuth } from "../../context/AuthContext";
 import { getInvestorsFromDb } from "../../data/users";
-
 import { Investor } from "../../types";
 
 export const InvestorsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStages, setSelectedStages] = useState<string[]>([]);
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
-
   const [investors, setInvestors] = useState<Investor[]>([]);
   const { user } = useAuth();
 
@@ -26,8 +24,9 @@ export const InvestorsPage: React.FC = () => {
     };
     fetchData();
   }, []);
+
   if (!user) return null;
-  // Get unique investment stages and interests
+
   const allStages = Array.from(
     new Set(investors.flatMap((i) => i.investmentStage || ""))
   );
@@ -35,8 +34,7 @@ export const InvestorsPage: React.FC = () => {
     new Set(investors.flatMap((i) => i.investmentInterests || ""))
   );
 
-  // Filter investors based on search and filters
-  const filteredInvestors = investors && investors.filter((investor) => {
+  const filteredInvestors = investors.filter((investor) => {
     const matchesSearch =
       searchQuery === "" ||
       investor.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -73,24 +71,26 @@ export const InvestorsPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in bg-black min-h-screen text-white px-4 py-8">
+      {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Find Investors</h1>
-        <p className="text-gray-600">
+        <h1 className="text-3xl font-bold text-purple-300">Find Investors</h1>
+        <p className="text-gray-300 mt-1">
           Connect with investors who match your startup's needs
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Filters sidebar */}
+        {/* Filters Sidebar */}
         <div className="space-y-6">
-          <Card>
+          <Card className="bg-purple-900 border border-purple-700 text-white">
             <CardHeader>
-              <h2 className="text-lg font-medium text-gray-900">Filters</h2>
+              <h2 className="text-lg font-medium text-purple-300">Filters</h2>
             </CardHeader>
             <CardBody className="space-y-6">
+              {/* Investment Stage */}
               <div>
-                <h3 className="text-sm font-medium text-gray-900 mb-2">
+                <h3 className="text-sm font-medium text-purple-200 mb-2">
                   Investment Stage
                 </h3>
                 <div className="space-y-2">
@@ -98,10 +98,10 @@ export const InvestorsPage: React.FC = () => {
                     <button
                       key={stage}
                       onClick={() => toggleStage(stage)}
-                      className={`block w-full text-left px-3 py-2 rounded-md text-sm ${
+                      className={`block w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
                         selectedStages.includes(stage)
-                          ? "bg-primary-50 text-primary-700"
-                          : "text-gray-700 hover:bg-gray-50"
+                          ? "bg-purple-700 text-white"
+                          : "text-purple-200 hover:bg-purple-800"
                       }`}
                     >
                       {stage}
@@ -110,20 +110,20 @@ export const InvestorsPage: React.FC = () => {
                 </div>
               </div>
 
+              {/* Investment Interests */}
               <div>
-                <h3 className="text-sm font-medium text-gray-900 mb-2">
+                <h3 className="text-sm font-medium text-purple-200 mb-2">
                   Investment Interests
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {allInterests.map((interest) => (
                     <Badge
                       key={interest}
-                      variant={
+                      className={`cursor-pointer px-2 py-1 rounded ${
                         selectedInterests.includes(interest)
-                          ? "primary"
-                          : "gray"
-                      }
-                      className="cursor-pointer"
+                          ? "bg-purple-700 text-white"
+                          : "bg-gray-800 text-gray-300"
+                      }`}
                       onClick={() => toggleInterest(interest)}
                     >
                       {interest}
@@ -132,51 +132,59 @@ export const InvestorsPage: React.FC = () => {
                 </div>
               </div>
 
+              {/* Location */}
               <div>
-                <h3 className="text-sm font-medium text-gray-900 mb-2">
+                <h3 className="text-sm font-medium text-purple-200 mb-2">
                   Location
                 </h3>
                 <div className="space-y-2">
-                  <button className="flex items-center w-full text-left px-3 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-50">
-                    <MapPin size={16} className="mr-2" />
-                    San Francisco, CA
-                  </button>
-                  <button className="flex items-center w-full text-left px-3 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-50">
-                    <MapPin size={16} className="mr-2" />
-                    New York, NY
-                  </button>
-                  <button className="flex items-center w-full text-left px-3 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-50">
-                    <MapPin size={16} className="mr-2" />
-                    Boston, MA
-                  </button>
+                  {["San Francisco, CA", "New York, NY", "Boston, MA"].map(
+                    (loc) => (
+                      <button
+                        key={loc}
+                        className="flex items-center w-full text-left px-3 py-2 rounded-md text-sm text-purple-200 hover:bg-purple-800"
+                      >
+                        <MapPin size={16} className="mr-2 text-purple-300" />
+                        {loc}
+                      </button>
+                    )
+                  )}
                 </div>
               </div>
             </CardBody>
           </Card>
         </div>
 
-        {/* Main content */}
+        {/* Main Content */}
         <div className="lg:col-span-3 space-y-6">
+          {/* Dark Search Bar */}
           <div className="flex items-center gap-4">
-            <Input
-              placeholder="Search investors by name, interests, or keywords..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              startAdornment={<Search size={18} />}
-              fullWidth
-            />
+            <div className="relative w-full">
+              <Input
+                placeholder="Search investors by name, interests, or keywords..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                fullWidth
+                className="bg-purple-900 border border-purple-700 text-black placeholder-gray-400 focus:ring-purple-500 focus:border-purple-500 pl-10"
+              />
+              <Search
+                size={18}
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
+              />
+            </div>
 
             <div className="flex items-center gap-2">
-              <Filter size={18} className="text-gray-500" />
-              <span className="text-sm text-gray-600">
+              <Filter size={18} className="text-purple-300" />
+              <span className="text-sm text-gray-300">
                 {filteredInvestors.length} results
               </span>
             </div>
           </div>
 
+          {/* Investors Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {filteredInvestors.map((investor) => (
-              <InvestorCard key={investor.id} investor={investor} />
+              <InvestorCard key={investor.id} investor={investor} darkMode />
             ))}
           </div>
         </div>

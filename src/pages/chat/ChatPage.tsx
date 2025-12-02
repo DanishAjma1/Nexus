@@ -1,6 +1,7 @@
+"use client";
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Send, Phone, Video, Info, Smile } from "lucide-react";
+import { Send, Phone, Video, Info, Smile, MessageCircle } from "lucide-react";
 import { Avatar } from "../../components/ui/Avatar";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
@@ -14,7 +15,6 @@ import {
   saveMessagesBetweenUsers,
   updateConversationsForUser,
 } from "../../data/messages";
-import { MessageCircle } from "lucide-react";
 import { getUserFromDb } from "../../data/users";
 import { useSocket } from "../../context/SocketContext";
 
@@ -24,285 +24,178 @@ export const ChatPage: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  const [checkStatus, setCheckStatus] = useState(false);
-  const [conversation, setConversation] = useState<any | null>();
-  const messagesEndRef = useRef<null | HTMLDivElement>(null);
+  const [conversation, setConversation] = useState<any | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const [chatPartner, setChatPartner] = useState<User | null>(null);
-  const [users, setUsers] = useState<[string, User][]>([]);
+  const [usersMap, setUsersMap] = useState<{ [key: string]: User }>({});
   const { socket } = useSocket();
-
   const navigate = useNavigate();
 
-  // Load conversations
   useEffect(() => {
-    const fetchConversation = async () => {
-      const conv = await getConversationsForUser(currentUser?.userId);
-      if (conv) setConversation(conv);
-    };
-    fetchConversation();
-  }, [userId, currentUser?.userId, messages]);
+    if (!currentUser) return;
+    getConversationsForUser(currentUser.userId).then(setConversation);
+  }, [currentUser]);
 
-  //  Fetch Partner Data, messages
   useEffect(() => {
-    if (!currentUser?.userId || !userId) return; // guard clause
-    const fetchUserData = async () => {
-      try {
-        // Load partner Data
-        const partner = await getUserFromDb(userId);
-        setChatPartner(partner || null);
+    if (!currentUser || !userId) return;
+    const fetchData = async () => {
+      const partner = await getUserFromDb(userId);
+      setChatPartner(partner || null);
 
-        // Load messages
-        const messages = await getMessagesBetweenUsers(
-          currentUser.userId,
-          userId
-        );
-        setMessages(messages.length > 0 ? messages : []);
-      } catch (err) {
-        console.error("Error fetching user data:", err);
-      }
+      const msgs = await getMessagesBetweenUsers(currentUser.userId, userId);
+      setMessages(msgs || []);
     };
+    fetchData();
+  }, [currentUser, userId]);
 
-    fetchUserData();
-  }, [currentUser?.userId, userId]);
-
-  //  Set Last messages for each conversation
   useEffect(() => {
     const fetchUsers = async () => {
       const uniqueIds = Array.from(new Set(messages.map((m) => m.senderId)));
       const usersData = await Promise.all(
-        uniqueIds.map(async (id) => {
-          const user = await getUserFromDb(id);
-          return [id, user] as [string, User];
-        })
+        uniqueIds.map(async (id) => [id, await getUserFromDb(id)] as [string, User])
       );
-
-      setUsers(Object.fromEntries(usersData));
+      setUsersMap(Object.fromEntries(usersData));
     };
-
-    if (messages.length > 0) {
-      fetchUsers();
-    }
+    if (messages.length) fetchUsers();
   }, [messages]);
 
-  // Connect socket.io client
   useEffect(() => {
-    // when user receive message
-    socket?.on("received-message", (message) => {
-      setMessages((prev) => [...prev, message]);
-    });
-
-    //  when user get typing
+    socket?.on("received-message", (msg: Message) => setMessages(prev => [...prev, msg]));
     socket?.on("is-typing", () => {
       setIsTyping(true);
-      setTimeout(() => {
-        setIsTyping(false);
-      }, 2000);
-    });
-
-    //  when user offline or status changed
-    socket?.on("check-user-status", () => {
-      setCheckStatus(!checkStatus);
+      setTimeout(() => setIsTyping(false), 2000);
     });
     return () => {
-      socket?.off("send-messsage");
-      socket?.off("received-messsage");
-      socket?.off("accept-call");
-      socket?.off("reject-call");
+      socket?.off("received-message");
+      socket?.off("is-typing");
     };
-  }, [currentUser?.userId]);
+  }, [socket]);
 
   useEffect(() => {
-    // Scroll to bottom of messages
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  //  Hanlde send message
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!newMessage.trim() || !currentUser || !userId) return;
 
-    const message = {
+    const msg: Message = {
       senderId: currentUser.userId,
       receiverId: userId,
       content: newMessage,
       isRead: false,
     };
 
-    const msg = await saveMessagesBetweenUsers(message);
-    socket?.emit("send-message", msg);
-    setMessages((prev) => [...prev, msg]);
+    const savedMsg = await saveMessagesBetweenUsers(msg);
+    socket?.emit("send-message", savedMsg);
+    setMessages(prev => [...prev, savedMsg]);
     setNewMessage("");
 
-    // Update conversation
-    try {
-      const con = {
-        sender: currentUser?.userId,
-        receiver: userId,
-        lastMessage: { ...msg },
-      };
-      const updatedConv = await updateConversationsForUser(con);
-      if (updatedConv) {
-        setConversation(updatedConv);
-      }
-    } catch (err) {
-      console.error("Failed to update conversation", err);
-    }
+    const conv = {
+      sender: currentUser.userId,
+      receiver: userId,
+      lastMessage: savedMsg,
+    };
+    await updateConversationsForUser(conv);
   };
 
   if (!currentUser) return null;
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] bg-white border border-gray-200 rounded-lg overflow-hidden animate-fade-in">
-      {/* Conversations sidebar */}
-      <div className="hidden md:block w-1/3 lg:w-1/4 border-r border-gray-200">
-        <ChatUserList conversation={conversation || null} />
+    <div className="flex flex-col md:flex-row h-screen overflow-hidden bg-black text-white">
+      {/* Sidebar for chats */}
+      <div className="hidden md:block w-1/3 lg:w-1/4 border-r border-purple-800 overflow-y-auto bg-purple-900">
+        <ChatUserList conversation={conversation} darkMode />
       </div>
 
-      {/* Main chat area */}
+      {/* Main chat */}
       <div className="flex-1 flex flex-col">
-        {/* Chat header */}
         {chatPartner ? (
           <>
-            <div className="border-b border-gray-200 p-4 flex justify-between items-center">
-              <div className="flex items-center">
+            {/* Header */}
+            <div className="flex justify-between items-center p-4 border-b border-purple-800 bg-purple-950">
+              <div className="flex items-center space-x-3">
                 <Avatar
                   src={chatPartner.avatarUrl}
                   alt={chatPartner.name}
                   size="md"
                   status={chatPartner.isOnline ? "online" : "offline"}
-                  className="mr-3"
                 />
-
                 <div>
-                  <h2 className="text-lg font-medium text-gray-900">
-                    {chatPartner.name}
-                  </h2>
-                  <p
-                    className={`text-sm ${
-                      isTyping || chatPartner.isOnline
-                        ? "text-green-500"
-                        : "text-gray-500"
-                    }`}
-                  >
-                    {isTyping
-                      ? "is typing"
-                      : chatPartner.isOnline
-                      ? "online"
-                      : "Last seen recently"}
+                  <h2 className="text-lg font-medium text-purple-200">{chatPartner.name}</h2>
+                  <p className={`text-sm ${isTyping ? "text-green-400" : "text-purple-400"}`}>
+                    {isTyping ? "is typing..." : chatPartner.isOnline ? "online" : "Last seen recently"}
                   </p>
                 </div>
               </div>
-
               <div className="flex space-x-2">
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="rounded-full p-2"
-                  aria-label="Voice call"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    navigate(
-                      `audio-call/${currentUser?.userId.slice(
-                        0,
-                        5
-                      )}&${chatPartner?._id.slice(0, 5)}/${false}`
-                    );
-                  }}
+                  className="rounded-full p-2 hover:bg-purple-800"
+                  onClick={() => navigate(`audio-call/${currentUser.userId}&${chatPartner._id}/false`)}
                 >
                   <Phone size={18} />
                 </Button>
-
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="rounded-full p-2"
-                  aria-label="Video call"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    navigate(
-                      `video-call/${currentUser?.userId.slice(
-                        0,
-                        5
-                      )}&${chatPartner?._id.slice(0, 5)}/${false}`
-                    );
-                  }}
+                  className="rounded-full p-2 hover:bg-purple-800"
+                  onClick={() => navigate(`video-call/${currentUser.userId}&${chatPartner._id}/false`)}
                 >
                   <Video size={18} />
                 </Button>
-
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="rounded-full p-2"
-                  aria-label="Info"
-                >
+                <Button variant="ghost" size="sm" className="rounded-full p-2 hover:bg-purple-800">
                   <Info size={18} />
                 </Button>
               </div>
             </div>
 
-            {/* Messages container */}
-            <div className="flex-1 p-4 overflow-y-auto bg-gray-50">
-              {messages.length > 0 ? (
-                <div className="space-y-4">
-                  {messages.map((msg) => (
-                    <ChatMessage
-                      key={msg._id}
-                      message={msg}
-                      user={users[msg.senderId]}
-                      isCurrentUser={msg.senderId === currentUser?.userId}
-                    />
-                  ))}
-                  <div ref={messagesEndRef} />
-                </div>
+            {/* Messages */}
+            <div className="flex-1 p-4 overflow-y-auto bg-purple-950">
+              {messages.length ? (
+                messages.map((msg) => (
+                  <ChatMessage
+                    key={msg._id}
+                    message={msg}
+                    user={usersMap[msg.senderId]}
+                    isCurrentUser={msg.senderId === currentUser.userId}
+                    darkMode
+                  />
+                ))
               ) : (
-                <div className="h-full flex flex-col items-center justify-center">
-                  <div className="bg-gray-100 p-4 rounded-full mb-4">
-                    <MessageCircle size={32} className="text-gray-400" />
+                <div className="flex flex-col items-center justify-center h-full text-center text-purple-400">
+                  <div className="bg-purple-900 p-4 rounded-full mb-4">
+                    <MessageCircle size={32} className="text-purple-600" />
                   </div>
-                  <h3 className="text-lg font-medium text-gray-700">
-                    No messages yet
-                  </h3>
-                  <p className="text-gray-500 mt-1">
-                    Send a message to start the conversation
-                  </p>
+                  <h3 className="text-lg font-medium text-purple-300">No messages yet</h3>
+                  <p className="mt-1">Send a message to start chatting</p>
                 </div>
               )}
+              <div ref={messagesEndRef} />
             </div>
 
             {/* Message input */}
-            <div className="border-t border-gray-200 p-4">
-              <form onSubmit={handleSendMessage} className="flex space-x-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="rounded-full p-2"
-                  aria-label="Add emoji"
-                >
+            <div className="p-4 border-t border-purple-800 bg-purple-950">
+              <form onSubmit={handleSendMessage} className="flex items-center space-x-2">
+                <Button type="button" variant="ghost" className="rounded-full p-2 hover:bg-purple-800">
                   <Smile size={20} />
                 </Button>
-
                 <Input
                   type="text"
                   placeholder="Type a message..."
                   value={newMessage}
                   onChange={(e) => {
-                    e.preventDefault();
                     socket?.emit("typing", chatPartner._id);
                     setNewMessage(e.target.value);
                   }}
                   fullWidth
-                  className="flex-1"
+                  className="bg-purple-900 border border-purple-700 text-white placeholder-purple-400 focus:ring-purple-500 focus:border-purple-500"
                 />
-
                 <Button
                   type="submit"
-                  size="sm"
                   disabled={!newMessage.trim()}
-                  className="rounded-full p-2 w-10 h-10 flex items-center justify-center"
-                  aria-label="Send message"
+                  className="rounded-full p-2 w-10 h-10 flex items-center justify-center bg-purple-700 hover:bg-purple-600 text-white"
                 >
                   <Send size={18} />
                 </Button>
@@ -310,16 +203,12 @@ export const ChatPage: React.FC = () => {
             </div>
           </>
         ) : (
-          <div className="h-full flex flex-col items-center justify-center p-4">
-            <div className="bg-gray-100 p-6 rounded-full mb-4">
-              <MessageCircle size={48} className="text-gray-400" />
+          <div className="flex-1 flex flex-col items-center justify-center text-center p-4 text-purple-400">
+            <div className="bg-purple-900 p-6 rounded-full mb-4">
+              <MessageCircle size={48} className="text-purple-600" />
             </div>
-            <h2 className="text-xl font-medium text-gray-700">
-              Select a conversation
-            </h2>
-            <p className="text-gray-500 mt-2 text-center">
-              Choose a contact from the list to start chatting
-            </p>
+            <h2 className="text-xl font-medium text-purple-300">Select a conversation</h2>
+            <p className="mt-2">Choose a contact from the list to start chatting</p>
           </div>
         )}
       </div>

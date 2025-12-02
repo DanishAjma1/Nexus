@@ -19,34 +19,31 @@ export const InvestorDashboard: React.FC = () => {
   const [selectedIndustries, setSelectedIndustries] = useState<string[]>([]);
   if (!user) return null;
 
-  // Get collaboration requests sent by this investor
-
-  // const requestedEntrepreneurIds = sentRequests.map(req => req.entrepreneurId);
+  const [industries, setIndustries] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
       if (user) {
-        const entrepreneurs = await getEnterprenuerFromDb();
-        setEnterprenuers(entrepreneurs);
-        entrepreneurs.map((e) => {
-          industries.push(e.industry);
-        });
+        const entrepreneursData = await getEnterprenuerFromDb();
+        setEnterprenuers(entrepreneursData);
+        const uniqueIndustries = [
+          ...new Set(entrepreneursData.map((e) => e.industry)),
+        ];
+        setIndustries(uniqueIndustries);
       }
     };
     fetchData();
-  }, []);
+  }, [user]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      const requests = await getRequestsFromInvestor(user?.userId);
+    const fetchRequests = async () => {
+      const requests = await getRequestsFromInvestor(user.userId);
       setSentRequests(requests);
     };
-    fetchData();
+    fetchRequests();
   }, [user.userId]);
 
-  // Filter entrepreneurs based on search and industry filters
   const filteredEntrepreneurs = entrepreneurs.filter((entrepreneur) => {
-    // Search filter
     const matchesSearch =
       searchQuery === "" ||
       entrepreneur?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -60,20 +57,13 @@ export const InvestorDashboard: React.FC = () => {
         ?.toLowerCase()
         .includes(searchQuery.toLowerCase());
 
-    // Industry filter
     const matchesIndustry =
       selectedIndustries.length === 0 ||
       selectedIndustries.includes(entrepreneur?.industry);
 
     return matchesSearch && matchesIndustry;
   });
-  const industries = entrepreneurs
-    ? [...new Set(entrepreneurs.map((enter) => enter.industry))]
-    : [];
 
-  // Get unique industries for filter
-
-  // Toggle industry selection
   const toggleIndustry = (industry: string) => {
     setSelectedIndustries((prevSelected) =>
       prevSelected.includes(industry)
@@ -83,49 +73,49 @@ export const InvestorDashboard: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+    <div className="space-y-6 animate-fade-in px-4 sm:px-6 lg:px-8 bg-black text-purple-200 min-h-screen">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Discover Startups
-          </h1>
-          <p className="text-gray-600">
-            Find and connect with promising entrepreneurs
-          </p>
+          <h1 className="text-2xl font-bold text-purple-200">Discover Startups</h1>
+          <p className="text-purple-400">Find and connect with promising entrepreneurs</p>
         </div>
-
-        <Link to="/entrepreneurs">
-          <Button leftIcon={<PlusCircle size={18} />}>View All Startups</Button>
+        <Link to="/entrepreneurs" className="w-full sm:w-auto">
+          <Button
+            leftIcon={<PlusCircle size={18} />}
+            className="w-full sm:w-auto bg-purple-900 text-purple-200 hover:bg-purple-800"
+          >
+            View All Startups
+          </Button>
         </Link>
       </div>
 
       {/* Filters and search */}
-      <div className="flex flex-col md:flex-row gap-4">
+      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
         <div className="w-full md:w-2/3">
           <Input
             placeholder="Search startups, industries, or keywords..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             fullWidth
-            startAdornment={<Search size={18} />}
+            startAdornment={<Search size={18} className="text-purple-400" />}
+            className="bg-purple-900 text-purple-200 placeholder-purple-400 border-purple-700"
           />
         </div>
-
         <div className="w-full md:w-1/3">
-          <div className="flex items-start space-x-2">
-            <Filter size={18} className="text-gray-500" />
-            <span className="text-sm font-medium text-gray-700">
-              Filter by:
-            </span>
-
-            <div className="flex flex-wrap gap-2 w-3/4">
+          <div className="flex flex-wrap items-center gap-2">
+            <Filter size={18} className="text-purple-400" />
+            <span className="text-sm font-medium text-purple-200">Filter by:</span>
+            <div className="flex flex-wrap gap-2">
               {industries.map((industry) => (
                 <Badge
                   key={industry}
-                  variant={
-                    selectedIndustries.includes(industry) ? "primary" : "gray"
-                  }
-                  className="cursor-pointer"
+                  variant={selectedIndustries.includes(industry) ? "primary" : "gray"}
+                  className={`cursor-pointer ${
+                    selectedIndustries.includes(industry)
+                      ? "bg-purple-700 text-purple-200"
+                      : "bg-purple-900 text-purple-400 hover:bg-purple-800 hover:text-purple-100"
+                  }`}
                   onClick={() => toggleIndustry(industry)}
                 >
                   {industry}
@@ -137,60 +127,41 @@ export const InvestorDashboard: React.FC = () => {
       </div>
 
       {/* Stats summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-primary-50 border border-primary-100">
-          <CardBody>
-            <div className="flex items-center">
-              <div className="p-3 bg-primary-100 rounded-full mr-4">
-                <Users size={20} className="text-primary-700" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-primary-700">
-                  Total Startups
-                </p>
-                <h3 className="text-xl font-semibold text-primary-900">
-                  {entrepreneurs && entrepreneurs.length}
-                </h3>
-              </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <Card className="bg-purple-900 border border-purple-800">
+          <CardBody className="flex items-center gap-4">
+            <div className="p-3 bg-purple-800 rounded-full">
+              <Users size={20} className="text-purple-200" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-purple-200">Total Startups</p>
+              <h3 className="text-xl font-semibold text-purple-100">{entrepreneurs.length}</h3>
             </div>
           </CardBody>
         </Card>
 
-        <Card className="bg-secondary-50 border border-secondary-100">
-          <CardBody>
-            <div className="flex items-center">
-              <div className="p-3 bg-secondary-100 rounded-full mr-4">
-                <PieChart size={20} className="text-secondary-700" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-secondary-700">
-                  Industries
-                </p>
-                <h3 className="text-xl font-semibold text-secondary-900">
-                  {industries.length}
-                </h3>
-              </div>
+        <Card className="bg-purple-900 border border-purple-800">
+          <CardBody className="flex items-center gap-4">
+            <div className="p-3 bg-purple-800 rounded-full">
+              <PieChart size={20} className="text-purple-200" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-purple-200">Industries</p>
+              <h3 className="text-xl font-semibold text-purple-100">{industries.length}</h3>
             </div>
           </CardBody>
         </Card>
 
-        <Card className="bg-accent-50 border border-accent-100">
-          <CardBody>
-            <div className="flex items-center">
-              <div className="p-3 bg-accent-100 rounded-full mr-4">
-                <Users size={20} className="text-accent-700" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-accent-700">
-                  Your Connections
-                </p>
-                <h3 className="text-xl font-semibold text-accent-900">
-                  {sentRequests &&
-                    sentRequests.filter(
-                      (req) => req.requestStatus === "accepted"
-                    ).length}
-                </h3>
-              </div>
+        <Card className="bg-purple-900 border border-purple-800">
+          <CardBody className="flex items-center gap-4">
+            <div className="p-3 bg-purple-800 rounded-full">
+              <Users size={20} className="text-purple-200" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-purple-200">Your Connections</p>
+              <h3 className="text-xl font-semibold text-purple-100">
+                {sentRequests.filter((req) => req.requestStatus === "accepted").length}
+              </h3>
             </div>
           </CardBody>
         </Card>
@@ -198,29 +169,22 @@ export const InvestorDashboard: React.FC = () => {
 
       {/* Entrepreneurs grid */}
       <div>
-        <Card>
+        <Card className="bg-purple-900 border border-purple-800">
           <CardHeader>
-            <h2 className="text-lg font-medium text-gray-900">
-              Featured Startups
-            </h2>
+            <h2 className="text-lg font-medium text-purple-200">Featured Startups</h2>
           </CardHeader>
-
           <CardBody>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredEntrepreneurs.length > 0 ? (
                 filteredEntrepreneurs.map((entrepreneur) => (
-                  <div key={entrepreneur._id}>
-                    <EntrepreneurCard entrepreneur={entrepreneur} />
-                  </div>
+                  <EntrepreneurCard key={entrepreneur._id} entrepreneur={entrepreneur} darkMode />
                 ))
               ) : (
-                <div className="text-center py-8">
-                  <p className="text-gray-600">
-                    No startups match your filters
-                  </p>
+                <div className="text-center py-8 col-span-full text-purple-200">
+                  <p className="text-purple-400">No startups match your filters</p>
                   <Button
                     variant="outline"
-                    className="mt-2"
+                    className="mt-2 border-purple-700 text-purple-200 hover:bg-purple-800"
                     onClick={() => {
                       setSearchQuery("");
                       setSelectedIndustries([]);

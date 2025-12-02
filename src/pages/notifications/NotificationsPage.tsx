@@ -13,13 +13,13 @@ export const NotificationsPage: React.FC = () => {
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case "message":
-        return <MessageCircle size={16} className="text-primary-600" />;
+        return <MessageCircle size={16} className="text-purple-300" />;
       case "connection":
-        return <UserPlus size={16} className="text-secondary-600" />;
+        return <UserPlus size={16} className="text-purple-400" />;
       case "investment":
-        return <DollarSign size={16} className="text-accent-600" />;
+        return <DollarSign size={16} className="text-purple-500" />;
       default:
-        return <Bell size={16} className="text-gray-600" />;
+        return <Bell size={16} className="text-purple-200" />;
     }
   };
 
@@ -27,14 +27,14 @@ export const NotificationsPage: React.FC = () => {
     <div className="space-y-6 animate-fade-in">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
-          <p className="text-gray-600">
+          <h1 className="text-2xl font-bold text-purple-100">Notifications</h1>
+          <p className="text-purple-300">
             Stay updated with your network activity
           </p>
         </div>
 
         {notifications.length > 0 && (
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" className="border-purple-600 text-purple-100 hover:bg-purple-700">
             Mark all as read
           </Button>
         )}
@@ -46,7 +46,7 @@ export const NotificationsPage: React.FC = () => {
             <Card
               key={notification.id}
               className={`transition-colors duration-200 ${
-                notification.unread ? "bg-primary-50" : ""
+                notification.unread ? "bg-purple-800" : "bg-purple-900"
               }`}
             >
               <CardBody className="flex items-start p-4">
@@ -54,24 +54,24 @@ export const NotificationsPage: React.FC = () => {
                   src={notification.user.avatar}
                   alt={notification.user.name}
                   size="md"
-                  className="flex-shrink-0 mr-4"
+                  className="flex-shrink-0 mr-4 ring-1 ring-purple-600"
                 />
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-gray-900">
+                    <span className="font-medium text-purple-100">
                       {notification.user.name}
                     </span>
                     {notification.unread && (
-                      <Badge variant="primary" size="sm" rounded>
+                      <Badge variant="purple" size="sm" rounded>
                         New
                       </Badge>
                     )}
                   </div>
 
-                  <p className="text-gray-600 mt-1">{notification.content}</p>
+                  <p className="text-purple-300 mt-1">{notification.content}</p>
 
-                  <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
+                  <div className="flex items-center gap-2 mt-2 text-sm text-purple-400">
                     {getNotificationIcon(notification.type)}
                     <span>{notification.time}</span>
                   </div>
@@ -80,7 +80,7 @@ export const NotificationsPage: React.FC = () => {
             </Card>
           ))
         ) : (
-          <p className="text-gray-600 text-center">
+          <p className="text-purple-300 text-center">
             No notifications found 🚀
           </p>
         )}

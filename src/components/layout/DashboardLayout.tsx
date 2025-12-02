@@ -18,10 +18,12 @@ export const DashboardLayout: React.FC = () => {
     fromName: string;
   } | null>(null);
 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-black">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-700"></div>
       </div>
     );
   }
@@ -70,7 +72,7 @@ export const DashboardLayout: React.FC = () => {
   }, [socket]);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-black text-purple-200 flex flex-col">
       {incomingCall && (
         <IncomingCallModal
           callType={incomingCall.callType}
@@ -80,12 +82,35 @@ export const DashboardLayout: React.FC = () => {
         />
       )}
 
-      <Navbar />
+      {/* Navbar with mobile menu toggle */}
+      <Navbar onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
 
-      <div className="flex-0 flex overflow-hidden">
-        <Sidebar />
-        <main className="flex-1 overflow-y-auto p-6">
-          <div className="max-w-7xl mx-auto">
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar for large screens */}
+        <Sidebar
+          className={`hidden md:flex md:flex-shrink-0`}
+          sidebarOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+        />
+
+        {/* Mobile Sidebar overlay */}
+        {sidebarOpen && (
+          <div className="fixed inset-0 z-40 flex md:hidden">
+            <div
+              className="fixed inset-0 bg-black bg-opacity-75"
+              onClick={() => setSidebarOpen(false)}
+            />
+            <Sidebar
+              className="relative flex w-64 bg-black"
+              sidebarOpen={sidebarOpen}
+              onClose={() => setSidebarOpen(false)}
+            />
+          </div>
+        )}
+
+        {/* Main content */}
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 bg-black">
+          <div className="max-w-7xl mx-auto">{/* Outlet content */}
             <Outlet />
           </div>
         </main>

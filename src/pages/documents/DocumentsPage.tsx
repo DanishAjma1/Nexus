@@ -33,128 +33,136 @@ export const DocumentsPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex justify-between items-center">
+    <div className="space-y-6 animate-fade-in p-4 bg-black min-h-screen text-white">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Documents</h1>
-          <p className="text-gray-600">Manage your startup's important files</p>
+          <h1 className="text-2xl font-bold text-purple-300">Documents</h1>
+          <p className="text-purple-400">Manage your startup's important files</p>
         </div>
 
         <label>
-          <input
-            type="file"
-            multiple
-            className="hidden"
-            onChange={handleUpload}
-          />
-          <Button leftIcon={<Upload size={18} />} asChild>
+          <input type="file" multiple className="hidden" onChange={handleUpload} />
+          <Button
+            leftIcon={<Upload size={18} />}
+            className="bg-purple-800 text-white hover:bg-purple-700 border-none"
+          >
             Upload Document
           </Button>
         </label>
       </div>
 
+      {/* Grid layout */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Storage info */}
-        <Card className="lg:col-span-1">
+        <Card className="lg:col-span-1 w-full bg-purple-900 border border-purple-800 text-white">
           <CardHeader>
-            <h2 className="text-lg font-medium text-gray-900">Storage</h2>
+            <h2 className="text-lg font-medium text-purple-300">Storage</h2>
           </CardHeader>
           <CardBody className="space-y-4">
             <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Used</span>
-                <span className="font-medium text-gray-900">12.5 GB</span>
+              <div className="flex justify-between text-sm text-purple-400">
+                <span>Used</span>
+                <span className="font-medium text-white">12.5 GB</span>
               </div>
-              <div className="h-2 bg-gray-200 rounded-full">
-                <div
-                  className="h-2 bg-primary-600 rounded-full"
-                  style={{ width: "0%" }}
-                />
+              <div className="h-2 bg-purple-800 rounded-full">
+                <div className="h-2 bg-purple-500 rounded-full w-1/2" />
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Available</span>
-                <span className="font-medium text-gray-900">7.5 GB</span>
+              <div className="flex justify-between text-sm text-purple-400">
+                <span>Available</span>
+                <span className="font-medium text-white">7.5 GB</span>
               </div>
             </div>
           </CardBody>
         </Card>
 
         {/* Document list */}
-        <div className="lg:col-span-3">
-          <Card>
-            <CardHeader className="flex justify-between items-center">
-              <h2 className="text-lg font-medium text-gray-900">
-                All Documents
-              </h2>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm">
+        <div className="lg:col-span-3 w-full">
+          <Card className="bg-purple-900 border border-purple-800 text-white">
+            <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0">
+              <h2 className="text-lg font-medium text-purple-300">All Documents</h2>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-purple-700 text-purple-200 hover:bg-purple-800"
+                >
                   Sort by
                 </Button>
-                <Button variant="outline" size="sm">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-purple-700 text-purple-200 hover:bg-purple-800"
+                >
                   Filter
                 </Button>
               </div>
             </CardHeader>
+
             <CardBody>
               <div className="space-y-2">
-                {documents.map((doc) => (
-                  <div
-                    key={doc.id}
-                    className="flex items-center p-4 hover:bg-gray-50 rounded-lg transition-colors duration-200"
-                  >
-                    <div className="p-2 bg-primary-50 rounded-lg mr-4">
-                      <FileText size={24} className="text-primary-600" />
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-sm font-medium text-gray-900 truncate">
-                          {doc.name}
-                        </h3>
-                        {doc.shared && (
-                          <Badge variant="secondary" size="sm">
-                            Shared
-                          </Badge>
-                        )}
+                {documents.length > 0 ? (
+                  documents.map((doc) => (
+                    <div
+                      key={doc.id}
+                      className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 hover:bg-purple-800 rounded-lg transition-colors duration-200 gap-2"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="p-2 bg-purple-700 rounded-lg">
+                          <FileText size={24} className="text-purple-400" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <h3 className="text-sm font-medium text-white truncate">
+                              {doc.name}
+                            </h3>
+                            {doc.shared && (
+                              <Badge variant="secondary" size="sm">
+                                Shared
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex flex-wrap items-center gap-4 mt-1 text-sm text-purple-400">
+                            <span>{doc.type}</span>
+                            <span>{doc.size}</span>
+                            <span>Modified {doc.lastModified}</span>
+                          </div>
+                        </div>
                       </div>
 
-                      <div className="flex items-center gap-4 mt-1 text-sm text-gray-500">
-                        <span>{doc.type}</span>
-                        <span>{doc.size}</span>
-                        <span>Modified {doc.lastModified}</span>
+                      <div className="flex items-center gap-2 mt-2 sm:mt-0">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="p-2 text-purple-400 hover:text-purple-200"
+                          aria-label="Download"
+                        >
+                          <Download size={18} />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="p-2 text-purple-400 hover:text-purple-200"
+                          aria-label="Share"
+                        >
+                          <Share2 size={18} />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="p-2 text-red-600 hover:text-red-500"
+                          aria-label="Delete"
+                        >
+                          <Trash2 size={18} />
+                        </Button>
                       </div>
                     </div>
-
-                    <div className="flex items-center gap-2 ml-4">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="p-2"
-                        aria-label="Download"
-                      >
-                        <Download size={18} />
-                      </Button>
-
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="p-2"
-                        aria-label="Share"
-                      >
-                        <Share2 size={18} />
-                      </Button>
-
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="p-2 text-error-600 hover:text-error-700"
-                        aria-label="Delete"
-                      >
-                        <Trash2 size={18} />
-                      </Button>
-                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-purple-400">
+                    No documents uploaded yet
                   </div>
-                ))}
+                )}
               </div>
             </CardBody>
           </Card>

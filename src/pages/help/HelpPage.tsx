@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Search, Book, MessageCircle, Phone, Mail, ExternalLink } from 'lucide-react';
 import { Card, CardHeader, CardBody } from '../../components/ui/Card';
-import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import toast from 'react-hot-toast';
 
@@ -31,7 +30,6 @@ export const HelpPage: React.FC = () => {
     message: ''
   });
 
-  // Only allow letters and spaces in name dynamically
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     if (/^[A-Za-z\s]*$/.test(value)) {
@@ -41,7 +39,7 @@ export const HelpPage: React.FC = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    if (name === 'name') return; // Name handled separately
+    if (name === 'name') return;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
@@ -61,11 +59,11 @@ export const HelpPage: React.FC = () => {
       toast.error('Email is required');
       return false;
     }
-    // Only allow common domains like Gmail, Yahoo, Hotmail, Outlook
-    const allowedDomains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com' , "icloud.com"];
+
+    const allowedDomains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'icloud.com'];
     const emailRegex = new RegExp(`^[^\\s@]+@(${allowedDomains.join('|')})$`, 'i');
     if (!emailRegex.test(email)) {
-      toast.error('Inavlud Email');
+      toast.error('Invalid Email');
       return false;
     }
 
@@ -91,93 +89,74 @@ export const HelpPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in bg-black min-h-screen p-6 text-purple-100">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Help & Support</h1>
-        <p className="text-gray-600">Find answers to common questions or get in touch with our support team</p>
+        <h1 className="text-2xl font-bold text-purple-100">Help & Support</h1>
+        <p className="text-purple-300">Find answers to common questions or get in touch with our support team</p>
       </div>
 
       {/* Search */}
       <div className="max-w-2xl">
-        <Input
-          placeholder="Search help articles..."
-          startAdornment={<Search size={18} />}
-          fullWidth
-        />
+        <div className="flex items-center bg-purple-900 rounded-lg p-2 w-full shadow-md">
+          <Search size={18} className="text-purple-400 mr-2" />
+          <input
+            type="text"
+            placeholder="Search help articles..."
+            className="bg-purple-900 text-purple-100 placeholder-purple-400 w-full focus:outline-none p-2 rounded-md"
+          />
+        </div>
       </div>
 
       {/* Quick links */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <CardBody className="text-center p-6">
-            <div className="inline-flex items-center justify-center w-12 h-12 bg-primary-50 rounded-lg mb-4">
-              <Book size={24} className="text-primary-600" />
-            </div>
-            <h2 className="text-lg font-medium text-gray-900">Documentation</h2>
-            <p className="text-sm text-gray-600 mt-2">
-              Browse our detailed documentation and guides
-            </p>
-            <Button
-              variant="outline"
-              className="mt-4"
-              rightIcon={<ExternalLink size={16} />}
-            >
-              View Docs
-            </Button>
-          </CardBody>
-        </Card>
-
-        <Card>
-          <CardBody className="text-center p-6">
-            <div className="inline-flex items-center justify-center w-12 h-12 bg-primary-50 rounded-lg mb-4">
-              <MessageCircle size={24} className="text-primary-600" />
-            </div>
-            <h2 className="text-lg font-medium text-gray-900">Live Chat</h2>
-            <p className="text-sm text-gray-600 mt-2">
-              Chat with our support team in real-time
-            </p>
-            <Button className="mt-4">
-              Start Chat
-            </Button>
-          </CardBody>
-        </Card>
-
-        <Card>
-          <CardBody className="text-center p-6">
-            <div className="inline-flex items-center justify-center w-12 h-12 bg-primary-50 rounded-lg mb-4">
-              <Phone size={24} className="text-primary-600" />
-            </div>
-            <h2 className="text-lg font-medium text-gray-900">Contact Us</h2>
-            <p className="text-sm text-gray-600 mt-2">
-              Get help via email or phone
-            </p>
-            <Button
-              variant="outline"
-              className="mt-4"
-              leftIcon={<Mail size={16} />}
-            >
-              Contact Support
-            </Button>
-          </CardBody>
-        </Card>
+        {[{
+          icon: <Book size={24} className="text-purple-400" />,
+          title: "Documentation",
+          desc: "Browse our detailed documentation and guides",
+          button: "View Docs"
+        }, {
+          icon: <MessageCircle size={24} className="text-purple-400" />,
+          title: "Live Chat",
+          desc: "Chat with our support team in real-time",
+          button: "Start Chat"
+        }, {
+          icon: <Phone size={24} className="text-purple-400" />,
+          title: "Contact Us",
+          desc: "Get help via email or phone",
+          button: "Contact Support",
+          buttonIcon: <Mail size={16} />
+        }].map((item, idx) => (
+          <Card key={idx} className="bg-purple-900 border border-purple-700 shadow-lg">
+            <CardBody className="text-center p-6">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-black rounded-lg mb-4">
+                {item.icon}
+              </div>
+              <h2 className="text-lg font-medium">{item.title}</h2>
+              <p className="text-sm text-purple-300 mt-2">{item.desc}</p>
+              <Button
+                variant="outline"
+                className="mt-4 border-purple-700 text-purple-100 hover:bg-purple-800"
+                {...(item.buttonIcon ? { leftIcon: item.buttonIcon } : {})}
+              >
+                {item.button}
+              </Button>
+            </CardBody>
+          </Card>
+        ))}
       </div>
 
       {/* FAQs */}
-      <Card>
+      <Card className="bg-purple-900 border border-purple-700 shadow-lg">
         <CardHeader>
-          <h2 className="text-lg font-medium text-gray-900">Frequently Asked Questions</h2>
+          <h2 className="text-lg font-medium">Frequently Asked Questions</h2>
         </CardHeader>
         <CardBody>
           <div className="space-y-6">
             {faqs.map((faq, index) => (
-              <div key={index} className="border-b border-gray-200 last:border-0 pb-6 last:pb-0">
-                <h3 className="text-base font-medium text-gray-900 mb-2">
-                  {faq.question}
-                </h3>
-                <p className="text-gray-600">
-                  {faq.answer}
-                </p>
+              <div key={index} className="border-b border-purple-700 last:border-0 pb-6 last:pb-0">
+                <h3 className="text-base font-medium mb-2">{faq.question}</h3>
+                <p className="text-purple-300">{faq.answer}</p>
               </div>
             ))}
           </div>
@@ -185,50 +164,43 @@ export const HelpPage: React.FC = () => {
       </Card>
 
       {/* Contact form */}
-      <Card>
+      <Card className="bg-gradient-to-br from-purple-900 to-black border border-purple-700 shadow-lg">
         <CardHeader>
-          <h2 className="text-lg font-medium text-gray-900">Still need help?</h2>
+          <h2 className="text-lg font-medium">Still need help?</h2>
         </CardHeader>
         <CardBody>
           <form className="space-y-6 max-w-2xl" onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Input
-                label="Name"
+              <input
+                type="text"
                 name="name"
                 placeholder="Your name"
                 value={formData.name}
-                onChange={handleNameChange} // only letters allowed
+                onChange={handleNameChange}
+                className="w-full p-2 rounded-lg bg-black text-purple-100 placeholder-purple-400 border border-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
-
-              <Input
-                label="Email"
-                name="email"
+              <input
                 type="email"
+                name="email"
                 placeholder="your@email.com"
                 value={formData.email}
                 onChange={handleChange}
+                className="w-full p-2 rounded-lg bg-black text-purple-100 placeholder-purple-400 border border-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Message
-              </label>
-              <textarea
-                name="message"
-                className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                rows={4}
-                placeholder="How can we help you?"
-                value={formData.message}
-                onChange={handleChange}
-              ></textarea>
-            </div>
+            <textarea
+              name="message"
+              rows={4}
+              placeholder="How can we help you?"
+              value={formData.message}
+              onChange={handleChange}
+              className="w-full p-2 rounded-lg bg-black text-purple-100 placeholder-purple-400 border border-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            ></textarea>
 
-            <div>
-              <Button type="submit">
-                Send Message
-              </Button>
-            </div>
+            <Button type="submit" className="bg-purple-700 text-purple-100 hover:bg-purple-600 w-full">
+              Send Message
+            </Button>
           </form>
         </CardBody>
       </Card>
