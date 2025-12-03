@@ -36,8 +36,8 @@ import { HelpPage } from "./pages/help/HelpPage";
 import { ChatPage } from "./pages/chat/ChatPage";
 import { ForgotPasswordPage } from "./pages/auth/ForgotPasswordPage";
 import { ResetPasswordPage } from "./pages/auth/ResetPasswordPage";
-//import { VideoCall } from "./components/webRTC/Videocall";
-//import { AudioCall } from "./components/webRTC/AudioCall";
+import { VideoCall } from "./components/webRTC/Videocall";
+import { AudioCall } from "./components/webRTC/AudioCall";
 import { Toaster } from "react-hot-toast";
 import { FraudAndRiskDetection } from "./pages/admin/FraudAndRiskDetection";
 import { Activities } from "./pages/admin/activities";
@@ -53,6 +53,8 @@ import { AICommandPage } from "./pages/admin/AI";
 import {Campaigns }from "./pages/admin/Campaigns";
 import { Deals } from "./pages/viewdeals/ViewDeal";
 import { DealsPage } from "./pages/deals/DealsPage";
+import { CampaignsPage } from './pages/campaignPage/CampaignPage';
+import { FundraisePage } from "./pages/fundraises/Fundraises-Page";
 
 function App() {
   return (
@@ -143,7 +145,8 @@ function App() {
 
             {/* Redirect root to login */}
             <Route path="/" element={<HomePage />} />
-
+<Route path="/All-Campaigns" element={<CampaignsPage />} />
+<Route path="/Fundraises" element={<FundraisePage />} />
             {/* Catch all other routes and redirect to login */}
             <Route
               path="/dashboard/entreprenuer"
