@@ -67,7 +67,7 @@ export const Navbar: React.FC = () => {
             
             {/* Sign Up Button for Desktop */}
             <Link to="/register">
-              <Button className="ml-4 px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-lg hover:shadow-orange-500/30">
+              <Button className="ml-4 px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-orange-500/30">
                 Sign Up
               </Button>
             </Link>
@@ -85,7 +85,7 @@ export const Navbar: React.FC = () => {
             {/* Sign Up Button for Mobile (visible when menu closed) */}
             {!isMenuOpen && (
               <Link to="/register">
-                <Button className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-sm font-semibold rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-300">
+                <Button className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-sm font-semibold rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-300">
                   Sign Up
                 </Button>
               </Link>
@@ -171,7 +171,7 @@ export const Navbar: React.FC = () => {
             {/* Mobile Auth Buttons */}
             <div className="pt-4 space-y-3">
               <Link to="/register" className="block" onClick={() => setIsMenuOpen(false)}>
-                <Button className="w-full py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-300">
+                <Button className="w-full py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-300">
                   Sign Up Free
                 </Button>
               </Link>
