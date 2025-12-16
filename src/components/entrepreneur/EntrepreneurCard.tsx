@@ -6,7 +6,7 @@ import { Card, CardBody, CardFooter } from '../ui/Card';
 import { Avatar } from '../ui/Avatar';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
-
+import { AmountMeasureWithTags } from "../../data/users";
 interface EntrepreneurCardProps {
   entrepreneur: Entrepreneur;
   showActions?: boolean;
@@ -63,7 +63,7 @@ export const EntrepreneurCard: React.FC<EntrepreneurCardProps> = ({
         <div className="mt-3 flex justify-between items-center">
           <div>
             <span className="text-xs text-gray-500">Funding Need</span>
-            <p className="text-sm font-medium text-gray-900">{entrepreneur.fundingNeeded}</p>
+            <p className="text-sm font-medium text-gray-900">{AmountMeasureWithTags(entrepreneur.fundingNeeded ?? 0)}</p>
           </div>
           
           <div>
