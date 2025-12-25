@@ -31,10 +31,9 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ to, icon, text }) => {
     <NavLink
       to={to}
       className={({ isActive }) =>
-        `flex items-center py-2.5 px-4 rounded-md transition-colors duration-200 ${
-          isActive
-            ? "bg-primary-50 text-primary-700"
-            : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+        `flex items-center py-2.5 px-4 rounded-md transition-colors duration-200 ${isActive
+          ? "bg-primary-50 text-primary-700"
+          : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
         }`
       }
     >
@@ -134,10 +133,10 @@ export const Sidebar: React.FC = () => {
     user.role === "entrepreneur"
       ? entrepreneurItems
       : user.role === "investor"
-      ? investorItems
-      : user.role === "admin"
-      ? adminItems
-      : [];
+        ? investorItems
+        : user.role === "admin"
+          ? adminItems
+          : [];
 
   return (
     <div className="w-64 bg-white h-full border-r border-gray-200 hidden md:block">
@@ -178,11 +177,15 @@ export const Sidebar: React.FC = () => {
               Contact Support
             </h4>
             <a
-              href="mailto:support@businessnexus.com"
+              href="https://mail.google.com/mail/?view=cm&to=aitrustbridge@gmail.com"
+              target="_blank"
+              rel="noopener noreferrer"
               className="mt-2 inline-flex items-center text-xs font-medium text-primary-600 hover:text-primary-500"
             >
-              support@businessnexus.com
+              aitrustbridge@gmail.com
             </a>
+
+
           </div>
         </div>
       </div>
