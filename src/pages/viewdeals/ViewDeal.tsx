@@ -48,11 +48,10 @@ export const Deals: React.FC = () => {
                   <h3 className="text-lg font-medium text-gray-900">{deal.investorName}</h3>
                   <p className="text-sm text-gray-500">{deal.investorEmail}</p>
                 </div>
-                <span className={`text-sm font-medium px-2 py-0.5 rounded-full ${
-                  deal.status === "pending" ? "bg-yellow-100 text-yellow-800" :
-                  deal.status === "accepted" ? "bg-green-100 text-green-800" :
-                  "bg-red-100 text-red-800"
-                }`}>
+                <span className={`text-sm font-medium px-2 py-0.5 rounded-full ${deal.status === "pending" ? "bg-yellow-100 text-yellow-800" :
+                    deal.status === "accepted" ? "bg-green-100 text-green-800" :
+                      "bg-red-100 text-red-800"
+                  }`}>
                   {deal.status}
                 </span>
               </CardHeader>

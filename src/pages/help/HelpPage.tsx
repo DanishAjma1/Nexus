@@ -62,7 +62,7 @@ export const HelpPage: React.FC = () => {
       return false;
     }
     // Only allow common domains like Gmail, Yahoo, Hotmail, Outlook
-    const allowedDomains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com' , "icloud.com"];
+    const allowedDomains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', "icloud.com"];
     const emailRegex = new RegExp(`^[^\\s@]+@(${allowedDomains.join('|')})$`, 'i');
     if (!emailRegex.test(email)) {
       toast.error('Inavlud Email');

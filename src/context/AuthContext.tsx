@@ -227,7 +227,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Update user profile
   const updateProfile = async (
-    userId: string |undefined,
+    userId: string | undefined,
     userData: User
   ): Promise<void> => {
     if (

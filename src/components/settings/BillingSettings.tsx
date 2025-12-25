@@ -165,8 +165,8 @@ export const BillingSettings: React.FC = () => {
                         invoice.status === "paid"
                           ? "success"
                           : invoice.status === "pending"
-                          ? "warning"
-                          : "error"
+                            ? "warning"
+                            : "error"
                       }
                     >
                       {invoice.status}

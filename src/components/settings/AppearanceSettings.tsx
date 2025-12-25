@@ -52,21 +52,21 @@ export const AppearanceSettings: React.FC = () => {
   ];
 
   const fontSizes = [
-    { 
-      id: "small" as FontSize, 
-      label: "Small", 
+    {
+      id: "small" as FontSize,
+      label: "Small",
       size: "14px",
       description: "Compact and space-efficient"
     },
-    { 
-      id: "medium" as FontSize, 
-      label: "Medium", 
+    {
+      id: "medium" as FontSize,
+      label: "Medium",
       size: "16px",
       description: "Recommended for most users"
     },
-    { 
-      id: "large" as FontSize, 
-      label: "Large", 
+    {
+      id: "large" as FontSize,
+      label: "Large",
       size: "18px",
       description: "Better readability"
     },
@@ -75,9 +75,9 @@ export const AppearanceSettings: React.FC = () => {
   // Apply theme changes
   useEffect(() => {
     localStorage.setItem("theme", selectedTheme);
-    
+
     const root = document.documentElement;
-    
+
     if (selectedTheme === "system") {
       const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
       root.classList.toggle("dark", isDark);
@@ -92,14 +92,14 @@ export const AppearanceSettings: React.FC = () => {
   // Apply font size changes
   useEffect(() => {
     localStorage.setItem("fontSize", fontSize);
-    
+
     const root = document.documentElement;
     const sizeMap = {
       small: "14px",
       medium: "16px",
       large: "18px",
     };
-    
+
     root.style.fontSize = sizeMap[fontSize];
     console.log("Font size changed to:", fontSize);
   }, [fontSize]);
@@ -145,11 +145,10 @@ export const AppearanceSettings: React.FC = () => {
                 <button
                   key={theme.id}
                   onClick={() => handleThemeChange(theme.id)}
-                  className={`relative p-5 rounded-xl border-2 transition-all text-left group hover:shadow-md ${
-                    isSelected
-                      ? "border-primary-500 bg-primary-50 shadow-sm"
-                      : "border-gray-200 hover:border-gray-300"
-                  }`}
+                  className={`relative p-5 rounded-xl border-2 transition-all text-left group hover:shadow-md ${isSelected
+                    ? "border-primary-500 bg-primary-50 shadow-sm"
+                    : "border-gray-200 hover:border-gray-300"
+                    }`}
                 >
                   {isSelected && (
                     <div className="absolute top-3 right-3">
@@ -158,7 +157,7 @@ export const AppearanceSettings: React.FC = () => {
                       </div>
                     </div>
                   )}
-                  
+
                   <div className={`w-12 h-12 rounded-lg ${theme.preview} border-2 mb-4 flex items-center justify-center`}>
                     <Icon
                       size={24}
@@ -167,7 +166,7 @@ export const AppearanceSettings: React.FC = () => {
                       }
                     />
                   </div>
-                  
+
                   <h3 className="font-semibold text-gray-900 mb-1">
                     {theme.label}
                   </h3>
@@ -197,11 +196,10 @@ export const AppearanceSettings: React.FC = () => {
                 <button
                   key={size.id}
                   onClick={() => handleFontSizeChange(size.id)}
-                  className={`w-full p-4 rounded-xl border-2 transition-all text-left flex items-center justify-between group hover:shadow-sm ${
-                    isSelected
-                      ? "border-primary-500 bg-primary-50"
-                      : "border-gray-200 hover:border-gray-300"
-                  }`}
+                  className={`w-full p-4 rounded-xl border-2 transition-all text-left flex items-center justify-between group hover:shadow-sm ${isSelected
+                    ? "border-primary-500 bg-primary-50"
+                    : "border-gray-200 hover:border-gray-300"
+                    }`}
                 >
                   <div>
                     <h3 className="font-semibold text-gray-900 mb-1">
@@ -212,9 +210,9 @@ export const AppearanceSettings: React.FC = () => {
                       Base size: {size.size}
                     </p>
                   </div>
-                  
+
                   <div className="flex items-center gap-3">
-                    <span 
+                    <span
                       className="text-gray-700 font-medium"
                       style={{ fontSize: size.size }}
                     >
@@ -239,7 +237,7 @@ export const AppearanceSettings: React.FC = () => {
         </CardBody>
       </Card>
 
-    
+
       {/* Reset Settings */}
       <Card>
         <CardHeader>
@@ -252,7 +250,7 @@ export const AppearanceSettings: React.FC = () => {
             <p className="text-sm text-gray-600">
               Reset all appearance settings to their default values
             </p>
-            <Button 
+            <Button
               variant="outline"
               onClick={() => {
                 setSelectedTheme("light");

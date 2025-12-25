@@ -2,6 +2,7 @@ import React from "react";
 import { Navbar } from "../../components/home/Navbar";
 import { Button } from "../../components/ui/Button";
 import { Link } from "react-router-dom";
+import { useState } from "react";
 interface CampaignProps {
   image: string;
   title: string;
@@ -24,6 +25,37 @@ interface SuccessfulCompanyProps {
 }
 
 export const HomePage: React.FC = () => {
+  const [formData, setFormData] = useState({ name: "", email: "", message: "" });
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState("");
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setSuccess("");
+
+    try {
+      const res = await fetch("http://localhost:5000/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        setSuccess("Message sent successfully!");
+        setFormData({ name: "", email: "", message: "" });
+      } else {
+        alert(data.error || "Failed to send message");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
   const CampaignDiv: React.FC<CampaignProps> = ({
     image,
     title,
@@ -229,10 +261,10 @@ export const HomePage: React.FC = () => {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                   <Link to="/register">
-                  <Button className="px-8 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl">
-                    Get Started
-                  </Button>
+                  <Link to="/register">
+                    <Button className="px-8 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl">
+                      Get Started
+                    </Button>
                   </Link>
                 </div>
 
@@ -343,11 +375,107 @@ export const HomePage: React.FC = () => {
                   </p>
                   <div className="flex flex-col sm:flex-row gap-4 justify-center">
                     <Link to="/register">
-  <Button className="px-8 py-3 text-black font-semibold rounded-lg hover:bg-gray-100 transition-all duration-300 transform hover:-translate-y-1">
-    Create Account
-  </Button>
-</Link>
+                      <Button className="px-8 py-3 text-black font-semibold rounded-lg hover:bg-gray-100 transition-all duration-300 transform hover:-translate-y-1">
+                        Create Account
+                      </Button>
+                    </Link>
                   </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          {/* CONTACT SECTION */}
+          <div className="mt-16 lg:mt-24 px-4">
+            <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 bg-gradient-to-br from-gray-900 to-black p-8 rounded-2xl border border-gray-800">
+
+              {/* LEFT: Contact Form */}
+              <div className="bg-gray-800/50 p-6 rounded-xl backdrop-blur-sm shadow-lg">
+                <h2 className="text-2xl font-bold text-white mb-4">Get in Touch</h2>
+                <p className="text-gray-300 mb-6">
+                  Fill out the form below and we'll get back to you shortly.
+                </p>
+                <form className="space-y-4">
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1" htmlFor="name">
+                      Name
+                    </label>
+                    <input
+                      type="text"
+                      id="name"
+                      placeholder="Your Name"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="w-full px-3 py-2 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1" htmlFor="email">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      id="email"
+                      placeholder="you@example.com"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      className="w-full px-3 py-2 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1" htmlFor="message">
+                      Message
+                    </label>
+
+                    <textarea
+                      id="message"
+                      placeholder="Your message..."
+                      rows={4}
+                      value={formData.message}
+                      onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                      className="w-full px-3 py-2 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    />
+
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    onClick={handleSubmit}
+                    className="px-6 py-3 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition-all duration-300"
+                  >
+                    {loading ? "Sending..." : "Send Message"}
+                  </button>
+                </form>
+              </div>
+
+              {/* RIGHT: Contact Info */}
+              <div className="flex flex-col justify-center p-6 bg-gray-800/50 rounded-xl backdrop-blur-sm shadow-lg">
+                <h3 className="text-xl font-bold text-white mb-4">Contact Info</h3>
+                <p className="text-gray-300 mb-2">
+                  Have questions? Reach out to us anytime.
+                </p>
+                <div className="mt-4">
+                  <p className="text-gray-400 text-xs mb-1">Email</p>
+                  <a
+                    href="https://mail.google.com/mail/?view=cm&to=aitrustbridge@gmail.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 inline-flex items-center text-xs font-medium text-primary-600 hover:text-primary-500"
+                  >
+                    aitrustbridge@gmail.com
+                  </a>
+                </div>
+                <div className="mt-4">
+                  <p className="text-gray-400 text-xs mb-1">Address</p>
+                  <span className="text-gray-300 text-sm">
+                    123 AI Street, Tech City, Country
+                  </span>
+                </div>
+                <div className="mt-4">
+                  <p className="text-gray-400 text-xs mb-1">Phone</p>
+                  <span className="text-gray-300 text-sm">+1 (234) 567-890</span>
                 </div>
               </div>
             </div>

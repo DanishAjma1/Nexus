@@ -44,11 +44,11 @@ export const RegisterPage: React.FC = () => {
       return false;
     }
     // Common email domains allowed
-const emailRegex = /^[a-zA-Z0-9._%+-]+@(gmail|yahoo|icloud|outlook|hotmail|aol|protonmail|live|msn|comcast)\.com$/;
-if (!emailRegex.test(email)) {
-  setError("Invalid Email");
-  return false;
-}
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@(gmail|yahoo|icloud|outlook|hotmail|aol|protonmail|live|msn|comcast)\.com$/;
+    if (!emailRegex.test(email)) {
+      setError("Invalid Email");
+      return false;
+    }
 
 
     // Password validation
@@ -142,11 +142,10 @@ if (!emailRegex.test(email)) {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <button
                   type="button"
-                  className={`py-3 px-4 border rounded-md flex items-center justify-center transition-colors text-sm sm:text-base ${
-                    role === "entrepreneur"
+                  className={`py-3 px-4 border rounded-md flex items-center justify-center transition-colors text-sm sm:text-base ${role === "entrepreneur"
                       ? "border-primary-500 bg-primary-50 text-primary-700"
                       : "border-gray-300 text-gray-700 hover:bg-gray-50"
-                  }`}
+                    }`}
                   onClick={() => setRole("entrepreneur")}
                 >
                   <Building2 size={18} className="mr-2" />
@@ -155,11 +154,10 @@ if (!emailRegex.test(email)) {
 
                 <button
                   type="button"
-                  className={`py-3 px-4 border rounded-md flex items-center justify-center transition-colors text-sm sm:text-base ${
-                    role === "investor"
+                  className={`py-3 px-4 border rounded-md flex items-center justify-center transition-colors text-sm sm:text-base ${role === "investor"
                       ? "border-primary-500 bg-primary-50 text-primary-700"
                       : "border-gray-300 text-gray-700 hover:bg-gray-50"
-                  }`}
+                    }`}
                   onClick={() => setRole("investor")}
                 >
                   <CircleDollarSign size={18} className="mr-2" />
@@ -168,11 +166,10 @@ if (!emailRegex.test(email)) {
 
                 <button
                   type="button"
-                  className={`py-3 px-4 border rounded-md flex items-center justify-center transition-colors text-sm sm:text-base ${
-                    role === "admin"
+                  className={`py-3 px-4 border rounded-md flex items-center justify-center transition-colors text-sm sm:text-base ${role === "admin"
                       ? "border-primary-500 bg-primary-50 text-primary-700"
                       : "border-gray-300 text-gray-700 hover:bg-gray-50"
-                  }`}
+                    }`}
                   onClick={() => setRole("admin")}
                 >
                   <Shield size={18} className="mr-2" />
