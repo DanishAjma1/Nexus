@@ -50,7 +50,7 @@ import { Supporters } from "./pages/admin/supporters";
 import { FlaggedAccounts } from "./pages/admin/flaggedAccounts";
 import { Users } from "./pages/admin/Users";
 import { AICommandPage } from "./pages/admin/AI";
-import {Campaigns }from "./pages/admin/Campaigns";
+import { Campaigns } from "./pages/admin/Campaigns";
 import { Deals } from "./pages/viewdeals/ViewDeal";
 import { DealsPage } from "./pages/deals/DealsPage";
 import { CampaignsPage } from './pages/campaignPage/CampaignPage';
@@ -145,8 +145,8 @@ function App() {
 
             {/* Redirect root to login */}
             <Route path="/" element={<HomePage />} />
-<Route path="/All-Campaigns" element={<CampaignsPage />} />
-<Route path="/Fundraises" element={<FundraisePage />} />
+            <Route path="/All-Campaigns" element={<CampaignsPage />} />
+            <Route path="/Fundraises" element={<FundraisePage />} />
             {/* Catch all other routes and redirect to login */}
             <Route
               path="/dashboard/entreprenuer"
