@@ -1,4 +1,4 @@
-name: Nexus CI
+name: Trustbridge-AI CI
 
 on:
   push:
