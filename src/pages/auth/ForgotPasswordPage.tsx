@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { Mail, ArrowLeft, Shield, CheckCircle, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
 import toast from 'react-hot-toast';
 
 export const ForgotPasswordPage: React.FC = () => {
