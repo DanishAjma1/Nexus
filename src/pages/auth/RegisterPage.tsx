@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
   User,
   Mail,
@@ -8,10 +8,15 @@ import {
   Building2,
   Shield,
   AlertCircle,
+  Check,
+  ArrowRight,
+  Eye,
+  EyeOff,
+  CheckCircle,
+  ChevronLeft,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { Button } from "../../components/ui/Button";
-import { Input } from "../../components/ui/Input";
 import { UserRole } from "../../types";
 
 export const RegisterPage: React.FC = () => {
@@ -23,12 +28,39 @@ export const RegisterPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
-
-  const { register } = useAuth();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [pageTransition, setPageTransition] = useState({
+    direction: "enter-left",
+    isTransitioning: false
+  });
+  const location = useLocation();
   const navigate = useNavigate();
 
+  // Check if mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 888);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Handle page transition based on navigation
+  useEffect(() => {
+    const fromLogin = location.state?.fromLogin;
+    if (fromLogin) {
+      setPageTransition({ direction: "enter-right", isTransitioning: false });
+    } else {
+      setPageTransition({ direction: "enter-left", isTransitioning: false });
+    }
+  }, [location]);
+
+  const { register } = useAuth();
+
   const validateForm = () => {
-    // Name validation: letters and spaces only
     if (!name.trim()) {
       setError("Full name is required");
       return false;
@@ -38,20 +70,16 @@ export const RegisterPage: React.FC = () => {
       return false;
     }
 
-    // Email validation
     if (!email.trim()) {
       setError("Email is required");
       return false;
     }
-    // Common email domains allowed
-const emailRegex = /^[a-zA-Z0-9._%+-]+@(gmail|yahoo|icloud|outlook|hotmail|aol|protonmail|live|msn|comcast)\.com$/;
-if (!emailRegex.test(email)) {
-  setError("Invalid Email");
-  return false;
-}
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@(gmail|yahoo|icloud|outlook|hotmail|aol|protonmail|live|msn|comcast)\.com$/;
+    if (!emailRegex.test(email)) {
+      setError("Invalid Email");
+      return false;
+    }
 
-
-    // Password validation
     if (!password) {
       setError("Password is required");
       return false;
@@ -65,25 +93,21 @@ if (!emailRegex.test(email)) {
       return false;
     }
 
-    // Confirm password
     if (password !== confirmPassword) {
       setError("Passwords do not match");
       return false;
     }
 
-    // Role validation
     if (!role) {
       setError("Select a role");
       return false;
     }
 
-    // Terms validation
     if (!termsAccepted) {
       setError("You must accept the Terms of Service and Privacy Policy");
       return false;
     }
 
-    // All good
     setError(null);
     return true;
   };
@@ -94,7 +118,6 @@ if (!emailRegex.test(email)) {
 
     setIsLoading(true);
     try {
-      // Save to local storage for demo purposes
       localStorage.setItem(
         "userInfo",
         JSON.stringify({ name, email, password, role })
@@ -108,175 +131,579 @@ if (!emailRegex.test(email)) {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-8 px-4 sm:px-6 lg:px-8">
-      <div className="mx-auto w-full max-w-md">
-        <div className="flex justify-center">
-          <div className="w-12 h-12 bg-primary-600 rounded-md flex items-center justify-center shadow-md">
-            <Shield size={28} className="text-white" />
-          </div>
-        </div>
-        <h2 className="mt-6 text-center text-2xl sm:text-3xl font-extrabold text-gray-900">
-          Create your account
-        </h2>
-        <p className="mt-2 text-center text-sm text-gray-600 px-2">
-          Join TrustBridge AI to connect with partners
-        </p>
-      </div>
+  const handleNavigateToLogin = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setPageTransition({ direction: "exit-right", isTransitioning: true });
+    
+    setTimeout(() => {
+      navigate("/login", { 
+        state: { fromRegister: true } 
+      });
+    }, 400);
+  };
 
-      <div className="mt-8 mx-auto w-full max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-8">
+  // Add transition class based on direction
+  const getTransitionClass = () => {
+    const { direction, isTransitioning } = pageTransition;
+    if (!isTransitioning) return "";
+    
+    switch(direction) {
+      case "enter-left": return "animate-slide-in-left";
+      case "enter-right": return "animate-slide-in-right";
+      case "exit-left": return "animate-slide-out-left";
+      case "exit-right": return "animate-slide-out-right";
+      default: return "";
+    }
+  };
+
+  if (isMobile) {
+    return (
+      <div className={`min-h-screen bg-gradient-to-b from-primary-50 to-white flex flex-col transition-all duration-400 ${getTransitionClass()}`}>
+        {/* Mobile Header */}
+        <div className="p-4 bg-white border-b border-gray-100">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate(-1)}
+              className="p-2 rounded-lg hover:bg-gray-100 transition-all active:scale-95"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center animate-pulse">
+                <Shield size={18} className="text-white" />
+              </div>
+              <span className="font-bold text-gray-900">TrustBridge AI</span>
+            </div>
+          </div>
+          <h1 className="mt-4 text-xl font-bold text-gray-900">Create Account</h1>
+          <p className="text-gray-600 text-sm mt-1">Join our business network</p>
+        </div>
+
+        {/* Main Form Container */}
+        <div className="flex-1 p-6">
           {error && (
-            <div className="mb-4 bg-error-50 border border-error-500 text-error-700 px-4 py-3 rounded-md flex items-start">
-              <AlertCircle size={18} className="mr-2 mt-0.5" />
-              <span>{error}</span>
+            <div className="mb-4 bg-error-50 border border-error-200 rounded-xl p-3 flex items-start gap-2">
+              <AlertCircle size={18} className="text-error-500 flex-shrink-0 mt-0.5" />
+              <span className="text-error-700 text-sm">{error}</span>
             </div>
           )}
 
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            {/* Role selection */}
+          <form className="space-y-5" onSubmit={handleSubmit}>
+            {/* Role Selection - Mobile Friendly */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 I am registering as a
               </label>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="flex gap-2 overflow-x-auto pb-2 -mx-2 px-2">
                 <button
                   type="button"
-                  className={`py-3 px-4 border rounded-md flex items-center justify-center transition-colors text-sm sm:text-base ${
+                  className={`min-w-[100px] p-3 border rounded-xl flex flex-col items-center justify-center transition-all flex-shrink-0 active:scale-95 ${
                     role === "entrepreneur"
-                      ? "border-primary-500 bg-primary-50 text-primary-700"
-                      : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                      ? "border-primary-500 bg-primary-50"
+                      : "border-gray-200 bg-white hover:border-primary-300"
                   }`}
                   onClick={() => setRole("entrepreneur")}
                 >
-                  <Building2 size={18} className="mr-2" />
-                  Entrepreneur
+                  <Building2 size={20} className={`mb-1 ${role === "entrepreneur" ? "text-primary-600" : "text-gray-500"}`} />
+                  <span className="text-xs font-medium">Entrepreneur</span>
                 </button>
 
                 <button
                   type="button"
-                  className={`py-3 px-4 border rounded-md flex items-center justify-center transition-colors text-sm sm:text-base ${
+                  className={`min-w-[100px] p-3 border rounded-xl flex flex-col items-center justify-center transition-all flex-shrink-0 active:scale-95 ${
                     role === "investor"
-                      ? "border-primary-500 bg-primary-50 text-primary-700"
-                      : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                      ? "border-primary-500 bg-primary-50"
+                      : "border-gray-200 bg-white hover:border-primary-300"
                   }`}
                   onClick={() => setRole("investor")}
                 >
-                  <CircleDollarSign size={18} className="mr-2" />
-                  Investor
+                  <CircleDollarSign size={20} className={`mb-1 ${role === "investor" ? "text-primary-600" : "text-gray-500"}`} />
+                  <span className="text-xs font-medium">Investor</span>
                 </button>
 
                 <button
                   type="button"
-                  className={`py-3 px-4 border rounded-md flex items-center justify-center transition-colors text-sm sm:text-base ${
+                  className={`min-w-[100px] p-3 border rounded-xl flex flex-col items-center justify-center transition-all flex-shrink-0 active:scale-95 ${
                     role === "admin"
-                      ? "border-primary-500 bg-primary-50 text-primary-700"
-                      : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                      ? "border-primary-500 bg-primary-50"
+                      : "border-gray-200 bg-white hover:border-primary-300"
                   }`}
                   onClick={() => setRole("admin")}
                 >
-                  <Shield size={18} className="mr-2" />
-                  Admin
+                  <Shield size={20} className={`mb-1 ${role === "admin" ? "text-primary-600" : "text-gray-500"}`} />
+                  <span className="text-xs font-medium">Admin</span>
                 </button>
               </div>
             </div>
 
-            {/* Name */}
-            <Input
-              label="Full name"
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              fullWidth
-              startAdornment={<User size={18} />}
-            />
+            {/* Name Input */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Full Name
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <User size={18} className="text-gray-400" />
+                </div>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+                  placeholder="Enter your full name"
+                />
+                {name && /^[A-Za-z\s]+$/.test(name) && (
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                    <CheckCircle size={18} className="text-green-500" />
+                  </div>
+                )}
+              </div>
+            </div>
 
-            {/* Email */}
-            <Input
-              label="Email address"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              fullWidth
-              startAdornment={<Mail size={18} />}
-            />
+            {/* Email Input */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Email Address
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Mail size={18} className="text-gray-400" />
+                </div>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+                  placeholder="you@company.com"
+                />
+                {email && /^[a-zA-Z0-9._%+-]+@(gmail|yahoo|icloud|outlook|hotmail|aol|protonmail|live|msn|comcast)\.com$/.test(email) && (
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                    <CheckCircle size={18} className="text-green-500" />
+                  </div>
+                )}
+              </div>
+            </div>
 
-            {/* Password */}
-            <Input
-              label="Password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              fullWidth
-              startAdornment={<Lock size={18} />}
-            />
+            {/* Password Input */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Password
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock size={18} className="text-gray-400" />
+                </div>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="w-full pl-10 pr-11 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+                  placeholder="Create a strong password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                >
+                  {showPassword ? (
+                    <EyeOff size={18} className="text-gray-400" />
+                  ) : (
+                    <Eye size={18} className="text-gray-400" />
+                  )}
+                </button>
+              </div>
+              {/* Password Requirements - Mobile Compact */}
+              <div className="mt-2 grid grid-cols-2 gap-1 text-xs">
+                <div className={`flex items-center gap-1 ${password.length >= 8 ? 'text-green-600' : 'text-gray-400'}`}>
+                  <div className={`w-1.5 h-1.5 rounded-full ${password.length >= 8 ? 'bg-green-500' : 'bg-gray-300'}`} />
+                  <span>8+ chars</span>
+                </div>
+                <div className={`flex items-center gap-1 ${/[A-Z]/.test(password) ? 'text-green-600' : 'text-gray-400'}`}>
+                  <div className={`w-1.5 h-1.5 rounded-full ${/[A-Z]/.test(password) ? 'bg-green-500' : 'bg-gray-300'}`} />
+                  <span>Uppercase</span>
+                </div>
+                <div className={`flex items-center gap-1 ${/[a-z]/.test(password) ? 'text-green-600' : 'text-gray-400'}`}>
+                  <div className={`w-1.5 h-1.5 rounded-full ${/[a-z]/.test(password) ? 'bg-green-500' : 'bg-gray-300'}`} />
+                  <span>Lowercase</span>
+                </div>
+                <div className={`flex items-center gap-1 ${/[^A-Za-z0-9]/.test(password) ? 'text-green-600' : 'text-gray-400'}`}>
+                  <div className={`w-1.5 h-1.5 rounded-full ${/[^A-Za-z0-9]/.test(password) ? 'bg-green-500' : 'bg-gray-300'}`} />
+                  <span>Special</span>
+                </div>
+              </div>
+            </div>
 
-            {/* Confirm Password */}
-            <Input
-              label="Confirm password"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              fullWidth
-              startAdornment={<Lock size={18} />}
-            />
+            {/* Confirm Password Input */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Confirm Password
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock size={18} className="text-gray-400" />
+                </div>
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  className={`w-full pl-10 pr-11 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none ${
+                    confirmPassword
+                      ? password === confirmPassword
+                        ? "border-green-500"
+                        : "border-error-500"
+                      : "border-gray-300"
+                  }`}
+                  placeholder="Re-enter password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff size={18} className="text-gray-400" />
+                  ) : (
+                    <Eye size={18} className="text-gray-400" />
+                  )}
+                </button>
+                {confirmPassword && password === confirmPassword && (
+                  <div className="absolute inset-y-0 right-10 pr-3 flex items-center">
+                    <CheckCircle size={18} className="text-green-500" />
+                  </div>
+                )}
+              </div>
+            </div>
 
-            {/* Terms checkbox */}
-            <div className="flex items-start sm:items-center gap-2">
+            {/* Terms Checkbox - Mobile */}
+            <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl">
               <input
                 id="terms"
-                name="terms"
                 type="checkbox"
                 checked={termsAccepted}
                 onChange={(e) => setTermsAccepted(e.target.checked)}
                 required
-                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                className="h-5 w-5 text-primary-600 focus:ring-primary-500 border-gray-300 rounded-lg mt-0.5 flex-shrink-0"
               />
-              <label htmlFor="terms" className="block text-sm text-gray-900">
+              <label htmlFor="terms" className="text-sm text-gray-900">
                 I agree to the{" "}
-                <a
-                  href="#"
-                  className="font-medium text-primary-600 hover:text-primary-500"
-                >
-                  Terms of Service
+                <a href="#" className="text-primary-600 font-medium">
+                  Terms
                 </a>{" "}
                 and{" "}
-                <a
-                  href="#"
-                  className="font-medium text-primary-600 hover:text-primary-500"
-                >
+                <a href="#" className="text-primary-600 font-medium">
                   Privacy Policy
                 </a>
               </label>
             </div>
 
-            <Button type="submit" fullWidth isLoading={isLoading}>
-              Create account
+            {/* Create Account Button */}
+            <Button
+              type="submit"
+              fullWidth
+              isLoading={isLoading}
+              className="h-12 rounded-xl text-base font-medium transition-all duration-200 hover:scale-[1.02] active:scale-95"
+            >
+              {isLoading ? "Creating Account..." : "Create Account"}
             </Button>
           </form>
 
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300"></div>
+          {/* Login Link - Mobile */}
+          <div className="mt-8 text-center">
+            <p className="text-gray-600">
+              Already have an account?{" "}
+              <Link
+                to="/login"
+                onClick={handleNavigateToLogin}
+                className="font-semibold text-primary-600 hover:text-primary-700 inline-flex items-center gap-1 transition-all duration-200"
+              >
+                Sign in
+                <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </p>
+            {/* <p className="text-xs text-gray-500 mt-3 flex items-center justify-center gap-1">
+              <Shield size={12} className="text-green-500" />
+              Enterprise-grade security
+            </p> */}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Desktop Version
+  return (
+    <div className={`min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4 transition-all duration-400 ${getTransitionClass()}`}>
+      <div className="w-full max-w-4xl flex flex-col lg:flex-row bg-white rounded-2xl shadow-xl overflow-hidden">
+        {/* Left side - Brand/Info */}
+        <div className="lg:w-2/5 bg-gradient-to-br from-primary-600 to-primary-800 p-8 lg:p-12 text-white relative overflow-hidden">
+          <div className="relative z-10">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                <Shield size={24} className="text-white" />
               </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Or</span>
+              <span className="text-xl font-bold">TrustBridge AI</span>
+            </div>
+
+            <div className="mt-16">
+              <h1 className="text-3xl font-bold mb-6">
+                Join the Future of Business Connections
+              </h1>
+              <p className="text-primary-100 mb-8">
+                Connect with verified entrepreneurs, investors, and business partners in a trusted ecosystem.
+              </p>
+
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+                    <Check size={14} />
+                  </div>
+                  <span>Verified business profiles</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+                    <Check size={14} />
+                  </div>
+                  <span>AI-powered matchmaking</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+                    <Check size={14} />
+                  </div>
+                  <span>Secure deal management</span>
+                </div>
+                {/* <div className="flex items-center gap-3">
+                  <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+                    <Check size={14} />
+                  </div>
+                  <span>Enterprise-grade security</span>
+                </div> */}
               </div>
             </div>
 
-            <div className="mt-2 text-center">
-              <p className="text-sm text-gray-600">
+            <div className="mt-12 pt-8 border-t border-white/20">
+              <p className="text-primary-100 text-sm">
+                "TrustBridge AI transformed how we find and vet potential partners. The quality of connections is unmatched."
+              </p>
+              <p className="text-sm font-medium mt-2">— Sarah Chen, CEO at TechVentures</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Right side - Registration Form */}
+        <div className="lg:w-3/5 p-8 lg:p-12">
+          <div className="text-center lg:text-left mb-8">
+            <h2 className="text-2xl font-bold text-gray-900">Create Account</h2>
+            <p className="text-gray-600 mt-2">
+              Fill in your details to join our business network
+            </p>
+          </div>
+
+          {error && (
+            <div className="mb-6 bg-error-50 border border-error-200 rounded-xl p-4 flex items-start gap-3">
+              <AlertCircle size={20} className="text-error-500 flex-shrink-0 mt-0.5" />
+              <span className="text-error-700 text-sm">{error}</span>
+            </div>
+          )}
+
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                Select your role
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <button
+                  type="button"
+                  className={`relative p-4 border-2 rounded-xl flex flex-col items-center justify-center transition-all duration-200 ${
+                    role === "entrepreneur"
+                      ? "border-primary-500 bg-primary-50"
+                      : "border-gray-200 hover:border-gray-300"
+                  }`}
+                  onClick={() => setRole("entrepreneur")}
+                >
+                  <Building2 size={24} className={`mb-2 ${role === "entrepreneur" ? "text-primary-600" : "text-gray-500"}`} />
+                  <span className="font-medium text-gray-900">Entrepreneur</span>
+                  <span className="text-xs text-gray-500 mt-1">Business Owner</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`relative p-4 border-2 rounded-xl flex flex-col items-center justify-center transition-all duration-200 ${
+                    role === "investor"
+                      ? "border-primary-500 bg-primary-50"
+                      : "border-gray-200 hover:border-gray-300"
+                  }`}
+                  onClick={() => setRole("investor")}
+                >
+                  <CircleDollarSign size={24} className={`mb-2 ${role === "investor" ? "text-primary-600" : "text-gray-500"}`} />
+                  <span className="font-medium text-gray-900">Investor</span>
+                  <span className="text-xs text-gray-500 mt-1">Angel/VC</span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`relative p-4 border-2 rounded-xl flex flex-col items-center justify-center transition-all duration-200 ${
+                    role === "admin"
+                      ? "border-primary-500 bg-primary-50"
+                      : "border-gray-200 hover:border-gray-300"
+                  }`}
+                  onClick={() => setRole("admin")}
+                >
+                  <Shield size={24} className={`mb-2 ${role === "admin" ? "text-primary-600" : "text-gray-500"}`} />
+                  <span className="font-medium text-gray-900">Admin</span>
+                  <span className="text-xs text-gray-500 mt-1">Platform Manager</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-5">
+              {/* Name Input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Full Name
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <User size={18} className="text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+                    placeholder="Enter your full name"
+                  />
+                </div>
+              </div>
+
+              {/* Email Input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email Address
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Mail size={18} className="text-gray-400" />
+                  </div>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+                    placeholder="you@company.com"
+                  />
+                </div>
+              </div>
+
+              {/* Password Input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Password
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Lock size={18} className="text-gray-400" />
+                  </div>
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="w-full pl-10 pr-11 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+                    placeholder="Create a strong password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  >
+                    {showPassword ? (
+                      <EyeOff size={18} className="text-gray-400" />
+                    ) : (
+                      <Eye size={18} className="text-gray-400" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Confirm Password Input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Confirm Password
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Lock size={18} className="text-gray-400" />
+                  </div>
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+                    placeholder="Re-enter your password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff size={18} className="text-gray-400" />
+                    ) : (
+                      <Eye size={18} className="text-gray-400" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Terms checkbox */}
+            <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl">
+              <input
+                id="terms"
+                type="checkbox"
+                checked={termsAccepted}
+                onChange={(e) => setTermsAccepted(e.target.checked)}
+                required
+                className="h-5 w-5 text-primary-600 focus:ring-primary-500 border-gray-300 rounded-lg mt-0.5"
+              />
+              <div>
+                <label htmlFor="terms" className="block text-sm font-medium text-gray-900">
+                  I agree to the Terms of Service and Privacy Policy
+                </label>
+                <p className="text-xs text-gray-500 mt-1">
+                  By creating an account, you agree to our terms and acknowledge our privacy practices.
+                </p>
+              </div>
+            </div>
+
+            <Button
+              type="submit"
+              fullWidth
+              isLoading={isLoading}
+              className="h-12 rounded-xl font-medium text-base transition-all duration-200 hover:scale-[1.02] active:scale-95"
+            >
+              Create Account
+            </Button>
+          </form>
+
+          <div className="mt-8 pt-8 border-t border-gray-200">
+            <div className="text-center">
+              <p className="text-gray-600">
                 Already have an account?{" "}
                 <Link
                   to="/login"
-                  className="font-medium text-primary-600 hover:text-primary-500"
+                  onClick={handleNavigateToLogin}
+                  className="font-semibold text-primary-600 hover:text-primary-700 inline-flex items-center gap-1 transition-all duration-200"
                 >
-                  Sign in
+                  Sign in here
+                  <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                 </Link>
               </p>
             </div>

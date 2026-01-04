@@ -17,7 +17,6 @@ import { RegisterPage } from "./pages/auth/RegisterPage";
 // Dashboard Pages
 import { EntrepreneurDashboard } from "./pages/dashboard/EntrepreneurDashboard";
 import { InvestorDashboard } from "./pages/dashboard/InvestorDashboard";
-import { AdminDashboard } from "./pages/dashboard/AdminDashboard";
 
 // Profile Pages
 import { EntrepreneurProfile } from "./pages/profile/EntrepreneurProfile";
@@ -36,24 +35,21 @@ import { HelpPage } from "./pages/help/HelpPage";
 import { ChatPage } from "./pages/chat/ChatPage";
 import { ForgotPasswordPage } from "./pages/auth/ForgotPasswordPage";
 import { ResetPasswordPage } from "./pages/auth/ResetPasswordPage";
-import { VideoCall } from "./components/webRTC/Videocall";
-import { AudioCall } from "./components/webRTC/AudioCall";
+import { VideoCall } from "./pages/webRTC/Videocall";
+import { AudioCall } from "./pages/webRTC/AudioCall";
 import { Toaster } from "react-hot-toast";
-import { FraudAndRiskDetection } from "./pages/admin/FraudAndRiskDetection";
-import { Activities } from "./pages/admin/activities";
-import { Investors } from "./pages/admin/investors";
-
 import { HomePage } from "./pages/home/HomePage";
-import { LoginWithOAuthPage } from "./pages/auth/LoginWithOAuthPage";
-import { UserDetails } from "./components/user/UserDetails";
 import { Supporters } from "./pages/admin/supporters";
 import { FlaggedAccounts } from "./pages/admin/flaggedAccounts";
 import { Users } from "./pages/admin/Users";
 import { Campaigns } from "./pages/admin/Campaigns";
-import { Deals } from "./pages/viewdeals/ViewDeal";
 import { DealsPage } from "./pages/deals/DealsPage";
 import { CampaignsPage } from "./pages/campaignPage/CampaignPage";
 import { FundraisePage } from "./pages/fundraises/Fundraises-Page";
+import { AdminDashboard } from "./pages/dashboard/AdminDashboard";
+import { Activities } from "./pages/admin/activities";
+import { Investors } from "./pages/admin/investors";
+import { FraudAndRiskDetection } from "./pages/admin/FraudAndRiskDetection";
 
 function App() {
   return (
@@ -64,10 +60,8 @@ function App() {
             {/* Authentication Routes */}
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
-            <Route path="/fill-details" element={<UserDetails />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
-            <Route path="/login-with-oauth" element={<LoginWithOAuthPage />} />
 
             {/* Dashboard Routes */}
             <Route path="/dashboard" element={<DashboardLayout />}>
@@ -129,15 +123,20 @@ function App() {
 
             <Route path="/call" element={<DashboardLayout />}></Route>
 
-            <Route path="/viewdeals" element={<DashboardLayout />}>
-              <Route index element={<Deals />} />
-            </Route>
-            <Route path="/sent-deals" element={<DashboardLayout />}>
+            <Route path="/deals" element={<DashboardLayout />}>
               <Route index element={<DealsPage />} />
             </Route>
 
             {/* Chat Routes */}
             <Route path="/chat" element={<DashboardLayout />}>
+              <Route
+                path=":userId/audio-call/:roomId/:isIncommingCall"
+                element={<AudioCall />}
+              />
+              <Route
+                path=":userId/video-call/:roomId/:isIncommingCall"
+                element={<VideoCall />}
+              />
               <Route path=":userId" element={<ChatPage />} />
             </Route>
 
