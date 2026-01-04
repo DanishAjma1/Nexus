@@ -268,32 +268,6 @@ export const AdminDashboard: React.FC = () => {
             </div>
           </CardBody>
         </Card>
-
-        {/* AI Assistant Moderation */}
-        <Card>
-          <CardHeader className="flex justify-between items-center">
-            <h2 className="text-lg font-medium text-gray-900">
-              AI Assistant Management
-            </h2>
-            <Badge variant="success">AI</Badge>
-          </CardHeader>
-          <CardBody>
-            <p className="text-gray-600">
-              Moderate AI-generated campaign suggestions and approve automated
-              responses before they are shown to users.
-            </p>
-            <div className="mt-4 flex gap-2">
-              <Button
-                leftIcon={<MessageSquare size={16} />}
-                onClick={() => {
-                  navigate("/admin/ai");
-                }}
-              >
-                Review Responses
-              </Button>
-            </div>
-          </CardBody>
-        </Card>
       </div>
     </div>
   );

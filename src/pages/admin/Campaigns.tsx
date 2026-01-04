@@ -36,7 +36,9 @@ export const Campaigns: React.FC = () => {
 
   const updateStatus = async (id: string, status: string) => {
     try {
-      await axios.put(`http://localhost:5000/admin/campaigns/${id}/status`, { status });
+      await axios.put(`http://localhost:5000/admin/campaigns/${id}/status`, {
+        status,
+      });
       toast.success("Status updated!");
       fetchCampaigns();
     } catch {
@@ -145,13 +147,15 @@ export const Campaigns: React.FC = () => {
       {showForm && (
         <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4 overflow-auto">
           <div className="bg-white rounded-2xl shadow-lg w-full max-w-lg relative">
-            <button
-              onClick={() => setShowForm(false)}
-              className="absolute top-2 right-2 text-gray-700 hover:text-red-500 text-2xl font-bold p-1 rounded-full bg-white/90 hover:bg-white shadow-md transition"
-            >
-              ✕
-            </button>
-            <div className="p-6 pt-12">
+            <div className="flex justify-end items-end p-5">
+              <button
+                onClick={() => setShowForm(false)}
+                className="text-gray-700 hover:text-red-500 text-2xl font-bold py-4 px-5 rounded-full bg-white/90 hover:bg-white shadow-md transition"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-6">
               <CampForm
                 onSuccess={() => {
                   fetchCampaigns();
@@ -191,7 +195,6 @@ export const Campaigns: React.FC = () => {
                        backdrop-blur-md rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 
                        p-4 flex flex-col snap-start"
           >
-
             {c.images && c.images.length > 0 && (
               <div className="flex overflow-x-auto gap-2 mb-3 pb-1">
                 {c.images.map((img, i) => (
@@ -205,20 +208,27 @@ export const Campaigns: React.FC = () => {
               </div>
             )}
 
-            <h2 className="text-lg font-semibold text-green-700 mb-1 truncate">{c.title}</h2>
-            <p className="text-gray-700 text-xs mb-2 line-clamp-3">{c.description}</p>
+            <h2 className="text-lg font-semibold text-green-700 mb-1 truncate">
+              {c.title}
+            </h2>
+            <p className="text-gray-700 text-xs mb-2 line-clamp-3">
+              {c.description}
+            </p>
 
             <div className="flex justify-between items-center text-xs mb-3">
               <p>
-                <span className="font-semibold text-teal-600">Goal:</span> ${c.goalAmount}
+                <span className="font-semibold text-teal-600">Goal:</span> $
+                {c.goalAmount}
               </p>
               <p>
-                <span className="font-semibold text-teal-600">Raised:</span> ${c.raisedAmount}
+                <span className="font-semibold text-teal-600">Raised:</span> $
+                {c.raisedAmount}
               </p>
             </div>
 
             <p className="text-xs mb-1">
-              <span className="font-semibold text-purple-600">Category:</span> {c.category}
+              <span className="font-semibold text-purple-600">Category:</span>{" "}
+              {c.category}
             </p>
 
             <div className="flex justify-between text-xs mb-3">
@@ -234,7 +244,11 @@ export const Campaigns: React.FC = () => {
 
             <p className="text-xs mb-3">
               Status:{" "}
-              <span className={`font-semibold ${c.status === "active" ? "text-green-500" : "text-red-500"}`}>
+              <span
+                className={`font-semibold ${
+                  c.status === "active" ? "text-green-500" : "text-red-500"
+                }`}
+              >
                 {c.status}
               </span>
             </p>
@@ -265,4 +279,3 @@ export const Campaigns: React.FC = () => {
     </div>
   );
 };
-

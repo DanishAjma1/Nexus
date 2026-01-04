@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 
@@ -24,7 +24,9 @@ const CampForm: React.FC<CampFormProps> = ({ onSuccess }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
   ) => {
     const { name, value } = e.target;
 
@@ -47,7 +49,10 @@ const CampForm: React.FC<CampFormProps> = ({ onSuccess }) => {
     if (e.target.files) {
       const newFiles = Array.from(e.target.files);
       setImages((prev) => [...prev, ...newFiles]);
-      setPreviewUrls((prev) => [...prev, ...newFiles.map((file) => URL.createObjectURL(file))]);
+      setPreviewUrls((prev) => [
+        ...prev,
+        ...newFiles.map((file) => URL.createObjectURL(file)),
+      ]);
     }
   };
 
@@ -60,7 +65,8 @@ const CampForm: React.FC<CampFormProps> = ({ onSuccess }) => {
   };
 
   const validateForm = () => {
-    const { title, description, goalAmount, startDate, endDate, category } = formData;
+    const { title, description, goalAmount, startDate, endDate, category } =
+      formData;
 
     if (!title.trim()) {
       toast.error("Title is required");
@@ -222,7 +228,10 @@ const CampForm: React.FC<CampFormProps> = ({ onSuccess }) => {
         <div className="flex gap-2 mt-2 overflow-x-auto">
           {previewUrls.map((url, i) => (
             <div key={i} className="relative">
-              <img src={url} className="w-20 h-20 rounded-lg object-cover border" />
+              <img
+                src={url}
+                className="w-20 h-20 rounded-lg object-cover border"
+              />
               <button
                 type="button"
                 onClick={() => removeImage(i)}

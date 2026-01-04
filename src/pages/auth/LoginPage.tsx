@@ -51,8 +51,8 @@ export const LoginPage: React.FC = () => {
       setEmail("in@gmail.com");
       setPassword("123");
     } else {
-      setEmail("admin@trust.com");
-      setPassword("admin123");
+      setEmail("admin@gmail.com");
+      setPassword("123");
     }
     setRole(userRole);
   };
@@ -195,7 +195,9 @@ export const LoginPage: React.FC = () => {
                 <div className="w-full border-t border-gray-300"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Demo Accounts</span>
+                <span className="px-2 bg-white text-gray-500">
+                  Demo Accounts
+                </span>
               </div>
             </div>
 
@@ -238,7 +240,7 @@ export const LoginPage: React.FC = () => {
             </div>
 
             <p className="mt-2 text-center text-sm text-gray-600">
-              Don't have an account?{' '}
+              Don't have an account?{" "}
               <Link
                 to="/register"
                 className="font-medium text-primary-600 hover:text-primary-500"
