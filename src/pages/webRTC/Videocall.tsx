@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useSocket } from "../../context/SocketContext";
 import toast from "react-hot-toast";
-import AgoraRTC, { ILocalTrack } from "agora-rtc-sdk-ng";
+import AgoraRTC, { ILocalTrack, IAgoraRTCClient } from "agora-rtc-sdk-ng";
 import axios from "axios";
 
 export const VideoCall: React.FC = () => {
@@ -19,7 +19,7 @@ export const VideoCall: React.FC = () => {
   const localVideoRef = useRef<HTMLDivElement | null>(null);
   const remoteVideoRef = useRef<HTMLDivElement | null>(null);
   const localTracksRef = useRef<ILocalTrack[]>([]);
-  const clientRef = useRef<AgoraRTC.Client | null>(null);
+  const clientRef = useRef<IAgoraRTCClient | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [uid, setUid] = useState<string | null>(null);
   const URL = import.meta.env.VITE_BACKEND_URL;
@@ -96,8 +96,8 @@ export const VideoCall: React.FC = () => {
           from: user?.userId,
           to: userId,
           roomId: CHANNEL,
-          callType:"video",
-          fromName:user?.name
+          callType: "video",
+          fromName: user?.name,
         });
       }
     };

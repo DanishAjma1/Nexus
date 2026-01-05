@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useSocket } from "../../context/SocketContext";
 import toast from "react-hot-toast";
-import AgoraRTC, { ILocalTrack } from "agora-rtc-sdk-ng";
+import AgoraRTC, { ILocalTrack, IAgoraRTCClient } from "agora-rtc-sdk-ng";
 import axios from "axios";
 
 export const AudioCall: React.FC = () => {
@@ -18,7 +18,7 @@ export const AudioCall: React.FC = () => {
   const localAudioRef = useRef<HTMLDivElement | null>(null);
   const remoteAudioRef = useRef<HTMLDivElement | null>(null);
   const localTracksRef = useRef<ILocalTrack[]>([]);
-  const clientRef = useRef<AgoraRTC.Client | null>(null);
+  const clientRef = useRef<IAgoraRTCClient | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [uid, setUid] = useState<string | null>(null);
   const URL = import.meta.env.VITE_BACKEND_URL;
@@ -61,7 +61,7 @@ export const AudioCall: React.FC = () => {
         }
       });
 
-      client.on("user-unpublished", (user, mediaType) => {
+      client.on("user-unpublished", (_user, mediaType) => {
         if (mediaType === "audio" && remoteAudioRef.current) {
           remoteAudioRef.current.innerHTML = "";
         }

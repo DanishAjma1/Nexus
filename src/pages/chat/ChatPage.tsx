@@ -203,10 +203,10 @@ export const ChatPage: React.FC = () => {
                   onClick={(e) => {
                     e.preventDefault();
                     navigate(
-                      `audio-call/${currentUser?.userId.slice(
+                      `audio-call/${currentUser!.userId.slice(
                         0,
                         5
-                      )}&${chatPartner?._id.slice(0, 5)}/${false}`
+                      )}&${chatPartner!._id.slice(0, 5)}/${false}`
                     );
                   }}
                 >
@@ -221,10 +221,10 @@ export const ChatPage: React.FC = () => {
                   onClick={(e) => {
                     e.preventDefault();
                     navigate(
-                      `video-call/${currentUser?.userId.slice(
+                      `video-call/${currentUser!.userId.slice(
                         0,
                         5
-                      )}&${chatPartner?._id.slice(0, 5)}/${false}`
+                      )}&${chatPartner!._id.slice(0, 5)}/${false}`
                     );
                   }}
                 >

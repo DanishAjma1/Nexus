@@ -50,6 +50,7 @@ import { AdminDashboard } from "./pages/dashboard/AdminDashboard";
 import { Activities } from "./pages/admin/activities";
 import { Investors } from "./pages/admin/investors";
 import { FraudAndRiskDetection } from "./pages/admin/FraudAndRiskDetection";
+import { ViewDeals } from "./pages/viewdeals/ViewDeal";
 
 function App() {
   return (
@@ -124,7 +125,8 @@ function App() {
             <Route path="/call" element={<DashboardLayout />}></Route>
 
             <Route path="/deals" element={<DashboardLayout />}>
-              <Route index element={<DealsPage />} />
+              <Route path="sent-deals" element={<DealsPage />} />
+              <Route path="view-deals" element={<ViewDeals />} />
             </Route>
 
             {/* Chat Routes */}
@@ -140,7 +142,7 @@ function App() {
               <Route path=":userId" element={<ChatPage />} />
             </Route>
 
-            {/* Redirect root to login */}
+            {/* Redirect root to homepage */}
             <Route path="/" element={<HomePage />} />
             <Route path="/All-Campaigns" element={<CampaignsPage />} />
             <Route path="/Fundraises" element={<FundraisePage />} />

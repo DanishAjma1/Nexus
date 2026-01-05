@@ -45,7 +45,7 @@ export default defineConfig({
       },
       workbox: {
         cleanupOutdatedCaches: true,
-
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB
         navigateFallbackDenylist: [
           /^\/$/,                               // landing
           /^\/All-Campaigns(\/.*)?$/,
