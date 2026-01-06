@@ -1,15 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Card, CardHeader, CardBody } from "../ui/Card";
 import { Input } from "../ui/Input";
 import { Button } from "../ui/Button";
 import { Badge } from "../ui/Badge";
-import { 
-  Shield, 
-  Smartphone, 
-  LogOut, 
-  AlertCircle, 
-  CheckCircle, 
-  XCircle, 
+import { useNavigate } from 'react-router-dom';
+import {
+  Shield,
+  Smartphone,
+  LogOut,
+  AlertCircle,
+  CheckCircle,
+  XCircle,
   Key,
   Trash2,
   Clock,
@@ -20,7 +21,7 @@ import {
   Copy
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
-import toast from "react-hot-toast";
+import { toast } from 'react-hot-toast';
 import axios from "axios";
 
 interface Session {
@@ -44,9 +45,9 @@ interface TrustedDevice {
 }
 
 export const SecuritySettings: React.FC = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const URL = import.meta.env.VITE_BACKEND_URL;
-  
+
   const [passwords, setPasswords] = useState({
     current: "",
     new: "",
@@ -73,20 +74,51 @@ export const SecuritySettings: React.FC = () => {
   });
 
   const [isLoadingDevices, setIsLoadingDevices] = useState(false);
+  const navigate = useNavigate();
 
-  
+  const ClickOutsideToast = ({ children, onClose }) => {
+    const toastRef = useRef(null);
+
+    useEffect(() => {
+      const handleClickOutside = (event) => {
+        if (toastRef.current && !toastRef.current.contains(event.target)) {
+          onClose();
+        }
+      };
+
+      // Add event listener with a small delay to avoid immediate dismissal
+      setTimeout(() => {
+        document.addEventListener('mousedown', handleClickOutside);
+      }, 100);
+
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }, [onClose]);
+
+    return (
+      <div ref={toastRef}>
+        {children}
+      </div>
+    );
+  };
+
+
 
   // Load user's 2FA status and trusted devices
   useEffect(() => {
     if (user?.userId) {
+
       loadSecurityData();
+      setTwoFactorEnabled(user?.twoFactorEnabled || false);
     }
   }, [user]);
+
 
   const loadSecurityData = async () => {
     try {
       setIsLoadingDevices(true);
-      
+
       // Load trusted devices
       const devicesResponse = await axios.get(
         `${URL}/auth/trusted-devices/${user?.userId}`,
@@ -94,13 +126,13 @@ export const SecuritySettings: React.FC = () => {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
         }
       );
-      
+
       setTrustedDevices(devicesResponse.data.trustedDevices);
       setSecuritySettings(devicesResponse.data.securitySettings);
-      
+
       // Check 2FA status from user data
       setTwoFactorEnabled(user?.twoFactorEnabled || false);
-      
+
     } catch (error) {
       console.error("Failed to load security data:", error);
       toast.error("Failed to load security settings");
@@ -174,10 +206,10 @@ export const SecuritySettings: React.FC = () => {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
         }
       );
-      
+
       setSecretData(response.data);
       setShowTwoFactorSetup(true);
-      
+
       toast.success("Scan the QR code with your authenticator app");
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to setup 2FA");
@@ -205,14 +237,14 @@ export const SecuritySettings: React.FC = () => {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
         }
       );
-      
+
       setTwoFactorEnabled(true);
       setShowTwoFactorSetup(false);
       setBackupCodes(response.data.backupCodes);
       setShowBackupCodes(true);
       setVerificationCode("");
       setSecretData(null);
-      
+
       toast.success("Two-factor authentication enabled successfully!");
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to enable 2FA");
@@ -222,11 +254,53 @@ export const SecuritySettings: React.FC = () => {
   };
 
   const handleDisable2FA = async () => {
-    if (!window.confirm("Are you sure you want to disable two-factor authentication? This will make your account less secure.")) {
-      return;
-    }
+    toast(
+      <ClickOutsideToast onClose={() => toast.dismiss()}>
+        <div>
+          <p>Are you sure you want to disable two-factor authentication?</p>
+          <p className="text-sm text-gray-600 mt-1">
+            This will make your account less secure.
+          </p>
+          <div className="flex justify-end space-x-2 mt-3">
+            <button
+              onClick={() => {
+                toast.dismiss();
+                disable2FAHandler();
+              }}
+              className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700"
+            >
+              Disable
+            </button>
+            <button
+              onClick={() => toast.dismiss()}
+              className="px-3 py-1 text-sm bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </ClickOutsideToast>,
+      {
+        duration: Infinity,
+        position: 'top-center',
+      }
+    );
+  };
 
+  // Separate handler for the actual disabling logic
+  const disable2FAHandler = async () => {
     try {
+      // First, clear all trusted devices from backend
+      if (trustedDevices.length > 0) {
+        await axios.delete(
+          `${URL}/auth/trusted-devices/${user?.userId}`,
+          {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+          }
+        );
+      }
+
+      // Then disable 2FA
       const response = await axios.post(
         `${URL}/auth/disable-2fa`,
         { userId: user?.userId },
@@ -234,13 +308,27 @@ export const SecuritySettings: React.FC = () => {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
         }
       );
-      
-      setTwoFactorEnabled(false);
+
+      // Clear local state
+      setTwoFactorEnabled(false);  // This will change button to "Enable 2FA"
       setBackupCodes([]);
       setShowBackupCodes(false);
-      
-      toast.success("Two-factor authentication disabled");
+      setTrustedDevices([]);  // This will clear trusted devices section
+      loadSecurityData();
+      // Dismiss the confirmation toast
+      toast.dismiss();
+
+      toast.success("Two-factor authentication disabled successfully.");
+
+      setTimeout(() => {
+        logout();
+        navigate('/login', {
+          state: { message: "2FA has been disabled. Please log in again." }
+        });
+        toast.success("Please log in again to continue.");
+      }, 1500);
     } catch (error: any) {
+      toast.dismiss(); // Also dismiss on error
       toast.error(error.response?.data?.message || "Failed to disable 2FA");
     }
   };
@@ -253,7 +341,7 @@ export const SecuritySettings: React.FC = () => {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
         }
       );
-      
+
       setTrustedDevices(prev => prev.filter(device => device.deviceId !== deviceId));
       toast.success("Device removed from trusted list");
     } catch (error: any) {
@@ -270,7 +358,7 @@ export const SecuritySettings: React.FC = () => {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
         }
       );
-      
+
       toast.success("Security settings updated");
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to update settings");
@@ -284,29 +372,136 @@ export const SecuritySettings: React.FC = () => {
   };
 
   const downloadBackupCodes = () => {
-  const codesText = backupCodes.join('\n');
+    const codesText = backupCodes.join('\n');
 
-  // Check if browser supports URL.createObjectURL
-  if (typeof window !== 'undefined' && URL.createObjectURL) {
-    const blob = new Blob([codesText], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
+    if (!backupCodes.length) {
+      alert('No backup codes to download');
+      return;
+    }
 
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'trustbridge-backup-codes.txt';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  } else if (navigator.clipboard) {
-    // Fallback: copy to clipboard
-    navigator.clipboard.writeText(codesText)
-      .then(() => alert('Backup codes copied to clipboard'))
-      .catch(() => alert('Failed to copy backup codes'));
-  } else {
-    alert('Downloading backup codes is not supported in this environment');
-  }
-};
+    // Ensure we're in a browser
+    if (typeof window === 'undefined') {
+      console.error('Not in a browser environment');
+      return;
+    }
+
+    // Method 1: Force download using modern approach
+    const downloadFile = () => {
+      try {
+        // Create blob with proper MIME type
+        const blob = new Blob([codesText], {
+          type: 'text/plain;charset=utf-8'
+        });
+
+        // Create URL for the blob
+        const url = URL.createObjectURL(blob);
+
+        // Create a temporary link element
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'trustbridge-backup-codes.txt';
+
+        // Required for Firefox
+        link.style.display = 'none';
+
+        // Some browsers require the link to be in the DOM
+        document.body.appendChild(link);
+
+        // Simulate click
+        link.click();
+
+        // Clean up
+        setTimeout(() => {
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+        }, 100);
+
+        return true;
+      } catch (error) {
+        console.error('Download failed:', error);
+        return false;
+      }
+    };
+
+    // Method 2: If download fails, try with a different approach
+    const forceDownload = () => {
+      // Try the standard method first
+      if (downloadFile()) return true;
+
+      // Alternative method: Create and remove an iframe
+      try {
+        const blob = new Blob([codesText], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = url;
+
+        document.body.appendChild(iframe);
+
+        setTimeout(() => {
+          document.body.removeChild(iframe);
+          URL.revokeObjectURL(url);
+        }, 100);
+
+        return true;
+      } catch (error) {
+        console.error('Iframe method failed:', error);
+        return false;
+      }
+    };
+
+    // Method 3: Last resort - save via data URL
+    const dataUrlDownload = () => {
+      try {
+        const dataUrl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(codesText);
+        const link = document.createElement('a');
+        link.href = dataUrl;
+        link.download = 'trustbridge-backup-codes.txt';
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => document.body.removeChild(link), 100);
+        return true;
+      } catch (error) {
+        console.error('Data URL method failed:', error);
+        return false;
+      }
+    };
+
+    // Try methods in order
+    if (forceDownload()) {
+      // Optional: Show success message
+      console.log('Download started successfully');
+    } else if (dataUrlDownload()) {
+      console.log('Download started via data URL');
+    } else {
+      // Fallback to clipboard
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(codesText)
+          .then(() => {
+            // More specific message
+            const userMessage = `Backup codes copied to clipboard. 
+          
+Please:
+1. Open a text editor (Notepad, TextEdit, etc.)
+2. Paste the codes (Ctrl+V or Cmd+V)
+3. Save the file as: trustbridge-backup-codes.txt
+
+Your codes:
+${codesText}`;
+
+            alert(userMessage);
+          })
+          .catch(() => {
+            // Ultimate fallback
+            alert(`Please save these backup codes manually:\n\n${codesText}`);
+          });
+      } else {
+        alert(`Please save these backup codes manually:\n\n${codesText}`);
+      }
+    }
+  };
 
 
   const formatDate = (dateString: string) => {
@@ -366,8 +561,8 @@ export const SecuritySettings: React.FC = () => {
                   Disable 2FA
                 </Button>
               ) : (
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={initiate2FASetup}
                   disabled={isSettingUp2FA}
                 >
@@ -397,16 +592,16 @@ export const SecuritySettings: React.FC = () => {
                   {secretData?.qrCodeUrl && (
                     <div className="flex flex-col items-center mb-4">
                       <div className="w-48 h-48 bg-white p-4 border-2 border-gray-300 rounded-lg mb-2">
-                        <img 
-                          src={secretData.qrCodeUrl} 
-                          alt="QR Code" 
+                        <img
+                          src={secretData.qrCodeUrl}
+                          alt="QR Code"
                           className="w-full h-full"
                         />
                       </div>
                       <p className="text-xs text-gray-600 text-center mb-4">
                         Scan with your authenticator app
                       </p>
-                      
+
                       <div className="w-full max-w-md">
                         <div className="mb-2">
                           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -442,7 +637,7 @@ export const SecuritySettings: React.FC = () => {
                       disabled={isSettingUp2FA}
                     />
                     <div className="flex gap-2">
-                      <Button 
+                      <Button
                         onClick={handleEnable2FA}
                         disabled={isSettingUp2FA || verificationCode.length !== 6}
                       >
@@ -475,10 +670,10 @@ export const SecuritySettings: React.FC = () => {
                     Save Your Backup Codes
                   </h3>
                   <p className="text-sm text-yellow-800 mb-4">
-                    These backup codes can be used to access your account if you lose your 
+                    These backup codes can be used to access your account if you lose your
                     authenticator device. <strong>Save them in a secure place!</strong> Each code can only be used once.
                   </p>
-                  
+
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-4">
                     {backupCodes.map((code, index) => (
                       <div
@@ -489,7 +684,7 @@ export const SecuritySettings: React.FC = () => {
                       </div>
                     ))}
                   </div>
-                  
+
                   <div className="flex gap-2">
                     <Button
                       size="sm"
@@ -541,7 +736,7 @@ export const SecuritySettings: React.FC = () => {
           <p className="text-sm text-gray-600 mb-4">
             Devices that won't require 2FA verification for {securitySettings.sessionDuration} days.
           </p>
-          
+
           {isLoadingDevices ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
@@ -551,6 +746,10 @@ export const SecuritySettings: React.FC = () => {
             <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
               <DeviceIcon className="mx-auto text-gray-400" size={32} />
               <p className="text-sm text-gray-600 mt-2">No trusted devices yet</p>
+              <p className="text-sm text-gray-600 mt-2">
+                Please logout and login again one time from your devices to add them to the trusted list.
+                after enabling 2FA.
+              </p>
             </div>
           ) : (
             <div className="space-y-3">
