@@ -16,9 +16,12 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import { Button } from "../../components/ui/Button";
 import { UserRole } from "../../types";
+import toast from "react-hot-toast";
+import axios from "axios";
 
 export const LoginPage: React.FC = () => {
   const [email, setEmail] = useState("");
+   const [user, setUser] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<UserRole>("entrepreneur");
   const [error, setError] = useState<string | null>(null);
@@ -30,6 +33,7 @@ export const LoginPage: React.FC = () => {
     isTransitioning: false
   });
   const URL = import.meta.env.VITE_BACKEND_URL;
+  
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -53,22 +57,57 @@ export const LoginPage: React.FC = () => {
     }
   }, [location]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setIsLoading(true);
+  // const handleSubmit = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   setError(null);
+  //   setIsLoading(true);
 
-    try {
-      await login(email, password, role);
+  //   try {
+  //     await login(email, password, role);
 
-      if (role === "entrepreneur") navigate("/dashboard/entrepreneur");
-      else if (role === "investor") navigate("/dashboard/investor");
-      else if (role === "admin") navigate("/dashboard/admin");
-    } catch (err) {
-      setError((err as Error).message);
-      setIsLoading(false);
+  //     if (role === "entrepreneur") navigate("/dashboard/entrepreneur");
+  //     else if (role === "investor") navigate("/dashboard/investor");
+  //     else if (role === "admin") navigate("/dashboard/admin");
+  //   } catch (err) {
+  //     setError((err as Error).message);
+  //     setIsLoading(false);
+  //   }
+  // };
+
+  // Update the handleSubmit function in LoginPage
+// Update the handleSubmit function in LoginPage.tsx
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError(null);
+  setIsLoading(true);
+
+  try {
+    const result = await login(email, password, role);
+
+    if (result.requires2FA) {
+      // Navigate to 2FA verification page
+      navigate("/verify-2fa", {
+        state: {
+          partialToken: result.partialToken,
+          user: result.user,
+          email,
+          role
+        }
+      });
+      return;
     }
-  };
+
+    // If we get here, login was successful without 2FA
+    if (role === "entrepreneur") navigate("/dashboard/entrepreneur");
+    else if (role === "investor") navigate("/dashboard/investor");
+    else if (role === "admin") navigate("/dashboard/admin");
+    
+  } catch (err: any) {
+    setError(err.message);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const fillDemoCredentials = (userRole: UserRole) => {
     if (userRole === "entrepreneur") {

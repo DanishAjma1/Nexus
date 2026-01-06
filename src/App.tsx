@@ -51,6 +51,8 @@ import { Activities } from "./pages/admin/activities";
 import { Investors } from "./pages/admin/investors";
 import { FraudAndRiskDetection } from "./pages/admin/FraudAndRiskDetection";
 import { ViewDeals } from "./pages/viewdeals/ViewDeal";
+import { TwoFactorAuthPage } from "./pages/auth/TwoFactorAuthPage";
+import { UserDetails } from "./components/user/UserDetails";
 
 function App() {
   return (
@@ -146,6 +148,8 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/All-Campaigns" element={<CampaignsPage />} />
             <Route path="/Fundraises" element={<FundraisePage />} />
+            <Route path="/verify-2fa" element={<TwoFactorAuthPage />} />
+            <Route path="/fill-details" element={<UserDetails />} />
             {/* Catch all other routes and redirect to login */}
             <Route
               path="/dashboard/entreprenuer"
