@@ -14,7 +14,7 @@ export const getInvestorsFromDb = async () => {
   }
 };
 
-export const getInvestorById = async (id) => {
+export const getInvestorById = async (id: string | undefined) => {
   try {
     const res = await axios.get(URL + "/investor/get-investor-by-id/" + id, {
       withCredentials: true,
@@ -38,7 +38,7 @@ export const getEnterprenuerFromDb = async () => {
   }
 };
 
-export const getEnterpreneurById = async (id) => {
+export const getEnterpreneurById = async (id: string | undefined) => {
   try {
     const res = await axios.get(
       URL + "/entrepreneur/get-entrepreneur-by-id/" + id,
@@ -83,7 +83,11 @@ export const updateInvestorData = async (formData: any) => {
   }
 };
 
-export const sendMailToUser = async (message:string,sub:string,email: string) => {
+export const sendMailToUser = async (
+  message: string,
+  sub: string,
+  email: string
+) => {
   try {
     const res = await axios.post(
       `${URL}/auth/send-mail`,
@@ -99,10 +103,11 @@ export const sendMailToUser = async (message:string,sub:string,email: string) =>
   }
 };
 
-export const getUserFromDb = async (id) => {
+export const getUserFromDb = async (id: string | undefined) => {
   try {
     const res = await axios.get(`${URL}/user/get-user-by-id/${id}`);
     const { user } = res.data;
+    console.log(user)
     return user;
   } catch (err) {
     console.log(err);

@@ -1,10 +1,13 @@
-
 import React, { useEffect, useState } from "react";
-import { User, Lock, Palette, CreditCard } from "lucide-react";
+import { Lock, Palette, CreditCard, User2 } from "lucide-react";
 import { Card, CardHeader, CardBody } from "../../components/ui/Card";
 import { useAuth } from "../../context/AuthContext";
-import { getEnterpreneurById, getInvestorById } from "../../data/users";
-import { Entrepreneur, Investor } from "../../types";
+import {
+  getEnterpreneurById,
+  getInvestorById,
+  getUserFromDb,
+} from "../../data/users";
+import { Entrepreneur, Investor, User } from "../../types";
 import { ProfileSettings } from "../../components/settings/ProfileSettings";
 import { SecuritySettings } from "../../components/settings/SecuritySettings";
 import { AppearanceSettings } from "../../components/settings/AppearanceSettings";
@@ -14,24 +17,57 @@ type SettingsTab = "profile" | "security" | "appearance" | "billing";
 
 export const SettingsPage: React.FC = () => {
   const { user: currentUser } = useAuth();
-  const [user, setUser] = useState<Entrepreneur | Investor>();
+  const [user, setUser] = useState<Entrepreneur | Investor | User>();
   const [activeTab, setActiveTab] = useState<SettingsTab>("profile");
 
   useEffect(() => {
     const fetchUser = async () => {
-      let fetchedUser = null;
-      if (currentUser?.role === "investor")
-        fetchedUser = await getInvestorById(currentUser?.userId);
-      else if (currentUser?.role === "entrepreneur")
-        fetchedUser = await getEnterpreneurById(currentUser?.userId);
+      if (!currentUser) return;
 
-      setUser(fetchedUser);
+      // debug: inspect the shape of currentUser
+      console.log("SettingsPage: currentUser:", currentUser);
+
+      // try common id fields used across different auth payloads
+      const userId =
+        (currentUser as any).userId ??
+        (currentUser as any).id ??
+        (currentUser as any).uid;
+
+      if (!userId) {
+        console.warn("SettingsPage: no user id found on currentUser");
+        return;
+      }
+
+      try {
+        let fetchedUser = null;
+        if (currentUser.role === "investor") {
+          fetchedUser = await getInvestorById(userId);
+        } else if (currentUser.role === "entrepreneur") {
+          fetchedUser = await getEnterpreneurById(userId);
+        } else if (currentUser.role === "admin") {
+          console.log("SettingsPage: fetching admin user by id:", userId);
+          fetchedUser = await getUserFromDb(userId);
+        } else {
+          console.warn("SettingsPage: unexpected role:", currentUser.role);
+        }
+
+        console.log("SettingsPage: fetchedUser:", fetchedUser);
+        setUser(fetchedUser ?? undefined);
+      } catch (err) {
+        console.error("SettingsPage: fetchUser error:", err);
+      }
     };
+
     fetchUser();
-  }, [currentUser]);
+  }, [
+    currentUser?.role,
+    currentUser?.userId,
+    (currentUser as any)?.id,
+    (currentUser as any)?.uid,
+  ]);
 
   const navItems = [
-    { id: "profile" as SettingsTab, label: "Profile", icon: User },
+    { id: "profile" as SettingsTab, label: "Profile", icon: User2 },
     { id: "security" as SettingsTab, label: "Security", icon: Lock },
     { id: "appearance" as SettingsTab, label: "Appearance", icon: Palette },
     { id: "billing" as SettingsTab, label: "Billing", icon: CreditCard },

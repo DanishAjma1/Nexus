@@ -4,12 +4,12 @@ import { Input } from "../ui/Input";
 import { Button } from "../ui/Button";
 import { Avatar } from "../ui/Avatar";
 import { useAuth } from "../../context/AuthContext";
-import { Entrepreneur, Investor, UserRole } from "../../types";
+import { Entrepreneur, Investor, User, UserRole } from "../../types";
 import { InvestorSettings } from "./InvestorSettings";
 import { EntrepreneurSettings } from "./EntrepreneurSettings";
 
 interface ProfileSettingsProps {
-  user?: Entrepreneur | Investor;
+  user?: Entrepreneur | Investor | User;
   currentUser: any;
 }
 
@@ -22,7 +22,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
   type UserDetails = {
     name?: string;
     email?: string;
-    role?: UserRole | undefined;
+    role?: UserRole;
     bio: string;
     location: string;
     avatarUrl?: string | File | null;
@@ -57,7 +57,8 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
   const handleSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     if (!user) return;
-    updateProfile(user.userId, userDetails);
+    console.log("user:" + user);
+    updateProfile(user?.userId, userDetails);
   };
 
   return (
@@ -97,6 +98,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Input
+              type="text"
               label="Full Name"
               name="name"
               value={userDetails.name}

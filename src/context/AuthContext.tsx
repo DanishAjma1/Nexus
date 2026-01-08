@@ -41,7 +41,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, []);
 
-  // Mock login function - in a real app, this would make an API call
+  // Login function - in a real app, this would make an API call
   const login = async (
     email: string,
     password: string,
@@ -108,7 +108,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  // Mock register function - in a real app, this would make an API call
+  // Register function - in a real app, this would make an API call
   const register = async (
     name: string,
     email: string,
@@ -137,9 +137,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         localStorage.setItem("token", token);
         setUser(user);
         return user.userId;
-      }
-      else
-        return null;
+      } else return null;
     } catch (error) {
       toast.error((error as Error).message);
       return null;
@@ -188,7 +186,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  // Mock reset password function
+  // Reset password function
   const resetPassword = async (
     token: string,
     newPassword: string
@@ -227,9 +225,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Update user profile
   const updateProfile = async (
-    userId: string |undefined,
+    userId: string | undefined,
     userData: User
   ): Promise<void> => {
+    console.log("i am here");
     if (
       userData.location === "" &&
       userData.bio === "" &&
