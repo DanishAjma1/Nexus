@@ -167,8 +167,13 @@ const handleSubmit = async (e: React.FormEvent) => {
               <ChevronLeft size={20} />
             </button>
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center animate-pulse">
-                <Shield size={18} className="text-white" />
+              <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center animate-pulse">
+                {/* <Shield size={18} className="text-white" /> */}
+                <img
+                src="/tab-logo1.png"
+                alt="TrustBridge AI Logo"
+                className="w-auto h-full object-contain"
+              />
               </div>
               <span className="font-bold text-gray-900">TrustBridge AI</span>
             </div>
@@ -398,12 +403,15 @@ const handleSubmit = async (e: React.FormEvent) => {
         {/* Left side - Brand/Info */}
         <div className="lg:w-2/5 bg-gradient-to-br from-primary-600 to-primary-800 p-8 lg:p-12 text-white relative overflow-hidden">
           <div className="relative z-10">
-            <div className="flex items-center gap-3 mb-8">
-              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
-                <Shield size={24} className="text-white" />
-              </div>
-              <span className="text-xl font-bold">TrustBridge AI</span>
-            </div>
+            <div className="flex items-center justify-center mb-8">
+          <div className="w-60 h-44 bg-white rounded-lg flex items-center justify-center backdrop-blur-sm">
+            <img
+              src="/big-logo.png"
+              alt="TrustBridge AI Logo"
+              className="w-auto h-full object-contain"
+            />
+          </div>
+        </div>
 
             <div className="mt-16">
               <h1 className="text-3xl font-bold mb-6">

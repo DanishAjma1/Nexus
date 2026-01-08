@@ -116,11 +116,14 @@ export const ResetPasswordPage: React.FC = () => {
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
         {/* Header */}
         <div className="bg-gradient-to-r from-primary-600 to-primary-800 p-8 text-white">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
-              <Shield size={24} className="text-white" />
+          <div className="flex items-center justify-center mb-4">
+            <div className="w-48 h-36 bg-white rounded-lg flex items-center justify-center backdrop-blur-sm">
+              <img
+                src="/big-logo.png"
+                alt="TrustBridge AI Logo"
+                className="w-full h-full object-contain"
+              />
             </div>
-            <span className="text-xl font-bold">TrustBridge AI</span>
           </div>
           <h1 className="text-2xl font-bold text-center mb-2">Reset Your Password</h1>
           <p className="text-primary-100 text-center">
@@ -160,7 +163,7 @@ export const ResetPasswordPage: React.FC = () => {
                   )}
                 </button>
               </div>
-              
+
               {/* Password Requirements */}
               <div className="mt-3 space-y-2">
                 <p className="text-xs font-medium text-gray-700">Password must include:</p>
@@ -203,13 +206,12 @@ export const ResetPasswordPage: React.FC = () => {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
-                  className={`w-full pl-10 pr-11 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all duration-200 group-hover:border-gray-400 ${
-                    confirmPassword
+                  className={`w-full pl-10 pr-11 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all duration-200 group-hover:border-gray-400 ${confirmPassword
                       ? password === confirmPassword
                         ? 'border-green-500'
                         : 'border-error-500'
                       : 'border-gray-300'
-                  }`}
+                    }`}
                   placeholder="Confirm new password"
                 />
                 <button

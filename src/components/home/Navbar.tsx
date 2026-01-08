@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 
 export const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  
+
   const ListItem = ({ data, to }: { data: string; to: string }) => {
     return (
       <Link to={to}>
@@ -14,7 +14,7 @@ export const Navbar: React.FC = () => {
       </Link>
     );
   };
-  
+
   const navItems = [
     { label: "Home", path: "/" },
     { label: "Campaigns", path: "/All-Campaigns" },
@@ -27,8 +27,8 @@ export const Navbar: React.FC = () => {
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo Section */}
           <Link to="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
-            <div className="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-lg hover:shadow-orange-500/20 transition-shadow duration-300">
-              <svg
+            <div className="w-16 h-8 md:w-20 md:h-20 rounded-lg flex items-center justify-center shadow-lg hover:shadow-blue-500/20 transition-shadow duration-300">
+              {/* <svg
                 width="28"
                 height="28"
                 viewBox="0 0 24 24"
@@ -50,7 +50,12 @@ export const Navbar: React.FC = () => {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
-              </svg>
+              </svg> */}
+              <img
+                src="/tab-logo1.png"
+                alt="TrustBridge AI Logo"
+                className="w-auto h-full object-contain"
+              />
             </div>
             <h1 className="text-white text-xl md:text-2xl font-bold bg-gradient-to-r from-blue-400 to-blue-300 bg-clip-text text-transparent">
               Trust Bridge AI
@@ -64,14 +69,14 @@ export const Navbar: React.FC = () => {
                 <ListItem key={item.path} data={item.label} to={item.path} />
               ))}
             </ul>
-            
+
             {/* Sign Up Button for Desktop */}
             <Link to="/register">
               <Button className="ml-4 px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-orange-500/30">
                 Sign Up
               </Button>
             </Link>
-            
+
             {/* Login Button for Desktop */}
             <Link to="/login">
               <Button className="ml-2 px-6 py-2 bg-transparent border border-gray-700 text-white font-semibold rounded-lg hover:bg-white/10 transition-all duration-300">
@@ -90,7 +95,7 @@ export const Navbar: React.FC = () => {
                 </Button>
               </Link>
             )}
-            
+
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="inline-flex items-center justify-center p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 focus:outline-none transition duration-300"
@@ -167,7 +172,7 @@ export const Navbar: React.FC = () => {
                 </Link>
               ))}
             </div>
-            
+
             {/* Mobile Auth Buttons */}
             <div className="pt-4 space-y-3">
               <Link to="/register" className="block" onClick={() => setIsMenuOpen(false)}>
@@ -175,14 +180,14 @@ export const Navbar: React.FC = () => {
                   Sign Up Free
                 </Button>
               </Link>
-              
+
               <Link to="/login" className="block" onClick={() => setIsMenuOpen(false)}>
                 <Button className="w-full py-3 bg-transparent border-2 border-gray-700 text-white font-semibold rounded-lg hover:bg-white/10 transition-all duration-300">
                   Login
                 </Button>
               </Link>
             </div>
-            
+
             {/* Mobile Menu Footer */}
             <div className="pt-6 border-t border-gray-800">
               <p className="text-center text-gray-400 text-sm">

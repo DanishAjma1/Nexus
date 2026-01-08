@@ -109,8 +109,13 @@ export const Navbar: React.FC = () => {
           {/* Logo */}
           <div className="flex-shrink-0 flex items-center">
             <Link to="/" className="flex items-center space-x-2">
-              <div className="w-10 h-10 bg-primary-600 rounded-md flex items-center justify-center">
-                <Handshake className="text-white" />
+              <div className="w-16 h-16 bg-white rounded-md flex items-center justify-center">
+                {/* <Handshake className="text-white" /> */}
+                <img
+                  src="/tab-logo1.png"
+                  alt="TrustBridge AI Logo"
+                  className="w-auto h-full object-contain"
+                />
               </div>
               <span className="text-lg font-bold text-gray-900">
                 TrustBridge AI
