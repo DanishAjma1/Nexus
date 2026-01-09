@@ -154,6 +154,8 @@ export const ForgotPasswordPage: React.FC = () => {
               <img
                 src="/big-logo.png"
                 alt="TrustBridge AI Logo"
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-contain"
               />
             </div>
