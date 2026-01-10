@@ -82,10 +82,12 @@ const handleSubmit = async (e: React.FormEvent) => {
   setIsLoading(true);
 
   try {
+    // Call AuthContext login function
     const result = await login(email, password, role);
 
+    // Check if 2FA is required
     if (result.requires2FA) {
-      // Navigate to 2FA verification page
+      setIsLoading(false);
       navigate("/verify-2fa", {
         state: {
           partialToken: result.partialToken,
@@ -97,15 +99,42 @@ const handleSubmit = async (e: React.FormEvent) => {
       return;
     }
 
-    // If we get here, login was successful without 2FA
-    if (role === "entrepreneur") navigate("/dashboard/entrepreneur");
-    else if (role === "investor") navigate("/dashboard/investor");
-    else if (role === "admin") navigate("/dashboard/admin");
+    // Successful login without 2FA
+    setIsLoading(false);
+
+    // Navigate to dashboard based on role
+    setTimeout(() => {
+      if (role === "entrepreneur") navigate("/dashboard/entrepreneur");
+      else if (role === "investor") navigate("/dashboard/investor");
+      else if (role === "admin") navigate("/dashboard/admin");
+    }, 500);
     
   } catch (err: any) {
-    setError(err.message);
-  } finally {
     setIsLoading(false);
+    // Check for approval status in error response
+    if (err.response?.status === 403) {
+      const data = err.response.data;
+      if (data.approvalStatus === "pending") {
+        // Redirect pending users to the account-under-review page
+        navigate("/account-under-review", { state: { email } });
+        return;
+      } else if (data.approvalStatus === "rejected") {
+        // Redirect to rejection page
+        setTimeout(() => {
+          navigate("/account-rejected", {
+            state: {
+              reason: data.reason || "No reason provided",
+              email: email
+            }
+          });
+        }, 500);
+        return;
+      } else {
+        setError(data.message || "Login failed");
+      }
+    } else {
+      setError(err.message || "Login failed");
+    }
   }
 };
 

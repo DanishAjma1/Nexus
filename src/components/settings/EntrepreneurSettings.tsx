@@ -88,7 +88,7 @@ export const EntrepreneurSettings: React.FC = () => {
             const message = `
             <p>Hello,</p>
             <p>Your account is currently under review by our administrators. You will be notified about your account activation within 24 hours.</p>
-            <p>If you have any questions, reply to this email or contact support at <a href="mailto:trustbridgeai@gmail.com">trustbridgeai@gmail</a>.</p>
+            <p>If you have any questions, reply to this email or contact support at <a href="mailto:aitrustbridge@gmail.com">aitrustbridge@gmail.com</a>.</p>
             <p>Thank you for your patience.</p>
             <p>Regards<br/>TrustBridgeAi Support Team</p>
             `;

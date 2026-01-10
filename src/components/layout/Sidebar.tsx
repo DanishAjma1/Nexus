@@ -18,6 +18,7 @@ import {
   ShieldBan,
   Briefcase,
   Shield,
+  ClipboardCheck,
 } from "lucide-react";
 
 interface SidebarItemProps {
@@ -98,6 +99,11 @@ export const Sidebar: React.FC = () => {
       to: "/admin/all-users",
       icon: <Briefcase size={20} />,
       text: "Manage Users",
+    },
+    {
+      to: "/dashboard/admin/approvals",
+      icon: <ClipboardCheck size={20} />,
+      text: "Account Approvals",
     },
     {
       to: "/admin/campaigns",

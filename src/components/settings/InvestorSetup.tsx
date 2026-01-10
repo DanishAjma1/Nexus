@@ -3,7 +3,6 @@ import { useAuth } from "../../context/AuthContext";
 import { Investor, UserRole } from "../../types";
 import {
     getInvestorById,
-    sendMailToUser,
     updateInvestorData,
     createInvestorProfile,
 } from "../../data/users";
@@ -103,15 +102,7 @@ export const InvestorSetup: React.FC = () => {
                     if (userId) {
                         await createInvestorProfile({ ...investorFormData, userId: userId });
 
-                        const message = `
-            <p>Hello,</p>
-            <p>Your account is currently under review by our administrators. You will be notified about your account activation within 24 hours.</p>
-            <p>If you have any questions, reply to this email or contact support at <a href="mailto:trustbridgeai@gmail.com">trustbridgeai@gmail</a>.</p>
-            <p>Thank you for your patience.</p>
-            <p>Regards<br/>TrustBridgeAi Support Team</p>
-            `;
-                        const sub = "Under Review Account Activation ";
-                        sendMailToUser(message, sub, email);
+                                                // Email will be sent from the backend when profile is created/updated
 
                         navigate("/", { replace: true });
                     }

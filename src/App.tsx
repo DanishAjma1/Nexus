@@ -53,6 +53,9 @@ import { FraudAndRiskDetection } from "./pages/admin/FraudAndRiskDetection";
 import { ViewDeals } from "./pages/viewdeals/ViewDeal";
 import { TwoFactorAuthPage } from "./pages/auth/TwoFactorAuthPage";
 import { UserDetails } from "./components/user/UserDetails";
+import { UserApprovals } from "./pages/admin/UserApprovals";
+import { AccountUnderReviewPage } from "./pages/auth/AccountUnderReviewPage";
+import { AccountRejectedPage } from "./pages/auth/AccountRejectedPage";
 
 function App() {
   return (
@@ -65,6 +68,8 @@ function App() {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/account-under-review" element={<AccountUnderReviewPage />} />
+            <Route path="/account-rejected" element={<AccountRejectedPage />} />
 
             {/* Dashboard Routes */}
             <Route path="/dashboard" element={<DashboardLayout />}>
@@ -84,6 +89,10 @@ function App() {
                 path="fraud-and-risk-detection"
                 element={<FraudAndRiskDetection />}
               />
+            </Route>
+
+            <Route path="/dashboard/admin" element={<DashboardLayout />}>
+              <Route path="approvals" element={<UserApprovals />} />
             </Route>
 
             {/* Profile Routes */}
