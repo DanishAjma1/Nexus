@@ -26,6 +26,9 @@ interface PendingUser {
   email: string;
   role: "entrepreneur" | "investor";
   createdAt: string;
+   approvalStatus?: string; 
+  approvalDate?: string; 
+  rejectionReason?: string; 
   details?: {
     startupName?: string;
     industry?: string;
@@ -34,6 +37,8 @@ interface PendingUser {
     investmentInterests?: string[];
     minimumInvestment?: string;
     maximumInvestment?: string;
+    rejectionReason?: string; 
+    rejectedAt?: string; 
   };
   previouslyRejected?: boolean;
   previousRejectionReason?: string | null;
@@ -71,10 +76,10 @@ export const UserApprovals: React.FC = () => {
   // Add loading states for approval and rejection buttons
   const [approvingUsers, setApprovingUsers] = useState<{ [key: string]: boolean }>({});
   const [rejectingUsers, setRejectingUsers] = useState<{ [key: string]: boolean }>({});
-const [deleteModal, setDeleteModal] = useState<{show: boolean; userId: string | null}>({
-  show: false,
-  userId: null
-});
+  const [deleteModal, setDeleteModal] = useState<{ show: boolean; userId: string | null }>({
+    show: false,
+    userId: null
+  });
   const URL = import.meta.env.VITE_BACKEND_URL;
   const token = localStorage.getItem("token");
 
@@ -118,7 +123,7 @@ const [deleteModal, setDeleteModal] = useState<{show: boolean; userId: string | 
     try {
       // Set loading state for this specific user
       setApprovingUsers(prev => ({ ...prev, [userId]: true }));
-      
+
       await axios.post(`${URL}/admin/approve-user/${userId}`, {}, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -145,7 +150,7 @@ const [deleteModal, setDeleteModal] = useState<{show: boolean; userId: string | 
     try {
       // Set loading state for this specific user
       setRejectingUsers(prev => ({ ...prev, [userId]: true }));
-      
+
       await axios.post(
         `${URL}/admin/reject-user/${userId}`,
         { rejectionReason: r },
@@ -166,68 +171,68 @@ const [deleteModal, setDeleteModal] = useState<{show: boolean; userId: string | 
   };
 
   // Delete rejected user
-const handleDeleteRejected = (userId: string) => {
-  setDeleteModal({ show: true, userId });
-};
-const confirmDelete = async () => {
-  if (!deleteModal.userId) return;
-  
-  try {
-    await axios.delete(`${URL}/admin/delete-rejected-user/${deleteModal.userId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    toast.success("User deleted successfully");
-    fetchApprovalData();
-  } catch (error) {
-    console.error(error);
-    toast.error("Failed to delete user");
-  } finally {
-    setDeleteModal({ show: false, userId: null });
-  }
-};
+  const handleDeleteRejected = (userId: string) => {
+    setDeleteModal({ show: true, userId });
+  };
+  const confirmDelete = async () => {
+    if (!deleteModal.userId) return;
 
-// Delete Modal Component
-const DeleteConfirmationModal = () => {
-  if (!deleteModal.show) return null;
-  
-  return (
-    <div 
-      className="fixed inset-0 z-[100]"
-      onClick={() => setDeleteModal({ show: false, userId: null })}
-    >
-      <div 
-        className="absolute top-4 right-4 max-w-md w-full z-[101]"
-        onClick={(e) => e.stopPropagation()}
+    try {
+      await axios.delete(`${URL}/admin/delete-rejected-user/${deleteModal.userId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success("User deleted successfully");
+      fetchApprovalData();
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to delete user");
+    } finally {
+      setDeleteModal({ show: false, userId: null });
+    }
+  };
+
+  // Delete Modal Component
+  const DeleteConfirmationModal = () => {
+    if (!deleteModal.show) return null;
+
+    return (
+      <div
+        className="fixed inset-0 z-[100]"
+        onClick={() => setDeleteModal({ show: false, userId: null })}
       >
-        <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-6">
-          <div className="flex items-start">
-            <AlertCircle className="w-6 h-6 text-red-600 mr-3 mt-0.5 flex-shrink-0" />
-            <div className="flex-1">
-              <h3 className="font-semibold text-gray-900 text-lg mb-2">Delete User</h3>
-              <p className="text-gray-600 mb-4">
-                Are you sure you want to permanently delete this user? This action cannot be undone.
-              </p>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setDeleteModal({ show: false, userId: null })}
-                  className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md font-medium transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={confirmDelete}
-                  className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-md font-medium transition-colors"
-                >
-                  Delete
-                </button>
+        <div
+          className="absolute top-4 right-4 max-w-md w-full z-[101]"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-6">
+            <div className="flex items-start">
+              <AlertCircle className="w-6 h-6 text-red-600 mr-3 mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <h3 className="font-semibold text-gray-900 text-lg mb-2">Delete User</h3>
+                <p className="text-gray-600 mb-4">
+                  Are you sure you want to permanently delete this user? This action cannot be undone.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setDeleteModal({ show: false, userId: null })}
+                    className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md font-medium transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmDelete}
+                    className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-md font-medium transition-colors"
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  );
-};
+    );
+  };
 
   // Format date
   const formatDate = (date: string) => {
@@ -276,11 +281,10 @@ const DeleteConfirmationModal = () => {
             )}
           </div>
           <span
-            className={`px-3 py-1 rounded-full text-sm font-medium ${
-              user.role === "entrepreneur"
-                ? "bg-blue-100 text-blue-700"
+            className={`px-3 py-1 rounded-full text-sm font-medium ${user.role === "entrepreneur"
+                ? "bg-blue-100 text-green-700"
                 : "bg-purple-100 text-purple-700"
-            }`}
+              }`}
           >
             {user.role}
           </span>
@@ -411,12 +415,12 @@ const DeleteConfirmationModal = () => {
               View Reason
             </Button>
             <Button
-  onClick={() => handleDeleteRejected(user._id)}
-  className="flex-1 bg-red-600 hover:bg-red-700 text-white"
->
-  <Trash2 className="w-4 h-4 mr-2" />
-  Delete
-</Button>
+              onClick={() => handleDeleteRejected(user._id)}
+              className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete
+            </Button>
           </div>
         )}
       </div>
@@ -489,42 +493,93 @@ const DeleteConfirmationModal = () => {
     );
   };
 
-  // Detail modal for rejection reason
-  const DetailModal = ({ user }: { user: PendingUser | null }) => {
-    if (!user) return null;
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <Card className="w-full max-w-md bg-white">
-          <CardHeader className="bg-red-50 border-b border-red-200">
-            <h2 className="text-xl font-bold text-red-900 flex items-center">
-              <XCircle className="w-5 h-5 mr-2" />
-              Rejection Details
-            </h2>
-          </CardHeader>
-          <div className="p-6 space-y-4">
-            <div>
-              <p className="text-sm text-gray-500 mb-1">User</p>
-              <p className="font-semibold text-gray-900">{user.name}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500 mb-1">Email</p>
-              <p className="font-semibold text-gray-900">{user.email}</p>
-            </div>
-            <div className="p-3 bg-red-50 rounded-lg border border-red-200">
-              <p className="text-sm text-gray-500 mb-2">Rejection Reason</p>
-              <p className="text-gray-900">{user.details?.rejectionReason || "No reason provided"}</p>
-            </div>
-            <Button
-              onClick={() => setShowDetailModal(false)}
-              className="w-full bg-gray-600 hover:bg-gray-700 text-white"
-            >
-              Close
-            </Button>
-          </div>
-        </Card>
-      </div>
-    );
+  //// Detail modal for rejection reason
+const DetailModal = ({ user }: { user: PendingUser | null }) => {
+  if (!user) return null;
+  
+  // Get the rejection reason - checking multiple possible locations
+  const getRejectionReason = () => {
+    // Check for rejectionReason in details object
+    if (user.details?.rejectionReason) {
+      return user.details.rejectionReason;
+    }
+    // Check for rejectionReason at root level
+    if (user.rejectionReason) {
+      return user.rejectionReason;
+    }
+    // Check for previousRejectionReason (for previously rejected users)
+    if (user.previousRejectionReason) {
+      return user.previousRejectionReason;
+    }
+    return "No reason provided";
   };
+
+  // Get the rejection date
+  const getRejectionDate = () => {
+    // Check for rejectedAt in details
+    if (user.details?.rejectedAt) {
+      return formatDate(user.details.rejectedAt as string);
+    }
+    // Check for approvalDate (which is when the decision was made)
+    if (user.approvalDate) {
+      return formatDate(user.approvalDate);
+    }
+    // Check for previousRejectionDate
+    if (user.previousRejectionDate) {
+      return formatDate(user.previousRejectionDate);
+    }
+    return "Date not available";
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <Card className="w-full max-w-md bg-white">
+        <CardHeader className="bg-red-50 border-b border-red-200">
+          <h2 className="text-xl font-bold text-red-900 flex items-center">
+            <XCircle className="w-5 h-5 mr-2" />
+            Rejection Details
+          </h2>
+        </CardHeader>
+        <div className="p-6 space-y-4">
+          <div>
+            <p className="text-sm text-gray-500 mb-1">User</p>
+            <p className="font-semibold text-gray-900">{user.name}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500 mb-1">Email</p>
+            <p className="font-semibold text-gray-900">{user.email}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500 mb-1">Role</p>
+            <span
+              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                user.role === "entrepreneur"
+                  ? "bg-blue-100 text-blue-700"
+                  : "bg-purple-100 text-purple-700"
+              }`}
+            >
+              {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+            </span>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500 mb-1">Rejection Date</p>
+            <p className="font-semibold text-gray-900">{getRejectionDate()}</p>
+          </div>
+          <div className="p-3 bg-red-50 rounded-lg border border-red-200">
+            <p className="text-sm text-gray-500 mb-2">Rejection Reason</p>
+            <p className="text-gray-900 whitespace-pre-wrap">{getRejectionReason()}</p>
+          </div>
+          <Button
+            onClick={() => setShowDetailModal(false)}
+            className="w-full bg-gray-600 hover:bg-gray-700 text-white"
+          >
+            Close
+          </Button>
+        </div>
+      </Card>
+    </div>
+  );
+};
 
   if (loading) {
     return (
@@ -593,11 +648,10 @@ const DeleteConfirmationModal = () => {
           <button
             key={tab}
             onClick={() => setActiveTab(tab as any)}
-            className={`px-6 py-3 font-medium border-b-2 transition-colors ${
-              activeTab === tab
+            className={`px-6 py-3 font-medium border-b-2 transition-colors ${activeTab === tab
                 ? "border-blue-600 text-blue-600"
                 : "border-transparent text-gray-600 hover:text-gray-900"
-            }`}
+              }`}
           >
             {tab.charAt(0).toUpperCase() + tab.slice(1)}
             {tab === "pending" && ` (${pendingUsers.entrepreneurs.length + pendingUsers.investors.length})`}
