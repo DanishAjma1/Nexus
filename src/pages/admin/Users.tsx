@@ -387,50 +387,7 @@ export const Users: React.FC = () => {
         </table>
       </div>
 
-      {/* ✔️ Pending Users Section */}
-      <div className="mt-10">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">
-          Pending User Approvals
-        </h2>
-
-        <div className="overflow-hidden rounded-lg border border-gray-200">
-          <table className="min-w-full bg-white">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="px-4 py-4 text-left text-sm font-medium text-gray-700">
-                  Name
-                </th>
-                <th className="px-4 py-4 text-left text-sm font-medium text-gray-700">
-                  Business Name
-                </th>
-                <th className="px-4 py-4 text-left text-sm font-medium text-gray-700">
-                  Action
-                </th>
-              </tr>
-            </thead>
-
-            <tbody className="divide-y divide-gray-200">
-              <tr>
-                <td className="px-6 py-4 text-sm text-gray-900">John Carter</td>
-                <td className="px-6 py-4 text-sm text-gray-700">Carter Tech</td>
-                <td className="px-6 py-4">
-                  <ActionButtons />
-                </td>
-              </tr>
-
-              <tr>
-                <td className="px-6 py-4 text-sm text-gray-900">Sarah Khan</td>
-                <td className="px-6 py-4 text-sm text-gray-700">
-                  SK Enterprises
-                </td>
-                <td className="px-6 py-4">
-                  <ActionButtons />
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+      
     </div>
   );
 };
