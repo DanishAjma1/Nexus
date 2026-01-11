@@ -21,6 +21,11 @@ export const Users: React.FC = () => {
   const [index, setIndex] = useState<number | null>(null);
   const [query, setQuery] = useState<string>("");
   const [searched, setSearched] = useState<string>("");
+  const [suspendModal, setSuspendModal] = useState<{ show: boolean; userId: string | null }>({ show: false, userId: null });
+  const [blockModal, setBlockModal] = useState<{ show: boolean; userId: string | null }>({ show: false, userId: null });
+  const [suspensionReason, setSuspensionReason] = useState<string>("");
+  const [suspensionDays, setSuspensionDays] = useState<string>("7");
+  const [blockReason, setBlockReason] = useState<string>("");
 
   const [startupGrowthChartData, setStartupGrowthChartData] = useState([]);
   const [industryGrowthChartData, setIndustryGrowthChartData] = useState([]);
@@ -44,6 +49,7 @@ export const Users: React.FC = () => {
   useEffect(() => {
     fetchStartupGrowthChartData();
     fetchIndustryGrowthChartData();
+    fetchUsers();
   }, []);
 
   const deleteUser = async (id: string) => {
@@ -64,24 +70,95 @@ export const Users: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        setLoading(true);
-        const res = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/admin/get-users`
-        );
+  const suspendUser = async () => {
+    if (!suspendModal.userId || !suspensionReason.trim() || !suspensionDays) {
+      toast.error("Please provide a reason and suspension period");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/admin/suspend-user/${suspendModal.userId}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            reason: suspensionReason,
+            suspensionDays: parseInt(suspensionDays),
+          }),
+        }
+      );
+
+      if (!res.ok) {
         const data = await res.json();
-        setUsers(data);
-      } catch (error) {
-        console.error(error);
-        toast.error("Failed to load users");
-      } finally {
-        setLoading(false);
+        throw new Error(data.message || "Failed to suspend user");
       }
-    };
-    fetchUsers();
-  }, []);
+
+      toast.success("User suspended successfully. Notification email sent.");
+      setSuspendModal({ show: false, userId: null });
+      setSuspensionReason("");
+      setSuspensionDays("7");
+      fetchUsers();
+    } catch (error: any) {
+      toast.error(error.message || "Error suspending user");
+    }
+  };
+
+  const blockUser = async () => {
+    if (!blockModal.userId || !blockReason.trim()) {
+      toast.error("Please provide a block reason");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/admin/block-user/${blockModal.userId}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            reason: blockReason,
+          }),
+        }
+      );
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || "Failed to block user");
+      }
+
+      toast.success("User blocked successfully. Notification email sent.");
+      setBlockModal({ show: false, userId: null });
+      setBlockReason("");
+      fetchUsers();
+    } catch (error: any) {
+      toast.error(error.message || "Error blocking user");
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/admin/get-users`
+      );
+      const data = await res.json();
+      setUsers(data);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to load users");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const dialogRef = useRef(null);
 
@@ -118,12 +195,26 @@ export const Users: React.FC = () => {
   const [graphViewModal, setGraphViewModal] = useState<GraphData | null>(null);
 
   const TableRow = ({ user, idx }) => {
+    // Check if user is suspended or blocked
+    const isUserRestricted = user.isSuspended || user.isBlocked;
+    
     return (
       <>
         <tr key={idx} className="border-t hover:bg-gray-50 relative group">
           <td className="px-4 py-2 flex items-center">
             <span>{idx + 1}.</span>
             <p className="ml-5">{user.name}</p>
+            {/* Show status badges */}
+            {user.isSuspended && (
+              <span className="ml-2 px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full">
+                Suspended
+              </span>
+            )}
+            {user.isBlocked && (
+              <span className="ml-2 px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full">
+                Blocked
+              </span>
+            )}
           </td>
           <td className="px-4 py-2">{user.email}</td>
           <td className="px-4 py-2">{user.role}</td>
@@ -167,6 +258,7 @@ export const Users: React.FC = () => {
                       }
                 `}
               >
+                {/* Always show View Profile option */}
                 <Button
                   variant="ghost"
                   className="border-b text-xs hover:text-blue-500 focus:text-white focus:bg-blue-500"
@@ -179,18 +271,36 @@ export const Users: React.FC = () => {
                 >
                   View Profile
                 </Button>
-                <Button
-                  variant="ghost"
-                  className="border-b text-xs hover:text-yellow-500 focus:text-white focus:bg-yellow-500"
-                >
-                  Suspend
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="border-b text-xs hover:text-red-500 focus:text-white focus:bg-red-500"
-                >
-                  Block
-                </Button>
+                
+                {/* Only show Suspend option if user is NOT restricted */}
+                {!isUserRestricted && (
+                  <Button
+                    variant="ghost"
+                    className="border-b text-xs hover:text-yellow-500 focus:text-white focus:bg-yellow-500"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setSuspendModal({ show: true, userId: user._id });
+                      setShowDialog(false);
+                    }}
+                  >
+                    Suspend
+                  </Button>
+                )}
+                
+                {/* Only show Block option if user is NOT restricted */}
+                {!isUserRestricted && (
+                  <Button
+                    variant="ghost"
+                    className="border-b text-xs hover:text-red-500 focus:text-white focus:bg-red-500"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setBlockModal({ show: true, userId: user._id });
+                      setShowDialog(false);
+                    }}
+                  >
+                    Block
+                  </Button>
+                )}
               </div>
             )}
           </td>
@@ -205,7 +315,7 @@ export const Users: React.FC = () => {
 
   return (
     <div className="p-4">
-      {/* {profileModal && ( */}
+      {/* Profile Modal */}
       <div
         className={`fixed transition-all ease-in-out z-10 inset-0 bg-black bg-opacity-20 overflow-scroll scroll-smooth duration-300 p-10 ${
           profileModal
@@ -254,7 +364,7 @@ export const Users: React.FC = () => {
 
       {/* ✔️ Users Table */}
       <h1 className="text-xl font-bold mb-10 underline underline-offset-8">
-        Manange Users
+        Manage Users
       </h1>
 
       <div className="w-full mb-10">
@@ -387,7 +497,107 @@ export const Users: React.FC = () => {
         </table>
       </div>
 
-      
+      {/* Suspend Modal */}
+      {suspendModal.show && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h2 className="text-xl font-bold mb-4">Suspend User</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Suspension Reason *
+                </label>
+                <textarea
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                  rows={3}
+                  value={suspensionReason}
+                  onChange={(e) => setSuspensionReason(e.target.value)}
+                  placeholder="Enter reason for suspension..."
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Suspension Period (Days) *
+                </label>
+                <Input
+                  type="number"
+                  min="1"
+                  value={suspensionDays}
+                  onChange={(e) => setSuspensionDays(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <Button
+                variant="warning"
+                onClick={suspendUser}
+                className="flex-1"
+              >
+                Suspend User
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setSuspendModal({ show: false, userId: null });
+                  setSuspensionReason("");
+                  setSuspensionDays("7");
+                }}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Block Modal */}
+      {blockModal.show && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h2 className="text-xl font-bold mb-4">Block User</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Block Reason *
+                </label>
+                <textarea
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
+                  rows={3}
+                  value={blockReason}
+                  onChange={(e) => setBlockReason(e.target.value)}
+                  placeholder="Enter reason for blocking..."
+                />
+              </div>
+              <div className="bg-red-50 border border-red-200 rounded-md p-3">
+                <p className="text-sm text-red-800">
+                  <strong>Warning:</strong> Blocking a user will permanently restrict their access to the platform. This action cannot be undone automatically.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <Button
+                variant="error"
+                onClick={blockUser}
+                className="flex-1"
+              >
+                Block User
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setBlockModal({ show: false, userId: null });
+                  setBlockReason("");
+                }}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

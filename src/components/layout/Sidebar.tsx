@@ -19,6 +19,7 @@ import {
   Briefcase,
   Shield,
   ClipboardCheck,
+  Ban,
 } from "lucide-react";
 
 interface SidebarItemProps {
@@ -126,6 +127,11 @@ export const Sidebar: React.FC = () => {
       to: "/admin/flaggedAccounts",
       icon: <AlertTriangle size={20} />,
       text: "Flagged Accounts",
+    },
+    {
+      to: "/admin/suspended-blocked",
+      icon: <Ban size={20} />,
+      text: "Suspended & Blocked",
     },
   ];
 

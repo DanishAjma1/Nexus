@@ -56,6 +56,9 @@ import { UserDetails } from "./components/user/UserDetails";
 import { UserApprovals } from "./pages/admin/UserApprovals";
 import { AccountUnderReviewPage } from "./pages/auth/AccountUnderReviewPage";
 import { AccountRejectedPage } from "./pages/auth/AccountRejectedPage";
+import { SuspendedUserPage } from "./pages/auth/SuspendedUserPage";
+import { BlockedUserPage } from "./pages/auth/BlockedUserPage";
+import { SuspendedBlockedUsers } from "./pages/admin/SuspendedBlockedUsers";
 
 function App() {
   return (
@@ -70,6 +73,8 @@ function App() {
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/account-under-review" element={<AccountUnderReviewPage />} />
             <Route path="/account-rejected" element={<AccountRejectedPage />} />
+            <Route path="/account-suspended" element={<SuspendedUserPage />} />
+            <Route path="/account-blocked" element={<BlockedUserPage />} />
 
             {/* Dashboard Routes */}
             <Route path="/dashboard" element={<DashboardLayout />}>
@@ -85,6 +90,7 @@ function App() {
               <Route path="campaigns" element={<Campaigns />} />
               <Route path="supporters" element={<Supporters />} />
               <Route path="flaggedAccounts" element={<FlaggedAccounts />} />
+              <Route path="suspended-blocked" element={<SuspendedBlockedUsers />} />
               <Route
                 path="fraud-and-risk-detection"
                 element={<FraudAndRiskDetection />}
