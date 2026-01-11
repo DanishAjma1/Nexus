@@ -55,7 +55,9 @@ export const InvestorsPage: React.FC = () => {
         selectedInterests.includes(interest)
       );
 
-    return matchesSearch && matchesStages && matchesInterests;
+    const isApproved = investor.approvalStatus === 'approved';
+
+    return matchesSearch && matchesStages && matchesInterests && isApproved;
   });
 
   const toggleStage = (stage: string) => {
@@ -98,11 +100,10 @@ export const InvestorsPage: React.FC = () => {
                     <button
                       key={stage}
                       onClick={() => toggleStage(stage)}
-                      className={`block w-full text-left px-3 py-2 rounded-md text-sm ${
-                        selectedStages.includes(stage)
-                          ? "bg-primary-50 text-primary-700"
-                          : "text-gray-700 hover:bg-gray-50"
-                      }`}
+                      className={`block w-full text-left px-3 py-2 rounded-md text-sm ${selectedStages.includes(stage)
+                        ? "bg-primary-50 text-primary-700"
+                        : "text-gray-700 hover:bg-gray-50"
+                        }`}
                     >
                       {stage}
                     </button>

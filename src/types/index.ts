@@ -9,6 +9,9 @@ export interface User {
   location: string;
   bio: string;
   isOnline?: boolean;
+  approvalStatus?: 'pending' | 'approved' | 'rejected';
+  isBlocked?: boolean;
+  isSuspended?: boolean;
 }
 
 export interface Entrepreneur extends User {

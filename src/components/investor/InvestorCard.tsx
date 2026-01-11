@@ -44,8 +44,13 @@ export const InvestorCard: React.FC<InvestorCardProps> = ({
           />
 
           <div className="flex-1">
-            <h3 className="text-lg font-semibold text-gray-900 mb-1">
+            <h3 className="text-lg font-semibold text-gray-900 mb-1 flex items-center gap-2">
               {investor.name}
+              {investor.isSuspended && (
+                <span className="inline-flex items-center font-medium rounded text-xs px-2 py-0.5 bg-red-100 text-red-800">
+                  Suspended
+                </span>
+              )}
             </h3>
             <p className="text-sm text-gray-500 mb-2">
               Investor • {investor.totalInvestments || "0"} investments

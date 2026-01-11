@@ -22,7 +22,8 @@ import {
     Globe,
     Calendar,
     Sparkles,
-    Check
+    Check,
+    Loader2
 } from "lucide-react";
 
 type User = {
@@ -37,6 +38,7 @@ export const InvestorSetup: React.FC = () => {
     const navigate = useNavigate();
     const checkIfSettingPage = location.pathname === "/settings" ? true : false;
     const { user, register } = useAuth();
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const [investor, setInvestor] = useState<Investor>();
     const initialInvestorData = useMemo(
@@ -79,6 +81,7 @@ export const InvestorSetup: React.FC = () => {
 
     const handleInvestorSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        setIsSubmitting(true);
         try {
             if (
                 investorFormData.maximumInvestment === "" ||
@@ -86,12 +89,14 @@ export const InvestorSetup: React.FC = () => {
                 investorFormData.investmentInterests?.length === 0
             ) {
                 alert("Please input the required data...");
+                setIsSubmitting(false);
                 return;
             }
 
             if (!checkIfSettingPage) {
                 const userInfoString = localStorage.getItem("userInfo");
                 if (!userInfoString) {
+                    setIsSubmitting(false);
                     return;
                 }
                 try {
@@ -102,7 +107,7 @@ export const InvestorSetup: React.FC = () => {
                     if (userId) {
                         await createInvestorProfile({ ...investorFormData, userId: userId });
 
-                                                // Email will be sent from the backend when profile is created/updated
+                        // Email will be sent from the backend when profile is created/updated
 
                         navigate("/", { replace: true });
                     }
@@ -137,6 +142,8 @@ export const InvestorSetup: React.FC = () => {
             }
         } catch (error) {
             console.error(error);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -383,6 +390,7 @@ export const InvestorSetup: React.FC = () => {
                                     value={investorFormData.minimumInvestment || ""}
                                     onChange={handleInvestorChange}
                                     placeholder="Minimum amount"
+                                    min="0"
                                     className="w-full pl-10 pr-5 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:bg-white transition-all placeholder-gray-400 group-hover:border-green-300"
                                 />
                                 <div className="absolute inset-0 rounded-xl border-2 border-transparent group-focus-within:border-green-400 pointer-events-none"></div>
@@ -402,6 +410,7 @@ export const InvestorSetup: React.FC = () => {
                                     value={investorFormData.maximumInvestment || ""}
                                     onChange={handleInvestorChange}
                                     placeholder="Maximum amount"
+                                    min="0"
                                     className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:bg-white transition-all placeholder-gray-400 group-hover:border-green-300"
                                 />
                                 <div className="absolute inset-0 rounded-xl border-2 border-transparent group-focus-within:border-green-400 pointer-events-none"></div>
@@ -420,6 +429,7 @@ export const InvestorSetup: React.FC = () => {
                                     value={investorFormData.successfullExits || ""}
                                     onChange={handleInvestorChange}
                                     placeholder="Number of exits"
+                                    min="0"
                                     className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:bg-white transition-all placeholder-gray-400 group-hover:border-green-300"
                                 />
                                 <div className="absolute inset-0 rounded-xl border-2 border-transparent group-focus-within:border-green-400 pointer-events-none"></div>
@@ -438,6 +448,7 @@ export const InvestorSetup: React.FC = () => {
                                     value={investorFormData.minTimline || ""}
                                     onChange={handleInvestorChange}
                                     placeholder="Minimum months"
+                                    min="0"
                                     className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:bg-white transition-all placeholder-gray-400 group-hover:border-green-300"
                                 />
                                 <div className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500"></div>
@@ -457,6 +468,7 @@ export const InvestorSetup: React.FC = () => {
                                     value={investorFormData.maxTimline || ""}
                                     onChange={handleInvestorChange}
                                     placeholder="Maximum months"
+                                    min="0"
                                     className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:bg-white transition-all placeholder-gray-400 group-hover:border-green-300"
                                 />
                                 <div className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500"></div>
@@ -479,11 +491,12 @@ export const InvestorSetup: React.FC = () => {
                     </div>
                     <button
                         type="submit"
-                        className="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl"
+                        disabled={isSubmitting}
+                        className="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-70 disabled:cursor-not-allowed"
                     >
                         <div className="flex items-center space-x-2">
-                            <Save className="w-5 h-5" />
-                            <span>{checkIfSettingPage ? "Update Profile" : "Save & Send For Review"}</span>
+                            {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                            <span>{checkIfSettingPage ? (isSubmitting ? "Updating..." : "Update Profile") : (isSubmitting ? "Saving..." : "Save & Send For Review")}</span>
                         </div>
                     </button>
                 </div>
