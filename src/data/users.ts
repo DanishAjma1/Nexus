@@ -83,7 +83,46 @@ export const updateInvestorData = async (formData: any) => {
   }
 };
 
-export const sendMailToUser = async (message:string,sub:string,email: string) => {
+export const createInvestorProfile = async (formData: any) => {
+  try {
+    await axios.put(
+      `${URL}/investor/update-profile/${formData.userId}`,
+      formData,
+      {
+        withCredentials: true,
+      }
+    );
+
+    toast.success("🎉 Investor profile created successfully! Your account is under review.");
+    return true;
+  } catch (err: any) {
+    console.log(err);
+    const errorMessage = err.response?.data?.message || "Failed to create profile.";
+    toast.error(`Registration failed: ${errorMessage}`);
+    throw err;
+  }
+};
+
+export const createEnterProfile = async (formData: any) => {
+  try {
+    await axios.put(
+      `${URL}/entrepreneur/update-profile/${formData.userId}`,
+      formData,
+      {
+        withCredentials: true,
+      }
+    );
+
+    toast.success("🎉 Entrepreneur profile created successfully! Your account is under review.");
+    return true;
+  } catch (err: any) {
+    console.log(err);
+    const errorMessage = err.response?.data?.message || "Failed to create profile.";
+    toast.error(`Registration failed: ${errorMessage}`);
+    throw err;
+  }
+};
+export const sendMailToUser = async (message: string, sub: string, email: string) => {
   try {
     const res = await axios.post(
       `${URL}/auth/send-mail`,
@@ -93,7 +132,7 @@ export const sendMailToUser = async (message:string,sub:string,email: string) =>
       }
     );
 
-    if (res.status === 200) toast.success("User data updated successfully.");
+    if (res.status === 200) toast.success("Email has been sent successfully.");;
   } catch (err) {
     console.log(err);
   }
@@ -109,7 +148,7 @@ export const getUserFromDb = async (id) => {
   }
 };
 
-export const getSuccessfulEntrepreneurs = () => {};
+export const getSuccessfulEntrepreneurs = () => { };
 
 export const AmountMeasureWithTags = (amount: number) => {
   if (amount !== 0) {

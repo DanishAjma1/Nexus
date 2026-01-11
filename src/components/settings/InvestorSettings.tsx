@@ -5,6 +5,7 @@ import {
   getInvestorById,
   sendMailToUser,
   updateInvestorData,
+  createInvestorProfile,
 } from "../../data/users";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
@@ -85,12 +86,12 @@ export const InvestorSettings: React.FC = () => {
           const { name, email, password, role } = parsed;
           const userId = await register(name, email, password, role);
           if (userId) {
-            await updateInvestorData({ ...investorFormData, userId: userId });
+            await createInvestorProfile({ ...investorFormData, userId: userId });
 
             const message = `
             <p>Hello,</p>
             <p>Your account is currently under review by our administrators. You will be notified about your account activation within 24 hours.</p>
-            <p>If you have any questions, reply to this email or contact support at <a href="mailto:trustbridgeai@gmail.com">trustbridgeai@gmail</a>.</p>
+            <p>If you have any questions, reply to this email or contact support at <a href="mailto:aitrustbridge@gmail.com">aitrustbridge@gmail.com</a>.</p>
             <p>Thank you for your patience.</p>
             <p>Regards<br/>TrustBridgeAi Support Team</p>
             `;
@@ -158,152 +159,150 @@ export const InvestorSettings: React.FC = () => {
     });
   };
   return (
-      <div className="p-4">
-        <CardHeader className="font-medium">
-          Fill the Details as an Investor...
-        </CardHeader>
-        <form
-          onSubmit={handleInvestorSubmit}
-          className="gap-5 flex flex-col text-sm justify-center mt-5"
-        >
-          <div className="flex gap-2 w-full">
-            <Input
-              label="Investment Interests..?"
-              name="interest"
-              value={investorFormData.interest}
-              onChange={handleInvestorChange}
-              disabled={investorFormData.investmentInterests.length === 4}
-              helperText={`${
-                5 - investorFormData.investmentInterests.length
+    <div className="p-4">
+      <CardHeader className="font-medium">
+        Fill the Details as an Investor...
+      </CardHeader>
+      <form
+        onSubmit={handleInvestorSubmit}
+        className="gap-5 flex flex-col text-sm justify-center mt-5"
+      >
+        <div className="flex gap-2 w-full">
+          <Input
+            label="Investment Interests..?"
+            name="interest"
+            value={investorFormData.interest}
+            onChange={handleInvestorChange}
+            disabled={investorFormData.investmentInterests.length === 4}
+            helperText={`${5 - investorFormData.investmentInterests.length
               } interests can be added..`}
-              fullWidth
-            />
-            <label className="flex items-center">
+            fullWidth
+          />
+          <label className="flex items-center">
+            <button
+              className="w-fit flex items-center px-5 hover:bg-blue-100 py-1 border-2 rounded-lg"
+              onClick={(e) => handleInterests(e)}
+            >
+              Add
+            </button>
+          </label>
+        </div>
+        <div className="flex flex-row flex-wrap gap-2">
+          {investorFormData.investmentInterests?.map((item, idx) => (
+            <div key={idx} className=" border-r-2 text-sm pr-1 flex gap-2">
+              {item}
               <button
-                className="w-fit flex items-center px-5 hover:bg-blue-100 py-1 border-2 rounded-lg"
-                onClick={(e) => handleInterests(e)}
+                className="bg-gray-50 p-1 w-fit rounded-full"
+                onClick={(e) => {
+                  e.preventDefault();
+                  const updatedInterests =
+                    investorFormData.investmentInterests.filter(
+                      (_, index) => {
+                        return index !== idx;
+                      }
+                    );
+                  setInvestorFormData({
+                    ...investorFormData,
+                    investmentInterests: updatedInterests,
+                  });
+                }}
               >
-                Add
+                <Eraser size={12} />
               </button>
-            </label>
-          </div>
-          <div className="flex flex-row flex-wrap gap-2">
-            {investorFormData.investmentInterests?.map((item, idx) => (
-              <div key={idx} className=" border-r-2 text-sm pr-1 flex gap-2">
-                {item}
-                <button
-                  className="bg-gray-50 p-1 w-fit rounded-full"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    const updatedInterests =
-                      investorFormData.investmentInterests.filter(
-                        (_, index) => {
-                          return index !== idx;
-                        }
-                      );
-                    setInvestorFormData({
-                      ...investorFormData,
-                      investmentInterests: updatedInterests,
-                    });
-                  }}
-                >
-                  <Eraser size={12} />
-                </button>
-              </div>
-            ))}
-          </div>
-          <div className="flex gap-2 w-full">
-            <Input
-              label="Investment Criteria..?"
-              name="criteria"
-              value={investorFormData.criteria}
-              onChange={handleInvestorChange}
-              disabled={investorFormData.investmentCriteria.length >= 5}
-              helperText={`${
-                5 - investorFormData.investmentCriteria.length
+            </div>
+          ))}
+        </div>
+        <div className="flex gap-2 w-full">
+          <Input
+            label="Investment Criteria..?"
+            name="criteria"
+            value={investorFormData.criteria}
+            onChange={handleInvestorChange}
+            disabled={investorFormData.investmentCriteria.length >= 5}
+            helperText={`${5 - investorFormData.investmentCriteria.length
               } Investment Criteria rules can be added..`}
-              fullWidth
-            />
-            <label className="flex items-center">
+            fullWidth
+          />
+          <label className="flex items-center">
+            <button
+              className="w-fit flex items-center px-5 hover:bg-blue-100 py-1 border-2 rounded-lg"
+              onClick={(e) => handleCriteria(e)}
+            >
+              Add
+            </button>
+          </label>
+        </div>
+        <div className="flex flex-row flex-wrap gap-2">
+          {investorFormData.investmentCriteria?.map((item, idx) => (
+            <div key={idx} className=" border-r-2 text-sm pr-1 flex gap-2">
+              {item}
               <button
-                className="w-fit flex items-center px-5 hover:bg-blue-100 py-1 border-2 rounded-lg"
-                onClick={(e) => handleCriteria(e)}
+                className="bg-gray-50 p-1 w-fit rounded-full"
+                onClick={(e) => {
+                  e.preventDefault();
+                  const updatedCriteria =
+                    investorFormData.investmentCriteria?.filter(
+                      (_, index) => {
+                        return index !== idx;
+                      }
+                    );
+                  setInvestorFormData({
+                    ...investorFormData,
+                    investmentCriteria: updatedCriteria,
+                  });
+                }}
               >
-                Add
+                <Eraser size={12} />
               </button>
-            </label>
-          </div>
-          <div className="flex flex-row flex-wrap gap-2">
-            {investorFormData.investmentCriteria?.map((item, idx) => (
-              <div key={idx} className=" border-r-2 text-sm pr-1 flex gap-2">
-                {item}
-                <button
-                  className="bg-gray-50 p-1 w-fit rounded-full"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    const updatedCriteria =
-                      investorFormData.investmentCriteria?.filter(
-                        (_, index) => {
-                          return index !== idx;
-                        }
-                      );
-                    setInvestorFormData({
-                      ...investorFormData,
-                      investmentCriteria: updatedCriteria,
-                    });
-                  }}
-                >
-                  <Eraser size={12} />
-                </button>
-              </div>
-            ))}
-          </div>
+            </div>
+          ))}
+        </div>
 
-          <div className="flex flex-row">
-            <div className="flex w-1/2 gap-5 flex-col pr-4">
-              <Input
-                type="number"
-                label="Minimum investment..?"
-                name="minimumInvestment"
-                value={investorFormData.minimumInvestment}
-                onChange={handleInvestorChange}
-              />
-              <Input
-                type="number"
-                label="Maximum investment..?"
-                name="maximumInvestment"
-                value={investorFormData.maximumInvestment}
-                onChange={handleInvestorChange}
-              />
-              <Input
-                type="number"
-                label="Successfull Exits..?"
-                name="successfullExits"
-                value={investorFormData.successfullExits}
-                onChange={handleInvestorChange}
-              />
-            </div>
-            <div className="flex gap-5 w-1/2 flex-col pl-4">
-              <Input
-                type="number"
-                label="Minimum time to invest..?"
-                name="minTimline"
-                value={investorFormData.minTimline}
-                onChange={handleInvestorChange}
-              />
-              <Input
-                type="number"
-                label="Maximum time to invest..?"
-                name="maxTimline"
-                value={investorFormData.maxTimline}
-                onChange={handleInvestorChange}
-              />
-            </div>
+        <div className="flex flex-row">
+          <div className="flex w-1/2 gap-5 flex-col pr-4">
+            <Input
+              type="number"
+              label="Minimum investment..?"
+              name="minimumInvestment"
+              value={investorFormData.minimumInvestment}
+              onChange={handleInvestorChange}
+            />
+            <Input
+              type="number"
+              label="Maximum investment..?"
+              name="maximumInvestment"
+              value={investorFormData.maximumInvestment}
+              onChange={handleInvestorChange}
+            />
+            <Input
+              type="number"
+              label="Successfull Exits..?"
+              name="successfullExits"
+              value={investorFormData.successfullExits}
+              onChange={handleInvestorChange}
+            />
           </div>
-          <div className="flex w-full justify-end pt-6 mt-6 border-t-2">
-            <Button type="submit">Save Changes</Button>
+          <div className="flex gap-5 w-1/2 flex-col pl-4">
+            <Input
+              type="number"
+              label="Minimum time to invest..?"
+              name="minTimline"
+              value={investorFormData.minTimline}
+              onChange={handleInvestorChange}
+            />
+            <Input
+              type="number"
+              label="Maximum time to invest..?"
+              name="maxTimline"
+              value={investorFormData.maxTimline}
+              onChange={handleInvestorChange}
+            />
           </div>
-        </form>
-      </div>
+        </div>
+        <div className="flex w-full justify-end pt-6 mt-6 border-t-2">
+          <Button type="submit">Save Changes</Button>
+        </div>
+      </form>
+    </div>
   );
 };
