@@ -21,6 +21,7 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import { Avatar } from "../ui/Avatar";
 import { Button } from "../ui/Button";
+import { AdminNotificationDropdown } from "../admin/AdminNotificationDropdown";
 
 export const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -79,11 +80,6 @@ export const Navbar: React.FC = () => {
         text: "Supporters",
         path: "/admin/Supporters",
       },
-      {
-        icon: <Bell size={18} />,
-        text: "Notifications",
-        path: "/notifications",
-      },
     ];
     adminMobileLinks = [
       {
@@ -114,11 +110,6 @@ export const Navbar: React.FC = () => {
         icon: <MessageCircle size={18} />,
         text: "Messages",
         path: "/messages",
-      },
-      {
-        icon: <Bell size={18} />,
-        text: "Notifications",
-        path: "/notifications",
       },
       { icon: <User size={18} />, text: "Profile", path: profileRoute },
     ];
@@ -159,6 +150,7 @@ export const Navbar: React.FC = () => {
                     {link.text}
                   </Link>
                 ))}
+                {user.role === 'admin' && <AdminNotificationDropdown />}
                 <Button
                   variant="ghost"
                   onClick={handleLogout}
@@ -194,7 +186,8 @@ export const Navbar: React.FC = () => {
           </div>
 
           {/* Mobile menu button */}
-          <div className="md:hidden flex items-center">
+          <div className="md:hidden flex items-center space-x-2">
+            {user?.role === 'admin' && <AdminNotificationDropdown />}
             <button
               onClick={toggleMenu}
               className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-primary-600 hover:bg-gray-50 focus:outline-none"

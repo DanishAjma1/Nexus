@@ -24,6 +24,7 @@ type ChartData = {
 };
 
 export const AdminDashboard: React.FC = () => {
+  const URL = import.meta.env.VITE_BACKEND_URL;
   const { user } = useAuth();
   const [stats, setStats] = useState({
     startups: 0,
@@ -55,29 +56,26 @@ export const AdminDashboard: React.FC = () => {
 
   const fetchStartupGrowthChartData = async () => {
     const res = await fetch(
-      "http://localhost:5000/admin/users/users-last-year"
+      `${URL}/admin/users/users-last-year`
     );
     const data = await res.json();
     setStartupGrowthChartData(data);
   };
-  // const fetchFundingChartData = async () => {
-  //   const res = await fetch(
-  //     "http://localhost:5000/admin/users/users-last-year"
-  //   );
+  //     `${URL}/admin/users/users-last-year`
   //   const data = await res.json();
   //   setStartupGrowthChartData(data);
   // };
 
   const fetchIndustryGrowthChartData = async () => {
     const res = await fetch(
-      "http://localhost:5000/admin/users/startup-by-industry"
+      `${URL}/admin/users/startup-by-industry`
     );
     const data = await res.json();
     setIndustryGrowthChartData(data);
   };
 
   const fetchFraudGrowthChartData = async () => {
-    const res = await fetch("http://localhost:5000/admin/risk-detection-flags");
+    const res = await fetch(`${URL}/admin/risk-detection-flags`);
     const data = await res.json();
     const { finalData } = data;
     setFraudGrowthChartData(finalData);

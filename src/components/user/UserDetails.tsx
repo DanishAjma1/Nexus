@@ -143,8 +143,8 @@ export const UserDetails: React.FC = () => {
         <div className="mt-12 text-center text-gray-500 text-sm">
           <p>
             Need help? Contact our support team at{" "}
-            <a href="mailto:support@trustbridge.ai" className="text-blue-600 hover:text-blue-800">
-              support@trustbridge.ai
+            <a href="mailto:aitrustbridge@gmail.com" className="text-blue-600 hover:text-blue-800">
+              aitrustbridge@gmail.com
             </a>
           </p>
           

@@ -15,6 +15,7 @@ import { InvestorProfile } from "../profile/InvestorProfile";
 import { ConfirmationModal } from "../../components/ui/ConfirmationModal";
 
 export const Users: React.FC = () => {
+  const URL = import.meta.env.VITE_BACKEND_URL;
   const [users, setUsers] = useState<User[]>([]);
   const [searchedusers, setSearchedUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,7 +49,7 @@ export const Users: React.FC = () => {
 
   const fetchStartupGrowthChartData = async () => {
     const res = await fetch(
-      "http://localhost:5000/admin/users/users-last-year"
+      `${URL}/admin/users/users-last-year`
     );
     const data = await res.json();
     setStartupGrowthChartData(data);
@@ -56,7 +57,7 @@ export const Users: React.FC = () => {
 
   const fetchIndustryGrowthChartData = async () => {
     const res = await fetch(
-      "http://localhost:5000/admin/users/startup-by-industry"
+      `${URL}/admin/users/startup-by-industry`
     );
     const data = await res.json();
     setIndustryGrowthChartData(data);
