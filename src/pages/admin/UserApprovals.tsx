@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import {
   Check,
@@ -16,9 +15,9 @@ import {
   Briefcase,
 } from "lucide-react";
 import { Button } from "../../components/ui/Button";
-import { Input } from "../../components/ui/Input";
 import { Card, CardHeader } from "../../components/ui/Card";
 import axios from "axios";
+import { ConfirmationModal } from "../../components/ui/ConfirmationModal";
 
 interface PendingUser {
   _id: string;
@@ -26,9 +25,9 @@ interface PendingUser {
   email: string;
   role: "entrepreneur" | "investor";
   createdAt: string;
-   approvalStatus?: string; 
-  approvalDate?: string; 
-  rejectionReason?: string; 
+  approvalStatus?: string;
+  approvalDate?: string;
+  rejectionReason?: string;
   details?: {
     startupName?: string;
     industry?: string;
@@ -37,8 +36,8 @@ interface PendingUser {
     investmentInterests?: string[];
     minimumInvestment?: string;
     maximumInvestment?: string;
-    rejectionReason?: string; 
-    rejectedAt?: string; 
+    rejectionReason?: string;
+    rejectedAt?: string;
   };
   previouslyRejected?: boolean;
   previousRejectionReason?: string | null;
@@ -191,49 +190,6 @@ export const UserApprovals: React.FC = () => {
     }
   };
 
-  // Delete Modal Component
-  const DeleteConfirmationModal = () => {
-    if (!deleteModal.show) return null;
-
-    return (
-      <div
-        className="fixed inset-0 z-[100]"
-        onClick={() => setDeleteModal({ show: false, userId: null })}
-      >
-        <div
-          className="absolute top-4 right-4 max-w-md w-full z-[101]"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-6">
-            <div className="flex items-start">
-              <AlertCircle className="w-6 h-6 text-red-600 mr-3 mt-0.5 flex-shrink-0" />
-              <div className="flex-1">
-                <h3 className="font-semibold text-gray-900 text-lg mb-2">Delete User</h3>
-                <p className="text-gray-600 mb-4">
-                  Are you sure you want to permanently delete this user? This action cannot be undone.
-                </p>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setDeleteModal({ show: false, userId: null })}
-                    className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md font-medium transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={confirmDelete}
-                    className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-md font-medium transition-colors"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   // Format date
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString("en-US", {
@@ -282,8 +238,8 @@ export const UserApprovals: React.FC = () => {
           </div>
           <span
             className={`px-3 py-1 rounded-full text-sm font-medium ${user.role === "entrepreneur"
-                ? "bg-blue-100 text-green-700"
-                : "bg-purple-100 text-purple-700"
+              ? "bg-blue-100 text-green-700"
+              : "bg-purple-100 text-purple-700"
               }`}
           >
             {user.role}
@@ -434,45 +390,55 @@ export const UserApprovals: React.FC = () => {
 
   // Separate component to keep local textarea state so typing doesn't cause focus loss
   const RejectionModalInner = ({ userId }: { userId: string }) => {
-    const [localReason, setLocalReason] = React.useState(rejectionReason[userId] || "");
+    const [localReason, setLocalReason] = useState(rejectionReason[userId] || "");
 
     useEffect(() => {
       setLocalReason(rejectionReason[userId] || "");
     }, [userId]);
 
+    const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+      if (e.target === e.currentTarget) setShowRejectModal(null);
+    };
+
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <Card className="w-full max-w-md bg-white">
-          <CardHeader className="bg-red-50 border-b border-red-200">
+      <div
+        className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 transition-all duration-300 animate-fade-in"
+        onClick={handleBackdropClick}
+      >
+        <Card className="w-full max-w-md bg-white shadow-2xl overflow-hidden transform animate-scale-in">
+          <CardHeader className="bg-red-50 border-b border-red-100 px-6 py-4">
             <h2 className="text-xl font-bold text-red-900 flex items-center">
-              <AlertCircle className="w-5 h-5 mr-2" />
-              Reject User Application
+              <div className="p-2 bg-red-100 rounded-full mr-3">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+              </div>
+              Reject Application
             </h2>
           </CardHeader>
-          <div className="p-6 space-y-4">
-            <p className="text-gray-700">
-              Please provide a reason for rejecting this user's application:
+          <div className="p-6 space-y-5">
+            <p className="text-gray-600 text-sm leading-relaxed">
+              Please provide a clear reason for rejecting this user's application. This will be sent as an email to the user.
             </p>
             <textarea
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 resize-none bg-gray-50 transition-all duration-200"
               rows={4}
               placeholder="e.g., Business plan is incomplete, Investment criteria not met..."
               value={localReason}
               autoFocus
               onChange={(e) => setLocalReason(e.target.value)}
             />
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               <Button
+                variant="outline"
                 onClick={() => setShowRejectModal(null)}
                 disabled={rejectingUsers[userId]}
-                className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-900"
+                className="flex-1"
               >
                 Cancel
               </Button>
               <Button
                 onClick={() => handleReject(userId, localReason)}
                 disabled={rejectingUsers[userId]}
-                className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium"
               >
                 {rejectingUsers[userId] ? (
                   <>
@@ -481,8 +447,8 @@ export const UserApprovals: React.FC = () => {
                   </>
                 ) : (
                   <>
-                    <X className="w-4 h-4 mr-2" />
-                    Reject
+                    <XCircle className="w-4 h-4 mr-2" />
+                    Reject User
                   </>
                 )}
               </Button>
@@ -493,93 +459,96 @@ export const UserApprovals: React.FC = () => {
     );
   };
 
-  //// Detail modal for rejection reason
-const DetailModal = ({ user }: { user: PendingUser | null }) => {
-  if (!user) return null;
-  
-  // Get the rejection reason - checking multiple possible locations
-  const getRejectionReason = () => {
-    // Check for rejectionReason in details object
-    if (user.details?.rejectionReason) {
-      return user.details.rejectionReason;
-    }
-    // Check for rejectionReason at root level
-    if (user.rejectionReason) {
-      return user.rejectionReason;
-    }
-    // Check for previousRejectionReason (for previously rejected users)
-    if (user.previousRejectionReason) {
-      return user.previousRejectionReason;
-    }
-    return "No reason provided";
-  };
+  const DetailModal = ({ user }: { user: PendingUser | null }) => {
+    if (!user) return null;
 
-  // Get the rejection date
-  const getRejectionDate = () => {
-    // Check for rejectedAt in details
-    if (user.details?.rejectedAt) {
-      return formatDate(user.details.rejectedAt as string);
-    }
-    // Check for approvalDate (which is when the decision was made)
-    if (user.approvalDate) {
-      return formatDate(user.approvalDate);
-    }
-    // Check for previousRejectionDate
-    if (user.previousRejectionDate) {
-      return formatDate(user.previousRejectionDate);
-    }
-    return "Date not available";
-  };
+    // Get the rejection reason - checking multiple possible locations
+    const getRejectionReason = () => {
+      if (user.details?.rejectionReason) return user.details.rejectionReason;
+      if (user.rejectionReason) return user.rejectionReason;
+      if (user.previousRejectionReason) return user.previousRejectionReason;
+      return "No specific reason provided.";
+    };
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-md bg-white">
-        <CardHeader className="bg-red-50 border-b border-red-200">
-          <h2 className="text-xl font-bold text-red-900 flex items-center">
-            <XCircle className="w-5 h-5 mr-2" />
-            Rejection Details
-          </h2>
-        </CardHeader>
-        <div className="p-6 space-y-4">
-          <div>
-            <p className="text-sm text-gray-500 mb-1">User</p>
-            <p className="font-semibold text-gray-900">{user.name}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500 mb-1">Email</p>
-            <p className="font-semibold text-gray-900">{user.email}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500 mb-1">Role</p>
-            <span
-              className={`px-2 py-1 rounded-full text-xs font-medium ${
-                user.role === "entrepreneur"
-                  ? "bg-blue-100 text-blue-700"
-                  : "bg-purple-100 text-purple-700"
-              }`}
+    // Get the rejection date
+    const getRejectionDate = () => {
+      if (user.details?.rejectedAt) return formatDate(user.details.rejectedAt as string);
+      if (user.approvalDate) return formatDate(user.approvalDate);
+      if (user.previousRejectionDate) return formatDate(user.previousRejectionDate);
+      return "N/A";
+    };
+
+    const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+      if (e.target === e.currentTarget) setShowDetailModal(false);
+    };
+
+    return (
+      <div
+        className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 transition-all duration-300 animate-fade-in"
+        onClick={handleBackdropClick}
+      >
+        <Card className="w-full max-w-lg bg-white shadow-2xl overflow-hidden transform animate-scale-in">
+          <CardHeader className="bg-red-50 border-b border-red-100 px-6 py-5">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold text-red-900 flex items-center">
+                <div className="p-2 bg-red-100 rounded-full mr-3">
+                  <XCircle className="w-5 h-5 text-red-600" />
+                </div>
+                Rejection Details
+              </h2>
+              <button
+                onClick={() => setShowDetailModal(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+          </CardHeader>
+          <div className="p-8 space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="space-y-1">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">User</p>
+                <div className="flex items-center gap-2">
+                  <p className="font-bold text-gray-900">{user.name}</p>
+                  <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-tight ${user.role === "entrepreneur" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"}`}>
+                    {user.role}
+                  </span>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Rejection Date</p>
+                <p className="font-bold text-gray-900">{getRejectionDate()}</p>
+              </div>
+              <div className="sm:col-span-2 space-y-1">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Email Address</p>
+                <div className="flex items-center gap-2 text-gray-700">
+                  <Mail className="w-4 h-4 text-gray-400" />
+                  <p className="font-medium">{user.email}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Rejection Reason</p>
+              <div className="bg-red-50 rounded-xl border border-red-100 p-5">
+                <p className="text-red-900 text-sm leading-relaxed whitespace-pre-wrap italic">
+                  "{getRejectionReason()}"
+                </p>
+              </div>
+            </div>
+
+            <Button
+              variant="outline"
+              onClick={() => setShowDetailModal(false)}
+              className="w-full mt-2 font-semibold text-gray-700 border-gray-200 hover:bg-gray-50 h-12"
             >
-              {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-            </span>
+              Dismiss
+            </Button>
           </div>
-          <div>
-            <p className="text-sm text-gray-500 mb-1">Rejection Date</p>
-            <p className="font-semibold text-gray-900">{getRejectionDate()}</p>
-          </div>
-          <div className="p-3 bg-red-50 rounded-lg border border-red-200">
-            <p className="text-sm text-gray-500 mb-2">Rejection Reason</p>
-            <p className="text-gray-900 whitespace-pre-wrap">{getRejectionReason()}</p>
-          </div>
-          <Button
-            onClick={() => setShowDetailModal(false)}
-            className="w-full bg-gray-600 hover:bg-gray-700 text-white"
-          >
-            Close
-          </Button>
-        </div>
-      </Card>
-    </div>
-  );
-};
+        </Card>
+      </div>
+    );
+  };
 
   if (loading) {
     return (
@@ -649,8 +618,8 @@ const DetailModal = ({ user }: { user: PendingUser | null }) => {
             key={tab}
             onClick={() => setActiveTab(tab as any)}
             className={`px-6 py-3 font-medium border-b-2 transition-colors ${activeTab === tab
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-gray-600 hover:text-gray-900"
+              ? "border-blue-600 text-blue-600"
+              : "border-transparent text-gray-600 hover:text-gray-900"
               }`}
           >
             {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -740,7 +709,14 @@ const DetailModal = ({ user }: { user: PendingUser | null }) => {
       {/* Modals */}
       {showRejectModal && <RejectionModal userId={showRejectModal} />}
       {showDetailModal && <DetailModal user={selectedUser} />}
-      {deleteModal.show && <DeleteConfirmationModal />}
+      <ConfirmationModal
+        isOpen={deleteModal.show}
+        title="Delete Rejected User"
+        message="Are you sure you want to permanently delete this user? This action cannot be undone."
+        variant="danger"
+        onConfirm={confirmDelete}
+        onClose={() => setDeleteModal({ show: false, userId: null })}
+      />
     </div>
   );
 };

@@ -2,16 +2,16 @@
 import React from "react";
 
 type Props = {
-  callType:string;
-  fromName:string;
+  callType: string;
+  fromName: string;
   onAccept: () => void;
   onReject: () => void;
 };
 
-const IncomingCallModal: React.FC<Props> = ({ callType,fromName, onAccept, onReject }) => {
+const IncomingCallModal: React.FC<Props> = ({ callType, fromName, onAccept, onReject }) => {
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg shadow-lg p-6 text-center w-96 z-10">
+    <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-[9999]">
+      <div className="bg-white rounded-lg shadow-lg p-6 text-center w-96 relative">
         <h2 className="text-xl font-bold mb-4">📞 Incoming Call</h2>
         <p className="mb-6"><strong>{fromName}</strong> request you for {callType} call</p>
         <div className="flex justify-around">

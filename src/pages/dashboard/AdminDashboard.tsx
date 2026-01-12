@@ -184,17 +184,17 @@ export const AdminDashboard: React.FC = () => {
           </Link>
         </CardHeader>
 
-        <div className="grid grid-flow-col font-medium grid-cols-3 h-[60vh] bg-white shadow-md py-10 px-5">
-          <div className=" col-span-2">
+        <div className="grid grid-cols-1 lg:grid-cols-3 font-medium h-auto lg:h-[60vh] bg-white shadow-md py-6 md:py-10 px-4 md:px-5 gap-8">
+          <div className="lg:col-span-2 h-[40vh] md:h-full">
             <StartupGrowthChart data={startupGrowthChartData} />
-            <h3 className="mb-2 justify-center flex font-light text-sm underline text-blue-700">
+            <h3 className="mt-2 justify-center flex font-light text-sm underline text-blue-700">
               User Growth Chart
             </h3>
           </div>
 
-          <div className="">
+          <div className="h-[40vh] md:h-full">
             <StartupIndustryChart data={industryGrowthChartData} />
-            <h3 className="ml-10 mb-2 justify-center flex font-light text-sm underline text-blue-700">
+            <h3 className="mt-2 lg:ml-10 justify-center flex font-light text-sm underline text-blue-700">
               Startup industry growthRate
             </h3>
           </div>
@@ -212,24 +212,23 @@ export const AdminDashboard: React.FC = () => {
             <Badge variant="secondary">Crowdfunding</Badge>
           </CardHeader>
 
-          <CardBody className="flex flex-row pb-10 gap-5">
-            <div className="w-2/5 flex flex-col justify-evenly">
-              <p className="text-gray-600">
+          <CardBody className="flex flex-col lg:flex-row pb-10 gap-8">
+            <div className="w-full lg:w-2/5 flex flex-col justify-evenly">
+              <p className="text-gray-600 text-sm md:text-base">
                 Edit, approve, or remove user accounts. Monitor activity and
-                handle reports of fraudulent behavior.The user catched by
+                handle reports of fraudulent behavior. The user caught by
                 suspicious activity could be responsible for its own acts. the
-                admin will always viewing your activities either you are
-                approaching well and structured way or not .This info is just
-                filling the blanks.
+                admin will always be viewing your activities whether you are
+                approaching in a well and structured way or not.
               </p>
-              <div className="mt-4 flex gap-2">
+              <div className="mt-6 flex flex-wrap gap-2">
                 <Button leftIcon={<Shield size={16} />}>View Reports</Button>
                 <Button variant="outline">Take Action</Button>
               </div>
             </div>
-            <div className="h-[50vh] w-3/5">
+            <div className="h-[40vh] md:h-[50vh] w-full lg:w-3/5">
               <FundingChart />
-              <h3 className="ml-10 mb-2 justify-center flex font-light text-sm underline text-blue-700">
+              <h3 className="mt-2 lg:ml-10 justify-center flex font-light text-sm underline text-blue-700">
                 Fund GrowthRate
               </h3>
             </div>
@@ -244,25 +243,23 @@ export const AdminDashboard: React.FC = () => {
             </h2>
             <Badge variant="warning">Security</Badge>
           </CardHeader>
-          <CardBody className="flex flex-row pb-10 gap-5">
-            <div className="w-2/5 flex flex-col justify-evenly">
-              <p className="text-gray-600">
-                Edit, approve, or remove user accounts. Monitor activity and
-                handle reports of fraudulent behavior.The user catched by
-                suspicious activity could be responsible for its own acts. the
-                admin will always viewing your activities either you are
-                approaching well and structured way or not .This info is just
-                filling the blanks.
+          <CardBody className="flex flex-col lg:flex-row pb-10 gap-8">
+            <div className="w-full lg:w-2/5 flex flex-col justify-evenly">
+              <p className="text-gray-600 text-sm md:text-base">
+                Monitor platform safety and identify high-risk behaviors. Our
+                automated systems flag suspicious activities for manual review.
+                Ensuring a secure environment for all entrepreneurs and
+                investors is our top priority.
               </p>
-              <div className="mt-4 flex gap-2">
+              <div className="mt-6 flex flex-wrap gap-2">
                 <Button leftIcon={<Shield size={16} />}>View Reports</Button>
                 <Button variant="outline">Take Action</Button>
               </div>
             </div>
-            <div className="h-[50vh] w-3/5">
+            <div className="h-[40vh] md:h-[50vh] w-full lg:w-3/5">
               <FraudAndRiskDetectionChart data={fraudGrowthChartData} />
 
-              <h3 className="ml-10 mb-1 justify-center flex font-light text-sm underline text-blue-700">
+              <h3 className="mt-2 lg:ml-10 justify-center flex font-light text-sm underline text-blue-700">
                 Fraud and Risk Detection GrowthRate
               </h3>
             </div>

@@ -4,6 +4,7 @@ import { Button } from "../../components/ui/Button";
 import { Card, CardHeader } from "../../components/ui/Card";
 import { AlertTriangle, Clock, Ban, Trash2, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
+import { ConfirmationModal } from "../../components/ui/ConfirmationModal";
 
 interface SuspendedUser {
   _id: string;
@@ -34,6 +35,19 @@ export const SuspendedBlockedUsers: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"suspended" | "blocked">("suspended");
   const [processing, setProcessing] = useState<{ [key: string]: boolean }>({});
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    variant: "danger" | "warning" | "success" | "primary";
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => { },
+    variant: "primary",
+  });
 
   const fetchData = async () => {
     try {
@@ -66,93 +80,114 @@ export const SuspendedBlockedUsers: React.FC = () => {
   }, []);
 
   const unsuspendUser = async (userId: string) => {
-    if (!confirm("Are you sure you want to unsuspend this user?")) return;
+    setConfirmModal({
+      isOpen: true,
+      title: "Unsuspend User",
+      message: "Are you sure you want to unsuspend this user?",
+      variant: "success",
+      onConfirm: async () => {
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+        try {
+          setProcessing((prev) => ({ ...prev, [userId]: true }));
+          const token = localStorage.getItem("token");
+          const res = await fetch(
+            `${import.meta.env.VITE_BACKEND_URL}/admin/unsuspend-user/${userId}`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
 
-    try {
-      setProcessing({ ...processing, [userId]: true });
-      const token = localStorage.getItem("token");
-      const res = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/admin/unsuspend-user/${userId}`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          if (!res.ok) {
+            const data = await res.json();
+            throw new Error(data.message || "Failed to unsuspend user");
+          }
+
+          toast.success("User unsuspended successfully");
+          fetchData();
+        } catch (error: any) {
+          toast.error(error.message || "Error unsuspending user");
+        } finally {
+          setProcessing((prev) => ({ ...prev, [userId]: false }));
         }
-      );
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.message || "Failed to unsuspend user");
-      }
-
-      toast.success("User unsuspended successfully");
-      fetchData();
-    } catch (error: any) {
-      toast.error(error.message || "Error unsuspending user");
-    } finally {
-      setProcessing({ ...processing, [userId]: false });
-    }
+      },
+    });
   };
 
   const unblockUser = async (userId: string) => {
-    if (!confirm("Are you sure you want to unblock this user?")) return;
+    setConfirmModal({
+      isOpen: true,
+      title: "Unblock User",
+      message: "Are you sure you want to unblock this user?",
+      variant: "success",
+      onConfirm: async () => {
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+        try {
+          setProcessing((prev) => ({ ...prev, [userId]: true }));
+          const token = localStorage.getItem("token");
+          const res = await fetch(
+            `${import.meta.env.VITE_BACKEND_URL}/admin/unblock-user/${userId}`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
 
-    try {
-      setProcessing({ ...processing, [userId]: true });
-      const token = localStorage.getItem("token");
-      const res = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/admin/unblock-user/${userId}`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          if (!res.ok) {
+            const data = await res.json();
+            throw new Error(data.message || "Failed to unblock user");
+          }
+
+          toast.success("User unblocked successfully");
+          fetchData();
+        } catch (error: any) {
+          toast.error(error.message || "Error unblocking user");
+        } finally {
+          setProcessing((prev) => ({ ...prev, [userId]: false }));
         }
-      );
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.message || "Failed to unblock user");
-      }
-
-      toast.success("User unblocked successfully");
-      fetchData();
-    } catch (error: any) {
-      toast.error(error.message || "Error unblocking user");
-    } finally {
-      setProcessing({ ...processing, [userId]: false });
-    }
+      },
+    });
   };
 
   const deleteUser = async (userId: string) => {
-    if (!confirm("Are you sure you want to delete this user? This action cannot be undone.")) return;
+    setConfirmModal({
+      isOpen: true,
+      title: "Delete User",
+      message: "Are you sure you want to delete this user? This action cannot be undone.",
+      variant: "danger",
+      onConfirm: async () => {
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+        try {
+          setProcessing((prev) => ({ ...prev, [userId]: true }));
+          const token = localStorage.getItem("token");
+          const res = await fetch(
+            `${import.meta.env.VITE_BACKEND_URL}/admin/delete-user/${userId}`,
+            {
+              method: "DELETE",
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
 
-    try {
-      setProcessing({ ...processing, [userId]: true });
-      const token = localStorage.getItem("token");
-      const res = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/admin/delete-user/${userId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          if (!res.ok) {
+            const data = await res.json();
+            throw new Error(data.message || "Failed to delete user");
+          }
+
+          toast.success("User deleted successfully");
+          fetchData();
+        } catch (error: any) {
+          toast.error(error.message || "Error deleting user");
+        } finally {
+          setProcessing((prev) => ({ ...prev, [userId]: false }));
         }
-      );
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.message || "Failed to delete user");
-      }
-
-      toast.success("User deleted successfully");
-      fetchData();
-    } catch (error: any) {
-      toast.error(error.message || "Error deleting user");
-    } finally {
-      setProcessing({ ...processing, [userId]: false });
-    }
+      },
+    });
   };
 
   if (loading) {
@@ -174,8 +209,8 @@ export const SuspendedBlockedUsers: React.FC = () => {
         <button
           onClick={() => setActiveTab("suspended")}
           className={`px-4 py-2 font-medium transition-colors ${activeTab === "suspended"
-              ? "text-yellow-600 border-b-2 border-yellow-600"
-              : "text-gray-600 hover:text-gray-900"
+            ? "text-yellow-600 border-b-2 border-yellow-600"
+            : "text-gray-600 hover:text-gray-900"
             }`}
         >
           <div className="flex items-center gap-2">
@@ -186,8 +221,8 @@ export const SuspendedBlockedUsers: React.FC = () => {
         <button
           onClick={() => setActiveTab("blocked")}
           className={`px-4 py-2 font-medium transition-colors ${activeTab === "blocked"
-              ? "text-red-600 border-b-2 border-red-600"
-              : "text-gray-600 hover:text-gray-900"
+            ? "text-red-600 border-b-2 border-red-600"
+            : "text-gray-600 hover:text-gray-900"
             }`}
         >
           <div className="flex items-center gap-2">
@@ -348,6 +383,15 @@ export const SuspendedBlockedUsers: React.FC = () => {
           )}
         </div>
       )}
+
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        variant={confirmModal.variant}
+        onConfirm={confirmModal.onConfirm}
+        onClose={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 };

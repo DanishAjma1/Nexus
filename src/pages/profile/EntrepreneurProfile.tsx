@@ -289,7 +289,7 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
               </Button>
             )}
             {isDealModalOpen && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+              <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex justify-center items-center z-[9999]">
                 <div className="bg-white rounded-lg w-96 p-6 relative shadow-lg">
                   <h2 className="text-lg font-bold mb-4">Make a Deal</h2>
 
@@ -394,7 +394,7 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
 
       {/* Suspend Modal */}
       {isSuspendModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex justify-center items-center z-[9999]">
           <div className="bg-white rounded-lg w-96 p-6 relative shadow-lg">
             <h2 className="text-lg font-bold mb-4">Suspend User</h2>
             <div className="mb-4">
@@ -425,7 +425,7 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
 
       {/* Block Modal */}
       {isBlockModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex justify-center items-center z-[9999]">
           <div className="bg-white rounded-lg w-96 p-6 relative shadow-lg">
             <h2 className="text-lg font-bold mb-4 text-red-600">Block User</h2>
             <p className="text-sm text-gray-500 mb-4">Blocking a user will hide their profile and prevent them from accessing the platform. This action is severe.</p>

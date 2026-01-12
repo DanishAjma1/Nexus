@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Send, Phone, Video, Info, Smile } from "lucide-react";
+import { Send, Phone, Video, Info, Smile, Menu, X, MessageSquare, ChevronLeft } from "lucide-react";
 import { Avatar } from "../../components/ui/Avatar";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
@@ -29,6 +29,7 @@ export const ChatPage: React.FC = () => {
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
   const [chatPartner, setChatPartner] = useState<User | null>(null);
   const [users, setUsers] = useState<[string, User][]>([]);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { socket } = useSocket();
 
   const navigate = useNavigate();
@@ -116,6 +117,11 @@ export const ChatPage: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Close sidebar on mobile when switching chats
+  useEffect(() => {
+    setIsSidebarOpen(false);
+  }, [userId]);
+
   //  Hanlde send message
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -153,10 +159,30 @@ export const ChatPage: React.FC = () => {
   if (!currentUser) return null;
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] bg-white border border-gray-200 rounded-lg overflow-hidden animate-fade-in">
-      {/* Conversations sidebar */}
-      <div className="hidden md:block w-1/3 lg:w-1/4 border-r border-gray-200">
-        <ChatUserList conversation={conversation || null} />
+    <div className="flex h-[calc(100vh-4rem)] bg-white border border-gray-200 rounded-lg overflow-hidden animate-fade-in relative">
+      {/* Mobile Sidebar Backdrop */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden backdrop-blur-sm transition-opacity"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      {/* Conversations sidebar - Drawer on mobile, Sidebar on desktop */}
+      <div className={`
+        fixed inset-y-0 left-0 z-50 w-3/4 max-w-xs bg-white transform transition-transform duration-300 ease-in-out border-r border-gray-200
+        md:relative md:translate-x-0 md:w-1/3 lg:w-1/4 md:z-auto
+        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
+        <div className="flex flex-col h-full">
+          <div className="p-4 border-b border-gray-200 flex items-center justify-between md:hidden">
+            <h2 className="font-bold text-gray-800">Conversations</h2>
+            <Button variant="ghost" size="sm" onClick={() => setIsSidebarOpen(false)}>
+              <X size={20} />
+            </Button>
+          </div>
+          <ChatUserList conversation={conversation || null} showTitle={false} />
+        </div>
       </div>
 
       {/* Main chat area */}
@@ -166,6 +192,16 @@ export const ChatPage: React.FC = () => {
           <>
             <div className="border-b border-gray-200 p-4 flex justify-between items-center">
               <div className="flex items-center">
+                {/* Mobile Sidebar Toggle */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="mr-2 md:hidden p-1"
+                  onClick={() => setIsSidebarOpen(true)}
+                >
+                  <MessageSquare size={20} />
+                </Button>
+
                 <Avatar
                   src={chatPartner.avatarUrl}
                   alt={chatPartner.name}
@@ -179,17 +215,16 @@ export const ChatPage: React.FC = () => {
                     {chatPartner.name}
                   </h2>
                   <p
-                    className={`text-sm ${
-                      isTyping || chatPartner.isOnline
-                        ? "text-green-500"
-                        : "text-gray-500"
-                    }`}
+                    className={`text-sm ${isTyping || chatPartner.isOnline
+                      ? "text-green-500"
+                      : "text-gray-500"
+                      }`}
                   >
                     {isTyping
                       ? "is typing"
                       : chatPartner.isOnline
-                      ? "online"
-                      : "Last seen recently"}
+                        ? "online"
+                        : "Last seen recently"}
                   </p>
                 </div>
               </div>

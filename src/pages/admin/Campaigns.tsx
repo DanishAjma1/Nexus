@@ -145,7 +145,7 @@ export const Campaigns: React.FC = () => {
       </div>
 
       {showForm && (
-        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4 overflow-auto">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-[9999] p-4 overflow-auto">
           <div className="bg-white rounded-2xl shadow-lg w-full max-w-lg relative">
             <div className="flex justify-end items-end p-5">
               <button
@@ -245,9 +245,8 @@ export const Campaigns: React.FC = () => {
             <p className="text-xs mb-3">
               Status:{" "}
               <span
-                className={`font-semibold ${
-                  c.status === "active" ? "text-green-500" : "text-red-500"
-                }`}
+                className={`font-semibold ${c.status === "active" ? "text-green-500" : "text-red-500"
+                  }`}
               >
                 {c.status}
               </span>

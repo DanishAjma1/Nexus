@@ -82,7 +82,8 @@ export interface AuthContextType {
     name: string,
     email: string,
     password: string,
-    role: UserRole
+    role: UserRole,
+    showToast?: boolean
   ) => Promise<string | null>;
   logout: () => void;
   forgotPassword: (email: string) => Promise<void>;

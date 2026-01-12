@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import {
   Menu,
   X,
@@ -14,6 +14,9 @@ import {
   Handshake,
   UsersRoundIcon,
   Briefcase,
+  Settings,
+  ClipboardCheck,
+  Ban,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { Avatar } from "../ui/Avatar";
@@ -23,8 +26,14 @@ export const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+
+  // Auto-close menu on route change
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [location.pathname]);
 
   const handleLogout = () => {
     logout();
@@ -36,16 +45,17 @@ export const Navbar: React.FC = () => {
     user?.role === "entrepreneur"
       ? "/dashboard/entrepreneur"
       : user?.role === "investor"
-      ? "/dashboard/investor"
-      : user?.role === "admin"
-      ? "/dashboard/admin"
-      : "/login";
+        ? "/dashboard/investor"
+        : user?.role === "admin"
+          ? "/dashboard/admin"
+          : "/login";
 
   // Determine profile route by role
   const profileRoute = user ? `/profile/${user.role}/${user.userId}` : "/login";
 
   // Navigation links by role
   let navLinks: { icon: JSX.Element; text: string; path: string }[] = [];
+  let adminMobileLinks: { icon: JSX.Element; text: string; path: string }[] = [];
 
   if (user?.role === "admin") {
     navLinks = [
@@ -73,6 +83,18 @@ export const Navbar: React.FC = () => {
         icon: <Bell size={18} />,
         text: "Notifications",
         path: "/notifications",
+      },
+    ];
+    adminMobileLinks = [
+      {
+        icon: <ClipboardCheck size={18} />,
+        text: "Account Approvals",
+        path: "/dashboard/admin/approvals",
+      },
+      {
+        icon: <Ban size={18} />,
+        text: "Suspended & Blocked",
+        path: "/admin/suspended-blocked",
       },
     ];
   } else {
@@ -222,6 +244,28 @@ export const Navbar: React.FC = () => {
                       {link.text}
                     </Link>
                   ))}
+
+                  {/* Admin-only mobile links */}
+                  {adminMobileLinks.map((link, index) => (
+                    <Link
+                      key={`mobile-admin-${index}`}
+                      to={link.path}
+                      className="flex items-center px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-md"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <span className="mr-3">{link.icon}</span>
+                      {link.text}
+                    </Link>
+                  ))}
+
+                  <Link
+                    to="/settings"
+                    className="flex items-center px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-md"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <Settings size={18} className="mr-3" />
+                    Settings
+                  </Link>
 
                   <button
                     onClick={() => {

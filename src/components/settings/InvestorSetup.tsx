@@ -102,14 +102,14 @@ export const InvestorSetup: React.FC = () => {
                 try {
                     const parsed = JSON.parse(userInfoString) as User;
                     const { name, email, password, role } = parsed;
-                    const userId = await register(name, email, password, role);
+                    const userId = await register(name, email, password, role, false);
                     console.log(userId);
                     if (userId) {
                         await createInvestorProfile({ ...investorFormData, userId: userId });
 
                         // Email will be sent from the backend when profile is created/updated
 
-                        navigate("/", { replace: true });
+                        navigate("/account-under-review", { replace: true });
                     }
                 } catch (e) {
                     console.error("Failed to parse userInfo from localStorage", e);

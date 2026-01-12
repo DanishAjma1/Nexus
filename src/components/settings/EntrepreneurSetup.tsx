@@ -119,7 +119,7 @@ export const EntrepreneurSetup: React.FC = () => {
                 try {
                     const parsed = JSON.parse(userInfoString) as User;
                     const { name, email, password, role } = parsed;
-                    const userId = await register(name, email, password, role);
+                    const userId = await register(name, email, password, role, false);
                     console.log(userId);
                     if (userId) {
                         await createEnterProfile({ ...formData, userId: userId });
@@ -127,7 +127,7 @@ export const EntrepreneurSetup: React.FC = () => {
                         // Email will be sent from the backend when profile is created/updated
                         setFormData({});
                         setEnterpreneur(undefined);
-                        navigate("/", { replace: true });
+                        navigate("/account-under-review", { replace: true });
                     }
                 } catch (e) {
                     console.error("Failed to parse userInfo from localStorage", e);

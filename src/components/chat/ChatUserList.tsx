@@ -9,9 +9,13 @@ import { getUserFromDb } from "../../data/users";
 
 interface ChatUserListProps {
   conversation: ChatConversation;
+  showTitle?: boolean;
 }
 
-export const ChatUserList: React.FC<ChatUserListProps> = ({ conversation }) => {
+export const ChatUserList: React.FC<ChatUserListProps> = ({
+  conversation,
+  showTitle = true
+}) => {
   const navigate = useNavigate();
   const { userId: activeUserId } = useParams<{ userId: string }>();
   const { user: currentUser } = useAuth();
@@ -49,9 +53,11 @@ export const ChatUserList: React.FC<ChatUserListProps> = ({ conversation }) => {
   return (
     <div className="bg-white border-r border-gray-200 w-full overflow-y-auto">
       <div className="py-4">
-        <h2 className="px-4 text-lg font-semibold text-gray-800 mb-4 border-b pb-5">
-          Messages
-        </h2>
+        {showTitle && (
+          <h2 className="px-4 text-lg font-semibold text-gray-800 mb-4 border-b pb-5">
+            Messages
+          </h2>
+        )}
 
         <div className="space-y-1 border-b-2">
           {chatPartners.length > 0 ? (
@@ -74,11 +80,10 @@ export const ChatUserList: React.FC<ChatUserListProps> = ({ conversation }) => {
               return (
                 <div
                   key={user._id}
-                  className={`px-4 py-3 flex cursor-pointer transition-colors duration-200 ${
-                    isActive
-                      ? "bg-primary-50 border-l-4 border-primary-600"
-                      : "hover:bg-gray-50 border-l-4 border-transparent"
-                  }`}
+                  className={`px-4 py-3 flex cursor-pointer transition-colors duration-200 ${isActive
+                    ? "bg-primary-50 border-l-4 border-primary-600"
+                    : "hover:bg-gray-50 border-l-4 border-transparent"
+                    }`}
                   onClick={() => handleSelectUser(user._id)}
                 >
                   <Avatar
@@ -92,8 +97,7 @@ export const ChatUserList: React.FC<ChatUserListProps> = ({ conversation }) => {
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-baseline">
                       <h3 className="text-sm font-medium text-gray-900 truncate">
-                        {user.name.slice(0, 5)}
-                        {"..."}
+                        {user.name}
                       </h3>
 
                       {Object.keys(lastMessage).length !== 0 &&

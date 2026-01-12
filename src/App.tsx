@@ -58,6 +58,7 @@ import { AccountUnderReviewPage } from "./pages/auth/AccountUnderReviewPage";
 import { AccountRejectedPage } from "./pages/auth/AccountRejectedPage";
 import { SuspendedUserPage } from "./pages/auth/SuspendedUserPage";
 import { BlockedUserPage } from "./pages/auth/BlockedUserPage";
+import ScrollToTop from "./components/common/ScrollToTop";
 import { SuspendedBlockedUsers } from "./pages/admin/SuspendedBlockedUsers";
 
 function App() {
@@ -65,6 +66,7 @@ function App() {
     <AuthProvider>
       <SocketProvider>
         <Router>
+          <ScrollToTop />
           <Routes>
             {/* Authentication Routes */}
             <Route path="/login" element={<LoginPage />} />
