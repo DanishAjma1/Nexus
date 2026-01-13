@@ -5,6 +5,9 @@ import {
   AlertTriangle,
   Shield,
   MessageSquare,
+  UserX,
+  Ban,
+  UserCheck
 } from "lucide-react";
 import { Card, CardBody, CardHeader } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/Badge";
@@ -27,11 +30,11 @@ export const AdminDashboard: React.FC = () => {
   const URL = import.meta.env.VITE_BACKEND_URL;
   const { user } = useAuth();
   const [stats, setStats] = useState({
-    startups: 0,
-    investors: 0,
+    approvedUsers: 0,
     supporters: 10,
     campaigns: 0,
-    flagged: 0,
+    suspendedUsers: 0,
+    blockedUsers: 0,
   });
   const navigate = useNavigate();
 
@@ -39,7 +42,46 @@ export const AdminDashboard: React.FC = () => {
     const fetchData = async () => {
       try {
         const res = await axios.get(`${URL}/admin/dashboard`);
-        setStats(res.data);
+        // Assuming the API returns total users, we'll need to calculate approved users
+        // For now, let's set a placeholder. In reality, you might need an API endpoint
+        // that specifically returns approved users count.
+        
+        // First, let's fetch all users to calculate counts
+        const usersRes = await axios.get(`${URL}/admin/get-users`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+        });
+        
+        const allUsers = usersRes.data;
+        
+        // Calculate counts based on user status
+        const approvedCount = allUsers.filter((u: any) => 
+          u.status === 'approved' || 
+          u.approvalStatus === 'approved' ||
+          u.isApproved === true ||
+          (u.status !== 'pending' && u.status !== 'rejected' && !u.isBlocked && !u.isSuspended)
+        ).length;
+        
+        const suspendedCount = allUsers.filter((u: any) => 
+          u.isSuspended === true || 
+          u.suspended === true ||
+          u.status === 'suspended'
+        ).length;
+        
+        const blockedCount = allUsers.filter((u: any) => 
+          u.isBlocked === true || 
+          u.blocked === true ||
+          u.status === 'blocked'
+        ).length;
+        
+        // Update stats with calculated values
+        setStats({
+          approvedUsers: approvedCount,
+          supporters: 10, // Keeping as static for now
+          campaigns: res.data.campaigns || 0,
+          suspendedUsers: suspendedCount,
+          blockedUsers: blockedCount
+        });
+        
       } catch (error) {
         console.error("Error fetching admin stats:", error);
       }
@@ -61,10 +103,6 @@ export const AdminDashboard: React.FC = () => {
     const data = await res.json();
     setStartupGrowthChartData(data);
   };
-  //     `${URL}/admin/users/users-last-year`
-  //   const data = await res.json();
-  //   setStartupGrowthChartData(data);
-  // };
 
   const fetchIndustryGrowthChartData = async () => {
     const res = await fetch(
@@ -103,65 +141,86 @@ export const AdminDashboard: React.FC = () => {
       </div>
 
       {/* Top summary cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-purple-50 border border-purple-100">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        {/* Approved Users Card */}
+        <Card className="bg-green-50 border border-green-100">
           <CardBody>
             <div className="flex items-center">
-              <div className="p-3 bg-purple-100 rounded-full mr-4">
-                <Users size={20} className="text-purple-700" />
+              <div className="p-3 bg-green-100 rounded-full mr-4">
+                <UserCheck size={20} className="text-green-700" />
               </div>
-              <div className="flex gap-2 items-center">
-                <p className="text-sm font-medium text-purple-700">Users</p>
-                <h3 className="font-semibold text-purple-900">
-                  {stats.investors || 10}
+              <div className="flex flex-col">
+                <p className="text-sm font-medium text-green-700">Approved Users</p>
+                <h3 className="text-lg font-semibold text-green-900">
+                  {stats.approvedUsers}
                 </h3>
               </div>
             </div>
           </CardBody>
         </Card>
 
+        {/* Supporters Card */}
         <Card className="bg-amber-50 border border-amber-100">
           <CardBody>
             <div className="flex items-center">
               <div className="p-3 bg-amber-100 rounded-full mr-4">
                 <Users size={20} className="text-amber-700" />
               </div>
-              <div className="flex gap-2 items-center">
+              <div className="flex flex-col">
                 <p className="text-sm font-medium text-amber-700">Supporters</p>
-                <h3 className="font-semibold text-amber-900">
-                  {stats.supporters || 10}
+                <h3 className="text-lg font-semibold text-amber-900">
+                  {stats.supporters}
                 </h3>
               </div>
             </div>
           </CardBody>
         </Card>
 
-        <Card className="bg-green-50 border border-green-100">
+        {/* Campaigns Card */}
+        <Card className="bg-blue-50 border border-blue-100">
           <CardBody>
             <div className="flex items-center">
-              <div className="p-3 bg-green-100 rounded-full mr-4">
-                <TrendingUp size={20} className="text-green-700" />
+              <div className="p-3 bg-blue-100 rounded-full mr-4">
+                <TrendingUp size={20} className="text-blue-700" />
               </div>
-              <div className="flex gap-2 items-center">
-                <p className="text-sm font-medium text-green-700">Campaigns</p>
-                <h3 className="font-semibold text-green-900">
-                  {stats.campaigns || 10}
+              <div className="flex flex-col">
+                <p className="text-sm font-medium text-blue-700">Campaigns</p>
+                <h3 className="text-lg font-semibold text-blue-900">
+                  {stats.campaigns}
                 </h3>
               </div>
             </div>
           </CardBody>
         </Card>
 
+        {/* Suspended Users Card */}
+        <Card className="bg-orange-50 border border-orange-100">
+          <CardBody>
+            <div className="flex items-center">
+              <div className="p-3 bg-orange-100 rounded-full mr-4">
+                <UserX size={20} className="text-orange-700" />
+              </div>
+              <div className="flex flex-col">
+                <p className="text-sm font-medium text-orange-700">Suspended</p>
+                <h3 className="text-lg font-semibold text-orange-900">
+                  {stats.suspendedUsers}
+                </h3>
+              </div>
+            </div>
+          </CardBody>
+        </Card>
+
+        {/* Blocked Users Card */}
         <Card className="bg-red-50 border border-red-100">
           <CardBody>
             <div className="flex items-center">
               <div className="p-3 bg-red-100 rounded-full mr-4">
-                <AlertTriangle size={20} className="text-red-700" />
+                <Ban size={20} className="text-red-700" />
               </div>
-              <div className="flex gap-2 items-center">
-                <p className="text-sm font-medium text-red-700">Flagged</p>
-                <h3 className="font-semibold text-red-900">
-                  {stats.flagged || 10}
+              <div className="flex flex-col">
+                <p className="text-sm font-medium text-red-700">Blocked</p>
+                <h3 className="text-lg font-semibold text-red-900">
+                  {stats.blockedUsers}
                 </h3>
               </div>
             </div>
