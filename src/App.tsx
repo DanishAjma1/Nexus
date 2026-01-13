@@ -63,6 +63,7 @@ import ScrollToTop from "./components/common/ScrollToTop";
 import { SuspendedBlockedUsers } from "./pages/admin/SuspendedBlockedUsers";
 import { TermsOfService } from "./pages/legal/TermsOfService";
 import { CommunityGuidelines } from "./pages/legal/CommunityGuidelines";
+import SendMassNotification from "./pages/admin/SendMassNotification";
 
 function App() {
   return (
@@ -103,6 +104,7 @@ function App() {
                   path="fraud-and-risk-detection"
                   element={<FraudAndRiskDetection />}
                 />
+                <Route path="send-notification" element={<SendMassNotification />} />
               </Route>
 
               <Route path="/dashboard/admin" element={<DashboardLayout />}>

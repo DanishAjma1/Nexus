@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Shield, ArrowLeft, FileText, AlertCircle, CheckCircle, Lock, Globe, Users, Building } from "lucide-react";
+import { Shield, FileText, AlertCircle, CheckCircle, Lock, Globe, Users, Building } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../../components/ui/Button";
 import { motion } from "framer-motion";
@@ -17,7 +17,7 @@ export const TermsOfService: React.FC = () => {
         visible: {
             opacity: 1,
             y: 0,
-            transition: { duration: 0.5, ease: "easeOut" }
+            transition: { duration: 0.5, ease: "easeOut" as any }
         }
     };
 
@@ -231,15 +231,14 @@ export const TermsOfService: React.FC = () => {
                                 </p>
                             </motion.div>
 
-                            {termsSections.map((section, index) => (
+                            {termsSections.map((section) => (
                                 <motion.section
                                     key={section.id}
                                     id={section.id}
-                                    variants={fadeInUp}
+                                    variants={{ ...fadeInUp, ...cardHover }}
                                     onViewportEnter={() => setActiveSection(section.id)}
                                     viewport={{ once: true, margin: "-100px" }}
                                     whileHover="hover"
-                                    variants={cardHover}
                                     className={`p-8 rounded-2xl border transition-all duration-300 cursor-default ${section.important
                                         ? 'bg-amber-50 border-amber-200 shadow-sm'
                                         : 'bg-gray-50 border-gray-200'
@@ -345,7 +344,7 @@ export const TermsOfService: React.FC = () => {
                                                     aitrustbridge@gmail.com
                                                 </a>
                                             </div>
-                                            
+
                                         </div>
                                     </div>
 

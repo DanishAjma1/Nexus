@@ -5,7 +5,7 @@ import { Card, CardBody } from "../../components/ui/Card";
 import { useAuth } from "../../context/AuthContext";
 import { useNotification } from "../../context/NotificationContext";
 import { formatDistanceToNow } from "date-fns";
-import { Check, Trash2, UserPlus, Bell, Clock, Shield } from "lucide-react";
+import { Check, Trash2, UserPlus, Bell, Clock } from "lucide-react";
 
 export const NotificationsPage: React.FC = () => {
   const { user } = useAuth();
@@ -17,31 +17,19 @@ export const NotificationsPage: React.FC = () => {
     clearAll
   } = useNotification();
 
-  if (user?.role !== 'admin') {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] animate-fade-in">
-        <Shield size={64} className="text-gray-200 mb-4" />
-        <h2 className="text-2xl font-bold text-gray-900">Access Restricted</h2>
-        <p className="text-gray-600 mt-2 text-center max-w-md">
-          Only administrators can view the registration and system notification logs.
-        </p>
-        <Button
-          className="mt-6"
-          onClick={() => window.history.back()}
-        >
-          Go Back
-        </Button>
-      </div>
-    );
-  }
+  // Removed admin-only restriction to allow all users to view their notifications
 
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Admin Notifications</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {user?.role === 'admin' ? 'Admin Notifications' : 'My Notifications'}
+          </h1>
           <p className="text-gray-600">
-            Manage user registration alerts and system events
+            {user?.role === 'admin'
+              ? 'Manage user registration alerts and system events'
+              : 'Keep track of your latest updates and alerts'}
           </p>
         </div>
 
@@ -70,9 +58,14 @@ export const NotificationsPage: React.FC = () => {
                 }`}
             >
               <CardBody className="flex items-start p-6">
-                <div className={`flex-shrink-0 mr-4 p-3 rounded-full ${notification.type === 'registration' ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-100 text-gray-600'
+                <div className={`flex-shrink-0 mr-4 p-3 rounded-full ${notification.type === 'registration' ? 'bg-emerald-100 text-emerald-600' :
+                  notification.type === 'approval' ? 'bg-blue-100 text-blue-600' :
+                    notification.type === 'suspension' ? 'bg-amber-100 text-amber-600' :
+                      'bg-gray-100 text-gray-600'
                   }`}>
-                  {notification.type === 'registration' ? <UserPlus size={24} /> : <Bell size={24} />}
+                  {notification.type === 'registration' ? <UserPlus size={24} /> :
+                    notification.type === 'approval' ? <Check size={24} /> :
+                      <Bell size={24} />}
                 </div>
 
                 <div className="flex-1 min-w-0">
@@ -102,6 +95,9 @@ export const NotificationsPage: React.FC = () => {
                   </div>
 
                   <p className="text-gray-700 mt-2 text-lg">
+                    {notification.sender?.role === 'admin' && (
+                      <span className="text-primary-700 font-bold block mb-1">TrustBridge AI</span>
+                    )}
                     {notification.message}
                   </p>
 

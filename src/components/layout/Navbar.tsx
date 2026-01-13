@@ -3,15 +3,12 @@ import { useNavigate, Link, useLocation } from "react-router-dom";
 import {
   Menu,
   X,
-  Bell,
   MessageCircle,
   User,
   LogOut,
   Building2,
   CircleDollarSign,
   Shield,
-  Users,
-  Handshake,
   UsersRoundIcon,
   Briefcase,
   Settings,
@@ -21,7 +18,7 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import { Avatar } from "../ui/Avatar";
 import { Button } from "../ui/Button";
-import { AdminNotificationDropdown } from "../admin/AdminNotificationDropdown";
+import { NotificationDropdown } from "../common/NotificationDropdown";
 
 export const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -150,7 +147,7 @@ export const Navbar: React.FC = () => {
                     {link.text}
                   </Link>
                 ))}
-                {user.role === 'admin' && <AdminNotificationDropdown />}
+                {user && <NotificationDropdown />}
                 <Button
                   variant="ghost"
                   onClick={handleLogout}
@@ -187,7 +184,7 @@ export const Navbar: React.FC = () => {
 
           {/* Mobile menu button */}
           <div className="md:hidden flex items-center space-x-2">
-            {user?.role === 'admin' && <AdminNotificationDropdown />}
+            {user && <NotificationDropdown />}
             <button
               onClick={toggleMenu}
               className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-primary-600 hover:bg-gray-50 focus:outline-none"

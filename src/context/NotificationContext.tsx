@@ -10,6 +10,11 @@ interface Notification {
     isRead: boolean;
     createdAt: string;
     link?: string;
+    sender?: {
+        name: string;
+        email: string;
+        role: string;
+    };
 }
 
 interface NotificationContextType {
@@ -31,24 +36,27 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const URL = import.meta.env.VITE_BACKEND_URL;
 
     const fetchNotifications = useCallback(async () => {
-        if (!user?.userId || user.role !== 'admin') {
+        if (!user?.userId) {
             setNotifications([]);
             setIsLoading(false);
             return;
         }
 
         try {
-            const res = await axios.get(`${URL}/admin/notifications/${user.userId}`);
+            const token = localStorage.getItem("token");
+            const res = await axios.get(`${URL}/admin/notifications/${user.userId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
             setNotifications(res.data);
         } catch (error) {
             console.error("Error fetching notifications:", error);
         } finally {
             setIsLoading(false);
         }
-    }, [user?.userId, user?.role, URL]);
+    }, [user?.userId, URL]);
 
     useEffect(() => {
-        if (user?.role === 'admin') {
+        if (user) {
             fetchNotifications();
             const interval = setInterval(fetchNotifications, 30000);
             return () => clearInterval(interval);
@@ -65,7 +73,10 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         );
 
         try {
-            await axios.put(`${URL}/admin/notifications/${id}/read`);
+            const token = localStorage.getItem("token");
+            await axios.put(`${URL}/admin/notifications/${id}/read`, {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
         } catch (error) {
             console.error("Error marking notification as read:", error);
             // Rollback if needed, but for isRead it's often okay to just stay "read" unless strictly critical
@@ -80,7 +91,10 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
 
         try {
-            await axios.put(`${URL}/admin/notifications/read-all/${user.userId}`);
+            const token = localStorage.getItem("token");
+            await axios.put(`${URL}/admin/notifications/read-all/${user.userId}`, {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
         } catch (error) {
             console.error("Error marking all as read:", error);
             fetchNotifications();
@@ -95,7 +109,10 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         setNotifications([]);
 
         try {
-            await axios.delete(`${URL}/admin/notifications/${user.userId}`);
+            const token = localStorage.getItem("token");
+            await axios.delete(`${URL}/admin/notifications/${user.userId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
             toast.success("Notifications cleared");
         } catch (error) {
             console.error("Error clearing notifications:", error);

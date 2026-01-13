@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
     Users,
-    ArrowLeft,
     Heart,
     ShieldAlert,
     Sparkles,
@@ -28,7 +27,7 @@ export const CommunityGuidelines: React.FC = () => {
         visible: {
             opacity: 1,
             y: 0,
-            transition: { duration: 0.6, ease: "easeOut" }
+            transition: { duration: 0.6, ease: "easeOut" as any }
         }
     };
 

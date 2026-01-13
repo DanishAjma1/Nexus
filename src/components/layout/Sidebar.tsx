@@ -20,6 +20,7 @@ import {
   Shield,
   ClipboardCheck,
   Ban,
+  Send,
 } from "lucide-react";
 
 interface SidebarItemProps {
@@ -129,10 +130,16 @@ export const Sidebar: React.FC = () => {
       text: "Flagged Accounts",
     },
     {
+      to: "/admin/send-notification",
+      icon: <Send size={20} />,
+      text: "Send Global Notification",
+    },
+    {
       to: "/admin/suspended-blocked",
       icon: <Ban size={20} />,
       text: "Suspended & Blocked",
     },
+    { to: "/notifications", icon: <Bell size={20} />, text: "Notifications" },
   ];
 
   const commonItems = [
