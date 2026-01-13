@@ -4,6 +4,7 @@ import { formatDistanceToNow } from "date-fns";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useNotification } from "../../context/NotificationContext";
+import { formatNotificationMessage } from "../../utils/formatNotificationMessage";
 
 export const NotificationDropdown: React.FC = () => {
     const { user } = useAuth();
@@ -102,7 +103,7 @@ export const NotificationDropdown: React.FC = () => {
                                                     {notification.sender?.role === 'admin' && (
                                                         <span className="text-primary-700 font-bold block mb-0.5">TrustBridge AI</span>
                                                     )}
-                                                    {notification.message}
+                                                    {formatNotificationMessage(notification.message)}
                                                 </p>
                                                 <div className="flex items-center gap-1.5 mt-1 text-xs text-gray-400">
                                                     <Clock size={12} />

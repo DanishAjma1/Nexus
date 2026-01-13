@@ -4,6 +4,7 @@ import { formatDistanceToNow } from "date-fns";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useNotification } from "../../context/NotificationContext";
+import { formatNotificationMessage } from "../../utils/formatNotificationMessage";
 
 export const AdminNotificationDropdown: React.FC = () => {
     const { user } = useAuth();
@@ -92,7 +93,7 @@ export const AdminNotificationDropdown: React.FC = () => {
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <p className={`text-sm ${!notification.isRead ? 'text-gray-900 font-medium' : 'text-gray-600'}`}>
-                                                    {notification.message}
+                                                    {formatNotificationMessage(notification.message)}
                                                 </p>
                                                 <div className="flex items-center gap-1.5 mt-1 text-xs text-gray-400">
                                                     <Clock size={12} />

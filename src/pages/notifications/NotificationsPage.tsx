@@ -6,6 +6,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useNotification } from "../../context/NotificationContext";
 import { formatDistanceToNow } from "date-fns";
 import { Check, Trash2, UserPlus, Bell, Clock } from "lucide-react";
+import { formatNotificationMessage } from "../../utils/formatNotificationMessage";
 
 export const NotificationsPage: React.FC = () => {
   const { user } = useAuth();
@@ -98,7 +99,7 @@ export const NotificationsPage: React.FC = () => {
                     {notification.sender?.role === 'admin' && (
                       <span className="text-primary-700 font-bold block mb-1">TrustBridge AI</span>
                     )}
-                    {notification.message}
+                    {formatNotificationMessage(notification.message)}
                   </p>
 
                   <div className="flex items-center gap-2 mt-4 text-sm text-gray-500">
