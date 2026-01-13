@@ -392,9 +392,9 @@ const SendMassNotification: React.FC = () => {
                                                         <p className="text-sm font-medium text-gray-900 truncate">{u.name}</p>
                                                         <p className="text-xs text-gray-500 truncate">{u.email} • <span className="capitalize">{u.role}</span></p>
                                                     </div>
-                                                    <div className="text-xs text-gray-400">
+                                                    {/* <div className="text-xs text-gray-400">
                                                         {u.status || u.approvalStatus || 'approved'}
-                                                    </div>
+                                                    </div> */}
                                                 </div>
                                             ))}
                                         </div>

@@ -150,7 +150,7 @@ export const AdminDashboard: React.FC = () => {
                 <UserCheck size={20} className="text-green-700" />
               </div>
               <div className="flex flex-col">
-                <p className="text-sm font-medium text-green-700">Approved Users</p>
+                <p className="text-sm font-medium text-green-700">Users</p>
                 <h3 className="text-lg font-semibold text-green-900">
                   {stats.approvedUsers}
                 </h3>
