@@ -9,6 +9,9 @@ export interface User {
   location: string;
   bio: string;
   isOnline?: boolean;
+  approvalStatus?: 'pending' | 'approved' | 'rejected';
+  isBlocked?: boolean;
+  isSuspended?: boolean;
 }
 
 export interface Entrepreneur extends User {
@@ -79,7 +82,8 @@ export interface AuthContextType {
     name: string,
     email: string,
     password: string,
-    role: UserRole
+    role: UserRole,
+    showToast?: boolean
   ) => Promise<string | null>;
   logout: () => void;
   forgotPassword: (email: string) => Promise<void>;

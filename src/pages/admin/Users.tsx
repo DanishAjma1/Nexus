@@ -12,8 +12,10 @@ import { Card, CardHeader } from "../../components/ui/Card";
 import { useNavigate } from "react-router-dom";
 import { EntrepreneurProfile } from "../profile/EntrepreneurProfile";
 import { InvestorProfile } from "../profile/InvestorProfile";
+import { ConfirmationModal } from "../../components/ui/ConfirmationModal";
 
 export const Users: React.FC = () => {
+  const URL = import.meta.env.VITE_BACKEND_URL;
   const [users, setUsers] = useState<User[]>([]);
   const [searchedusers, setSearchedUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -21,13 +23,33 @@ export const Users: React.FC = () => {
   const [index, setIndex] = useState<number | null>(null);
   const [query, setQuery] = useState<string>("");
   const [searched, setSearched] = useState<string>("");
+  const [suspendModal, setSuspendModal] = useState<{ show: boolean; userId: string | null }>({ show: false, userId: null });
+  const [blockModal, setBlockModal] = useState<{ show: boolean; userId: string | null }>({ show: false, userId: null });
+  const [suspensionReason, setSuspensionReason] = useState<string>("");
+  const [suspensionDays, setSuspensionDays] = useState<string>("7");
+  const [blockReason, setBlockReason] = useState<string>("");
 
   const [startupGrowthChartData, setStartupGrowthChartData] = useState([]);
   const [industryGrowthChartData, setIndustryGrowthChartData] = useState([]);
+  const [isSuspending, setIsSuspending] = useState(false);
+  const [isBlocking, setIsBlocking] = useState(false);
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    variant: "danger" | "warning" | "success" | "primary";
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => { },
+    variant: "primary",
+  });
 
   const fetchStartupGrowthChartData = async () => {
     const res = await fetch(
-      "http://localhost:5000/admin/users/users-last-year"
+      `${URL}/admin/users/users-last-year`
     );
     const data = await res.json();
     setStartupGrowthChartData(data);
@@ -35,7 +57,7 @@ export const Users: React.FC = () => {
 
   const fetchIndustryGrowthChartData = async () => {
     const res = await fetch(
-      "http://localhost:5000/admin/users/startup-by-industry"
+      `${URL}/admin/users/startup-by-industry`
     );
     const data = await res.json();
     setIndustryGrowthChartData(data);
@@ -44,44 +66,130 @@ export const Users: React.FC = () => {
   useEffect(() => {
     fetchStartupGrowthChartData();
     fetchIndustryGrowthChartData();
+    fetchUsers();
   }, []);
 
   const deleteUser = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this user?")) return;
+    setConfirmModal({
+      isOpen: true,
+      title: "Delete User",
+      message: "Are you sure you want to delete this user? This action cannot be undone.",
+      variant: "danger",
+      onConfirm: async () => {
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+        try {
+          const res = await fetch(
+            `${import.meta.env.VITE_BACKEND_URL}/admin/user/${id}`,
+            {
+              method: "DELETE",
+            }
+          );
+          if (!res.ok) throw new Error("Failed to delete");
+          toast.success("User deleted successfully");
+          setUsers((prev) => prev.filter((u) => u._id !== id));
+        } catch {
+          toast.error("Error deleting user");
+        }
+      },
+    });
+  };
+
+  const suspendUser = async () => {
+    if (!suspendModal.userId || !suspensionReason.trim() || !suspensionDays) {
+      toast.error("Please provide a reason and suspension period");
+      return;
+    }
 
     try {
+      setIsSuspending(true);
+      const token = localStorage.getItem("token");
       const res = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/admin/user/${id}`,
+        `${import.meta.env.VITE_BACKEND_URL}/admin/suspend-user/${suspendModal.userId}`,
         {
-          method: "DELETE",
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            reason: suspensionReason,
+            suspensionDays: parseInt(suspensionDays),
+          }),
         }
-      );  
-      if (!res.ok) throw new Error("Failed to delete");
-      toast.success("User deleted successfully");
-      setUsers((prev) => prev.filter((u) => u._id !== id));
-    } catch {
-      toast.error("Error deleting user");
+      );
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || "Failed to suspend user");
+      }
+
+      toast.success("User suspended successfully. Notification email sent.");
+      setSuspendModal({ show: false, userId: null });
+      setSuspensionReason("");
+      setSuspensionDays("7");
+      fetchUsers();
+    } catch (error: any) {
+      toast.error(error.message || "Error suspending user");
+    } finally {
+      setIsSuspending(false);
     }
   };
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        setLoading(true);
-        const res = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/admin/get-users`
-        );
+  const blockUser = async () => {
+    if (!blockModal.userId || !blockReason.trim()) {
+      toast.error("Please provide a block reason");
+      return;
+    }
+
+    try {
+      setIsBlocking(true);
+      const token = localStorage.getItem("token");
+      const res = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/admin/block-user/${blockModal.userId}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            reason: blockReason,
+          }),
+        }
+      );
+
+      if (!res.ok) {
         const data = await res.json();
-        setUsers(data);
-      } catch (error) {
-        console.error(error);
-        toast.error("Failed to load users");
-      } finally {
-        setLoading(false);
+        throw new Error(data.message || "Failed to block user");
       }
-    };
-    fetchUsers();
-  }, []);
+
+      toast.success("User blocked successfully. Notification email sent.");
+      setBlockModal({ show: false, userId: null });
+      setBlockReason("");
+      fetchUsers();
+    } catch (error: any) {
+      toast.error(error.message || "Error blocking user");
+    } finally {
+      setIsBlocking(false);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/admin/get-users`
+      );
+      const data: User[] = await res.json();
+      const approvedUsers = data.filter(u => u.approvalStatus === 'approved');
+      setUsers(approvedUsers);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to load users");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const dialogRef = useRef(null);
 
@@ -118,21 +226,34 @@ export const Users: React.FC = () => {
   const [graphViewModal, setGraphViewModal] = useState<GraphData | null>(null);
 
   const TableRow = ({ user, idx }) => {
+    // Check if user is suspended or blocked
+    const isUserRestricted = user.isSuspended || user.isBlocked;
+
     return (
       <>
         <tr key={idx} className="border-t hover:bg-gray-50 relative group">
           <td className="px-4 py-2 flex items-center">
             <span>{idx + 1}.</span>
             <p className="ml-5">{user.name}</p>
+            {/* Show status badges */}
+            {user.isSuspended && (
+              <span className="ml-2 px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-full">
+                Suspended
+              </span>
+            )}
+            {user.isBlocked && (
+              <span className="ml-2 px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full">
+                Blocked
+              </span>
+            )}
           </td>
           <td className="px-4 py-2">{user.email}</td>
           <td className="px-4 py-2">{user.role}</td>
           <td className="px-4 py-2">{user.location}</td>
           <td className={`px-4 py-2 `}>
             <span
-              className={`px-2 ${
-                user.isOnline ? "text-green-500" : "text-red-500"
-              }`}
+              className={`px-2 ${user.isOnline ? "text-green-500" : "text-red-500"
+                }`}
             >
               {user.isOnline ? "Online" : "Offline"}
             </span>
@@ -160,13 +281,13 @@ export const Users: React.FC = () => {
               <div
                 ref={dialogRef}
                 className={`absolute right-0 w-28 bg-white shadow-md rounded-md border flex flex-col z-50
-                      ${
-                        idx >= users.length - 2
-                          ? "bottom-full mb-2"
-                          : "top-full mt-2"
-                      }
+                      ${idx >= users.length - 2
+                    ? "bottom-full mb-2"
+                    : "top-full mt-2"
+                  }
                 `}
               >
+                {/* Always show View Profile option */}
                 <Button
                   variant="ghost"
                   className="border-b text-xs hover:text-blue-500 focus:text-white focus:bg-blue-500"
@@ -179,18 +300,36 @@ export const Users: React.FC = () => {
                 >
                   View Profile
                 </Button>
-                <Button
-                  variant="ghost"
-                  className="border-b text-xs hover:text-yellow-500 focus:text-white focus:bg-yellow-500"
-                >
-                  Suspend
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="border-b text-xs hover:text-red-500 focus:text-white focus:bg-red-500"
-                >
-                  Block
-                </Button>
+
+                {/* Only show Suspend option if user is NOT restricted */}
+                {!isUserRestricted && (
+                  <Button
+                    variant="ghost"
+                    className="border-b text-xs hover:text-yellow-500 focus:text-white focus:bg-yellow-500"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setSuspendModal({ show: true, userId: user._id });
+                      setShowDialog(false);
+                    }}
+                  >
+                    Suspend
+                  </Button>
+                )}
+
+                {/* Only show Block option if user is NOT restricted */}
+                {!isUserRestricted && (
+                  <Button
+                    variant="ghost"
+                    className="border-b text-xs hover:text-red-500 focus:text-white focus:bg-red-500"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setBlockModal({ show: true, userId: user._id });
+                      setShowDialog(false);
+                    }}
+                  >
+                    Block
+                  </Button>
+                )}
               </div>
             )}
           </td>
@@ -205,13 +344,12 @@ export const Users: React.FC = () => {
 
   return (
     <div className="p-4">
-      {/* {profileModal && ( */}
+      {/* Profile Modal */}
       <div
-        className={`fixed transition-all ease-in-out z-10 inset-0 bg-black bg-opacity-20 overflow-scroll scroll-smooth duration-300 p-10 ${
-          profileModal
-            ? "pointer-events-auto opacity-100"
-            : "pointer-events-none opacity-0"
-        }`}
+        className={`fixed transition-all ease-in-out z-10 inset-0 bg-black bg-opacity-20 overflow-scroll scroll-smooth duration-300 p-10 ${profileModal
+          ? "pointer-events-auto opacity-100"
+          : "pointer-events-none opacity-0"
+          }`}
       >
         <div className="flex flex-col items-end">
           <X
@@ -230,11 +368,10 @@ export const Users: React.FC = () => {
 
       {/* GraphViewModal */}
       <div
-        className={`fixed z-10 inset-0 transition-all duration-300 bg-black bg-opacity-35 p-10 ${
-          graphViewModal?.show
-            ? "pointer-events-auto opacity-100"
-            : "pointer-events-none opacity-0"
-        }`}
+        className={`fixed z-10 inset-0 transition-all duration-300 bg-black bg-opacity-35 p-10 ${graphViewModal?.show
+          ? "pointer-events-auto opacity-100"
+          : "pointer-events-none opacity-0"
+          }`}
       >
         <div className="flex w-full justify-end">
           <X
@@ -254,7 +391,7 @@ export const Users: React.FC = () => {
 
       {/* ✔️ Users Table */}
       <h1 className="text-xl font-bold mb-10 underline underline-offset-8">
-        Manange Users
+        Manage Users
       </h1>
 
       <div className="w-full mb-10">
@@ -277,7 +414,7 @@ export const Users: React.FC = () => {
           <Input
             type="text"
             placeholder="Search users with name, email or role.."
-            className="w-1/2"
+            className="w-full lg:w-1/2"
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);
@@ -299,11 +436,10 @@ export const Users: React.FC = () => {
       </div>
 
       <div
-        className={`grid-col-10 gap-6 grid-flow-col ${
-          query ? "hidden" : "grid"
-        }`}
+        className={`grid grid-cols-1 lg:grid-cols-10 gap-6 ${query ? "hidden" : "grid"
+          }`}
       >
-        <Card className="col-span-7">
+        <Card className="col-span-1 lg:col-span-7">
           <CardHeader className="flex justify-between items-center">
             <h2 className="text-lg font-medium text-gray-900">
               Users Analytics
@@ -318,14 +454,14 @@ export const Users: React.FC = () => {
               View
             </p>
           </CardHeader>
-          <div className="grid grid-flow-col font-medium h-[60vh] bg-white shadow-md py-10 pr-5">
-            <div className="col-span-2">
+          <div className="font-medium h-[40vh] md:h-[60vh] bg-white shadow-md py-6 md:py-10 pr-2 md:pr-5">
+            <div className="h-full">
               <StartupGrowthChart data={startupGrowthChartData} />
             </div>
           </div>
         </Card>
 
-        <Card className="col-span-3">
+        <Card className="col-span-1 lg:col-span-3">
           <CardHeader className="flex justify-between items-center">
             <h2 className="text-lg font-medium text-gray-900">
               Startup Industry Analytics
@@ -340,8 +476,8 @@ export const Users: React.FC = () => {
               View
             </p>
           </CardHeader>
-          <div className="grid grid-flow-col font-medium h-[60vh] bg-white shadow-md py-10 pr-5">
-            <div className="">
+          <div className="font-medium h-[40vh] md:h-[60vh] bg-white shadow-md py-6 md:py-10 pr-2 md:pr-5">
+            <div className="h-full">
               <StartupIndustryChart data={industryGrowthChartData} />
             </div>
           </div>
@@ -387,7 +523,123 @@ export const Users: React.FC = () => {
         </table>
       </div>
 
-      
+      {/* Suspend Modal */}
+      {suspendModal.show && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-[9999]">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h2 className="text-xl font-bold mb-4">Suspend User</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Suspension Reason *
+                </label>
+                <textarea
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                  rows={3}
+                  value={suspensionReason}
+                  onChange={(e) => setSuspensionReason(e.target.value)}
+                  placeholder="Enter reason for suspension..."
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Suspension Period (Days) *
+                </label>
+                <Input
+                  type="number"
+                  min="1"
+                  value={suspensionDays}
+                  onChange={(e) => setSuspensionDays(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <Button
+                variant="warning"
+                onClick={suspendUser}
+                className="flex-1"
+                disabled={isSuspending}
+              >
+                {isSuspending ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
+                    Suspending...
+                  </div>
+                ) : (
+                  "Suspend User"
+                )}
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setSuspendModal({ show: false, userId: null });
+                  setSuspensionReason("");
+                  setSuspensionDays("7");
+                }}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Block Modal */}
+      {blockModal.show && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-[9999]">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h2 className="text-xl font-bold mb-4">Block User</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Block Reason *
+                </label>
+                <textarea
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
+                  rows={3}
+                  value={blockReason}
+                  onChange={(e) => setBlockReason(e.target.value)}
+                  placeholder="Enter reason for blocking..."
+                />
+              </div>
+              <div className="bg-red-50 border border-red-200 rounded-md p-3">
+                <p className="text-sm text-red-800">
+                  <strong>Warning:</strong> Blocking a user will permanently restrict their access to the platform. This action cannot be undone automatically.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <Button
+                variant="error"
+                onClick={blockUser}
+                className="flex-1"
+                disabled={isBlocking}
+              >
+                {isBlocking ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
+                    Blocking...
+                  </div>
+                ) : (
+                  "Block User"
+                )}
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setBlockModal({ show: false, userId: null });
+                  setBlockReason("");
+                }}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

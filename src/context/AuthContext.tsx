@@ -20,42 +20,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Check for stored user on initial load
   // Check for stored user on initial load
-useEffect(() => {
-  // Clear token and user on refresh
-  localStorage.removeItem("token");
-  setUser(null);
+  useEffect(() => {
+    // Clear token and user on refresh
+    localStorage.removeItem("token");
+    setUser(null);
 
-  const checkAuth = async () => {
-    setIsLoading(true);
-    const token = localStorage.getItem("token"); // will be null after removal
-    if (token) {
-      try {
-        const res = await axios.get(URL + "/auth/verify", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const { user: userData } = res.data;
-
-        if (userData.exp * 1000 > Date.now()) {
-          setUser({
-            ...userData,
-            isOnline: true,
-            userId: userData.userId || userData._id,
+    const checkAuth = async () => {
+      setIsLoading(true);
+      const token = localStorage.getItem("token"); // will be null after removal
+      if (token) {
+        try {
+          const res = await axios.get(URL + "/auth/verify", {
+            headers: { Authorization: `Bearer ${token}` },
           });
-        } else {
+          const { user: userData } = res.data;
+
+          if (userData.exp * 1000 > Date.now()) {
+            setUser({
+              ...userData,
+              isOnline: true,
+              userId: userData.userId || userData._id,
+            });
+          } else {
+            localStorage.removeItem("token");
+            setUser(null);
+          }
+        } catch (err) {
+          console.error("Token verification failed:", err);
           localStorage.removeItem("token");
           setUser(null);
         }
-      } catch (err) {
-        console.error("Token verification failed:", err);
-        localStorage.removeItem("token");
-        setUser(null);
       }
-    }
-    setIsLoading(false);
-  };
+      setIsLoading(false);
+    };
 
-  checkAuth();
-}, []);
+    checkAuth();
+  }, []);
 
 
   // Enhanced login function with 2FA support
@@ -79,7 +79,7 @@ useEffect(() => {
           withCredentials: true,
         }
       );
-      
+
       const { token, user: userData, requires2FA: needs2FA, partialToken } = res.data;
 
       if (needs2FA && partialToken) {
@@ -103,7 +103,7 @@ useEffect(() => {
       };
       setUser(fullUserData);
       toast.success("Successfully logged in!");
-      
+
       return { requires2FA: false, user: fullUserData, token };
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || error.message;
@@ -127,7 +127,7 @@ useEffect(() => {
     }
 
     setIsLoading(true);
-    
+
     try {
       const response = await axios.post(
         `${URL}/auth/verify-2fa`,
@@ -137,9 +137,9 @@ useEffect(() => {
           useBackupCode
         }
       );
-      
+
       const { token, user: userData } = response.data;
-      
+
       // Save token and set user
       localStorage.setItem("token", token);
       const fullUserData = {
@@ -150,7 +150,7 @@ useEffect(() => {
       setUser(fullUserData);
       setRequires2FA(false);
       setPartialAuthData(null);
-      
+
       toast.success("2FA verification successful!");
       return { user: fullUserData, token };
     } catch (error: any) {
@@ -212,7 +212,8 @@ useEffect(() => {
     name: string,
     email: string,
     password: string,
-    role: UserRole
+    role: UserRole,
+    showToast: boolean = true
   ): Promise<string | null> => {
     setIsLoading(true);
 
@@ -231,7 +232,9 @@ useEffect(() => {
         }
       );
       if (res.status === 201) {
-        toast.success("Account created successfully!");
+        if (showToast) {
+          toast.success("Account created successfully!");
+        }
         const { token, user } = res.data;
         localStorage.setItem("token", token);
         const fullUserData = {
@@ -302,12 +305,12 @@ useEffect(() => {
       if (token !== storedToken) {
         throw new Error("Invalid or expired reset token");
       }
-      
+
       const savedUserStr = localStorage.getItem(USER_STORAGE_KEY);
       if (!savedUserStr) {
         throw new Error("User data not found");
       }
-      
+
       const savedUser = JSON.parse(savedUserStr);
 
       const res = await axios.patch(
@@ -315,7 +318,7 @@ useEffect(() => {
         { newPassword },
         { withCredentials: true }
       );
-      
+
       const { user: userData } = res.data;
       const fullUserData = {
         ...userData,
@@ -361,7 +364,9 @@ useEffect(() => {
     formData.append("location", userData.location);
     formData.append("email", userData.email);
     formData.append("bio", userData.bio);
-    formData.append("avatarUrl", userData.avatarUrl);
+    if (userData.avatarUrl) {
+      formData.append("avatarUrl", userData.avatarUrl as string | Blob);
+    }
 
     try {
       const res = await axios.post(
@@ -371,7 +376,7 @@ useEffect(() => {
           withCredentials: true,
         }
       );
-      
+
       toast.success("Profile updated successfully.");
       const { user: updatedUser } = res.data;
       const fullUserData = {
@@ -399,6 +404,7 @@ useEffect(() => {
     cancel2FA,
     requires2FA,
     partialAuthData,
+    userData: user,
     isAuthenticated: !!user,
     isLoading,
   };

@@ -104,7 +104,7 @@ export const RegisterPage: React.FC = () => {
     }
 
     if (!termsAccepted) {
-      setError("You must accept the Terms of Service and Privacy Policy");
+      setError("You must accept the Terms of Service and Community Guidelines");
       return false;
     }
 
@@ -202,8 +202,8 @@ export const RegisterPage: React.FC = () => {
                 <button
                   type="button"
                   className={`min-w-[100px] p-3 border rounded-xl flex flex-col items-center justify-center transition-all flex-shrink-0 active:scale-95 ${role === "entrepreneur"
-                      ? "border-primary-500 bg-primary-50"
-                      : "border-gray-200 bg-white hover:border-primary-300"
+                    ? "border-primary-500 bg-primary-50"
+                    : "border-gray-200 bg-white hover:border-primary-300"
                     }`}
                   onClick={() => setRole("entrepreneur")}
                 >
@@ -214,8 +214,8 @@ export const RegisterPage: React.FC = () => {
                 <button
                   type="button"
                   className={`min-w-[100px] p-3 border rounded-xl flex flex-col items-center justify-center transition-all flex-shrink-0 active:scale-95 ${role === "investor"
-                      ? "border-primary-500 bg-primary-50"
-                      : "border-gray-200 bg-white hover:border-primary-300"
+                    ? "border-primary-500 bg-primary-50"
+                    : "border-gray-200 bg-white hover:border-primary-300"
                     }`}
                   onClick={() => setRole("investor")}
                 >
@@ -340,10 +340,10 @@ export const RegisterPage: React.FC = () => {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
                   className={`w-full pl-10 pr-11 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 outline-none ${confirmPassword
-                      ? password === confirmPassword
-                        ? "border-green-500"
-                        : "border-error-500"
-                      : "border-gray-300"
+                    ? password === confirmPassword
+                      ? "border-green-500"
+                      : "border-error-500"
+                    : "border-gray-300"
                     }`}
                   placeholder="Re-enter password"
                 />
@@ -378,13 +378,21 @@ export const RegisterPage: React.FC = () => {
               />
               <label htmlFor="terms" className="text-sm text-gray-900">
                 I agree to the{" "}
-                <a href="#" className="text-primary-600 font-medium">
-                  Terms
-                </a>{" "}
+                <Link
+                  to="/terms"
+                  className="text-primary-600 font-medium"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  Terms of Service
+                </Link>{" "}
                 and{" "}
-                <a href="#" className="text-primary-600 font-medium">
-                  Privacy Policy
-                </a>
+                <Link
+                  to="/guidelines"
+                  className="text-primary-600 font-medium"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  Community Guidelines
+                </Link>
               </label>
             </div>
 
@@ -500,8 +508,8 @@ export const RegisterPage: React.FC = () => {
                 <button
                   type="button"
                   className={`relative p-6 border-2 rounded-xl flex flex-col items-center justify-center transition-all duration-200 flex-1 max-w-[180px] ${role === "entrepreneur"
-                      ? "border-primary-500 bg-primary-50"
-                      : "border-gray-200 hover:border-gray-300"
+                    ? "border-primary-500 bg-primary-50"
+                    : "border-gray-200 hover:border-gray-300"
                     }`}
                   onClick={() => setRole("entrepreneur")}
                 >
@@ -513,8 +521,8 @@ export const RegisterPage: React.FC = () => {
                 <button
                   type="button"
                   className={`relative p-6 border-2 rounded-xl flex flex-col items-center justify-center transition-all duration-200 flex-1 max-w-[180px] ${role === "investor"
-                      ? "border-primary-500 bg-primary-50"
-                      : "border-gray-200 hover:border-gray-300"
+                    ? "border-primary-500 bg-primary-50"
+                    : "border-gray-200 hover:border-gray-300"
                     }`}
                   onClick={() => setRole("investor")}
                 >
@@ -641,7 +649,22 @@ export const RegisterPage: React.FC = () => {
               />
               <div>
                 <label htmlFor="terms" className="block text-sm font-medium text-gray-900">
-                  I agree to the Terms of Service and Privacy Policy
+                  I agree to the{" "}
+                  <Link
+                    to="/terms"
+                    className="text-primary-600 hover:underline"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    Terms of Service
+                  </Link>{" "}
+                  and{" "}
+                  <Link
+                    to="/guidelines"
+                    className="text-primary-600 hover:underline"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    Community Guidelines
+                  </Link>
                 </label>
                 <p className="text-xs text-gray-500 mt-1">
                   By creating an account, you agree to our terms and acknowledge our privacy practices.

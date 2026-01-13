@@ -194,7 +194,7 @@ export const AccountUnderReviewPage: React.FC = () => {
           </p>
           <div className="flex gap-3">
             <a
-              href="mailto:support@trustbridge.ai"
+              href="mailto:aitrustbridge@gmail.com"
               className="flex-1 text-center px-4 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-medium"
             >
               Email Support

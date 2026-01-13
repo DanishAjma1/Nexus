@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 import {
     getEnterpreneurById,
     updateEntrepreneurData,
@@ -21,7 +22,8 @@ import {
     Lightbulb,
     Save,
     Sparkles,
-    Check
+    Check,
+    Loader2
 } from "lucide-react";
 
 type User = {
@@ -38,6 +40,7 @@ export const EntrepreneurSetup: React.FC = () => {
     const checkIfSettingPage = location.pathname === "/settings" ? true : false;
     const [entrepreneur, setEnterpreneur] = useState<Entrepreneur>();
     const isEditMode = checkIfSettingPage && entrepreneur;
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         const fetchEntrepreneur = async () => {
@@ -90,6 +93,23 @@ export const EntrepreneurSetup: React.FC = () => {
 
     const handleUserSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        setIsSubmitting(true);
+
+        if (formData.foundedYear) {
+            const yearStr = formData.foundedYear.toString();
+            if (yearStr.length !== 4) {
+                toast.error("Founded Year must be exactly 4 digits.");
+                setIsSubmitting(false);
+                return;
+            }
+            const currentYear = new Date().getFullYear();
+            if (parseInt(yearStr) > currentYear) {
+                toast.error(`Founded Year cannot be in the future (max ${currentYear}).`);
+                setIsSubmitting(false);
+                return;
+            }
+        }
+
         try {
             if (!checkIfSettingPage) {
                 const userInfoString = localStorage.getItem("userInfo");
@@ -99,15 +119,15 @@ export const EntrepreneurSetup: React.FC = () => {
                 try {
                     const parsed = JSON.parse(userInfoString) as User;
                     const { name, email, password, role } = parsed;
-                    const userId = await register(name, email, password, role);
+                    const userId = await register(name, email, password, role, false);
                     console.log(userId);
                     if (userId) {
                         await createEnterProfile({ ...formData, userId: userId });
 
-                                                // Email will be sent from the backend when profile is created/updated
+                        // Email will be sent from the backend when profile is created/updated
                         setFormData({});
                         setEnterpreneur(undefined);
-                        navigate("/", { replace: true });
+                        navigate("/account-under-review", { replace: true });
                     }
                 } catch (e) {
                     console.error("Failed to parse userInfo from localStorage", e);
@@ -150,6 +170,8 @@ export const EntrepreneurSetup: React.FC = () => {
             }
         } catch (error) {
             console.error(error);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -249,6 +271,8 @@ export const EntrepreneurSetup: React.FC = () => {
                                     value={formData.foundedYear || ""}
                                     onChange={handleUserChange}
                                     placeholder="When did you start?"
+                                    min="1000"
+                                    max={new Date().getFullYear()}
                                     className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:bg-white transition-all placeholder-gray-400 group-hover:border-green-300"
                                 />
                                 <div className="absolute inset-0 rounded-xl border-2 border-transparent group-focus-within:border-green-400 pointer-events-none"></div>
@@ -267,6 +291,7 @@ export const EntrepreneurSetup: React.FC = () => {
                                     value={formData.teamSize || ""}
                                     onChange={handleUserChange}
                                     placeholder="How many team members?"
+                                    min="0"
                                     className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:bg-white transition-all placeholder-gray-400 group-hover:border-green-300"
                                 />
                                 <div className="absolute inset-0 rounded-xl border-2 border-transparent group-focus-within:border-green-400 pointer-events-none"></div>
@@ -316,6 +341,7 @@ export const EntrepreneurSetup: React.FC = () => {
                                     value={formData.fundingNeeded || ""}
                                     onChange={handleUserChange}
                                     placeholder="Amount needed"
+                                    min="0"
                                     className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all placeholder-gray-400 group-hover:border-blue-300"
                                 />
                                 <div className="absolute inset-0 rounded-xl border-2 border-transparent group-focus-within:border-blue-400 pointer-events-none"></div>
@@ -335,6 +361,7 @@ export const EntrepreneurSetup: React.FC = () => {
                                     value={formData.revenue || ""}
                                     onChange={handleUserChange}
                                     placeholder="Current revenue"
+                                    min="0"
                                     className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all placeholder-gray-400 group-hover:border-blue-300"
                                 />
                                 <div className="absolute inset-0 rounded-xl border-2 border-transparent group-focus-within:border-blue-400 pointer-events-none"></div>
@@ -353,6 +380,7 @@ export const EntrepreneurSetup: React.FC = () => {
                                     value={formData.profitMargin || ""}
                                     onChange={handleUserChange}
                                     placeholder="Percentage"
+                                    min="0"
                                     className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all placeholder-gray-400 group-hover:border-blue-300"
                                 />
                                 <div className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500">%</div>
@@ -442,11 +470,12 @@ export const EntrepreneurSetup: React.FC = () => {
                     </div>
                     <button
                         type="submit"
-                        className="px-8 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-medium rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl"
+                        disabled={isSubmitting}
+                        className="px-8 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-medium rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-70 disabled:cursor-not-allowed"
                     >
                         <div className="flex items-center space-x-2">
-                            <Save className="w-5 h-5" />
-                            <span>{checkIfSettingPage ? "Update Profile" : "Save & Send For Review"}</span>
+                            {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                            <span>{checkIfSettingPage ? (isSubmitting ? "Updating..." : "Update Profile") : (isSubmitting ? "Saving..." : "Save & Send For Review")}</span>
                         </div>
                     </button>
                 </div>

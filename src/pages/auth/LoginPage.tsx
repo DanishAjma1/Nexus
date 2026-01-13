@@ -114,7 +114,23 @@ const handleSubmit = async (e: React.FormEvent) => {
     // Check for approval status in error response
     if (err.response?.status === 403) {
       const data = err.response.data;
-      if (data.approvalStatus === "pending") {
+      // Check blocked/suspended status first (before approval status)
+      if (data.isBlocked) {
+        // Redirect blocked users
+        navigate("/account-blocked", {
+          state: { blockReason: data.blockReason || "No reason provided" }
+        });
+        return;
+      } else if (data.isSuspended) {
+        // Redirect suspended users
+        navigate("/account-suspended", {
+          state: {
+            suspensionReason: data.suspensionReason || "No reason provided",
+            suspensionEndDate: data.suspensionEndDate
+          }
+        });
+        return;
+      } else if (data.approvalStatus === "pending") {
         // Redirect pending users to the account-under-review page
         navigate("/account-under-review", { state: { email } });
         return;
@@ -322,9 +338,9 @@ const handleSubmit = async (e: React.FormEvent) => {
                   Remember me
                 </label>
               </div>
-              <a href="/forgot-password" className="text-sm text-primary-600 font-medium">
+              <Link to="/forgot-password" className="text-sm text-primary-600 font-medium hover:text-primary-700">
                 Forgot?
-              </a>
+              </Link>
             </div>
 
             {/* Sign In Button */}
@@ -607,12 +623,12 @@ const handleSubmit = async (e: React.FormEvent) => {
                 </label>
               </div>
 
-              <a
-                href="/forgot-password"
+              <Link
+                to="/forgot-password"
                 className="text-sm font-medium text-primary-600 hover:text-primary-700"
               >
                 Forgot password?
-              </a>
+              </Link>
             </div>
 
             <Button

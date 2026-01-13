@@ -6,6 +6,7 @@ import {
 } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { SocketProvider } from "./context/SocketContext";
+import { NotificationProvider } from "./context/NotificationContext";
 
 // Layouts
 import { DashboardLayout } from "./components/layout/DashboardLayout";
@@ -56,117 +57,133 @@ import { UserDetails } from "./components/user/UserDetails";
 import { UserApprovals } from "./pages/admin/UserApprovals";
 import { AccountUnderReviewPage } from "./pages/auth/AccountUnderReviewPage";
 import { AccountRejectedPage } from "./pages/auth/AccountRejectedPage";
+import { SuspendedUserPage } from "./pages/auth/SuspendedUserPage";
+import { BlockedUserPage } from "./pages/auth/BlockedUserPage";
+import ScrollToTop from "./components/common/ScrollToTop";
+import { SuspendedBlockedUsers } from "./pages/admin/SuspendedBlockedUsers";
+import { TermsOfService } from "./pages/legal/TermsOfService";
+import { CommunityGuidelines } from "./pages/legal/CommunityGuidelines";
+import SendMassNotification from "./pages/admin/SendMassNotification";
 
 function App() {
   return (
     <AuthProvider>
       <SocketProvider>
-        <Router>
-          <Routes>
-            {/* Authentication Routes */}
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            <Route path="/reset-password" element={<ResetPasswordPage />} />
-            <Route path="/account-under-review" element={<AccountUnderReviewPage />} />
-            <Route path="/account-rejected" element={<AccountRejectedPage />} />
+        <NotificationProvider>
+          <Router>
+            <ScrollToTop />
+            <Routes>
+              {/* Authentication Routes */}
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
+              <Route path="/account-under-review" element={<AccountUnderReviewPage />} />
+              <Route path="/account-rejected" element={<AccountRejectedPage />} />
+              <Route path="/account-suspended" element={<SuspendedUserPage />} />
+              <Route path="/account-blocked" element={<BlockedUserPage />} />
+              <Route path="/terms" element={<TermsOfService />} />
+              <Route path="/guidelines" element={<CommunityGuidelines />} />
 
-            {/* Dashboard Routes */}
-            <Route path="/dashboard" element={<DashboardLayout />}>
-              <Route path="entrepreneur" element={<EntrepreneurDashboard />} />
-              <Route path="investor" element={<InvestorDashboard />} />
-              <Route path="admin" element={<AdminDashboard />} />
-            </Route>
+              {/* Dashboard Routes */}
+              <Route path="/dashboard" element={<DashboardLayout />}>
+                <Route path="entrepreneur" element={<EntrepreneurDashboard />} />
+                <Route path="investor" element={<InvestorDashboard />} />
+                <Route path="admin" element={<AdminDashboard />} />
+              </Route>
 
-            <Route path="/admin" element={<DashboardLayout />}>
-              <Route path="activities" element={<Activities />} />
-              <Route path="all-users" element={<Users />} />
-              <Route path="investors" element={<Investors />} />
-              <Route path="campaigns" element={<Campaigns />} />
-              <Route path="supporters" element={<Supporters />} />
-              <Route path="flaggedAccounts" element={<FlaggedAccounts />} />
+              <Route path="/admin" element={<DashboardLayout />}>
+                <Route path="activities" element={<Activities />} />
+                <Route path="all-users" element={<Users />} />
+                <Route path="investors" element={<Investors />} />
+                <Route path="campaigns" element={<Campaigns />} />
+                <Route path="supporters" element={<Supporters />} />
+                <Route path="flaggedAccounts" element={<FlaggedAccounts />} />
+                <Route path="suspended-blocked" element={<SuspendedBlockedUsers />} />
+                <Route
+                  path="fraud-and-risk-detection"
+                  element={<FraudAndRiskDetection />}
+                />
+                <Route path="send-notification" element={<SendMassNotification />} />
+              </Route>
+
+              <Route path="/dashboard/admin" element={<DashboardLayout />}>
+                <Route path="approvals" element={<UserApprovals />} />
+              </Route>
+
+              {/* Profile Routes */}
+              <Route path="/profile" element={<DashboardLayout />}>
+                <Route
+                  path="entrepreneur/:id"
+                  element={<EntrepreneurProfile />}
+                />
+                <Route path="investor/:id" element={<InvestorProfile />} />
+              </Route>
+
+              {/* Feature Routes */}
+              <Route path="/investors" element={<DashboardLayout />}>
+                <Route index element={<InvestorsPage />} />
+              </Route>
+
+              <Route path="/entrepreneurs" element={<DashboardLayout />}>
+                <Route index element={<EntrepreneursPage />} />
+              </Route>
+
+              <Route path="/messages" element={<DashboardLayout />}>
+                <Route index element={<MessagesPage />} />
+              </Route>
+
+              <Route path="/notifications" element={<DashboardLayout />}>
+                <Route index element={<NotificationsPage />} />
+              </Route>
+
+              <Route path="/documents" element={<DashboardLayout />}>
+                <Route index element={<DocumentsPage />} />
+              </Route>
+
+              <Route path="/settings" element={<DashboardLayout />}>
+                <Route index element={<SettingsPage />} />
+              </Route>
+
+              <Route path="/help" element={<DashboardLayout />}>
+                <Route index element={<HelpPage />} />
+              </Route>
+
+              <Route path="/call" element={<DashboardLayout />}></Route>
+
+              <Route path="/deals" element={<DashboardLayout />}>
+                <Route path="sent-deals" element={<DealsPage />} />
+                <Route path="view-deals" element={<ViewDeals />} />
+              </Route>
+
+              {/* Chat Routes */}
+              <Route path="/chat" element={<DashboardLayout />}>
+                <Route
+                  path=":userId/audio-call/:roomId/:isIncommingCall"
+                  element={<AudioCall />}
+                />
+                <Route
+                  path=":userId/video-call/:roomId/:isIncommingCall"
+                  element={<VideoCall />}
+                />
+                <Route path=":userId" element={<ChatPage />} />
+              </Route>
+
+              {/* Redirect root to homepage */}
+              <Route path="/" element={<HomePage />} />
+              <Route path="/All-Campaigns" element={<CampaignsPage />} />
+              <Route path="/Fundraises" element={<FundraisePage />} />
+              <Route path="/verify-2fa" element={<TwoFactorAuthPage />} />
+              <Route path="/fill-details" element={<UserDetails />} />
+              {/* Catch all other routes and redirect to login */}
               <Route
-                path="fraud-and-risk-detection"
-                element={<FraudAndRiskDetection />}
+                path="/dashboard/entreprenuer"
+                element={<Navigate to="/login" replace />}
               />
-            </Route>
-
-            <Route path="/dashboard/admin" element={<DashboardLayout />}>
-              <Route path="approvals" element={<UserApprovals />} />
-            </Route>
-
-            {/* Profile Routes */}
-            <Route path="/profile" element={<DashboardLayout />}>
-              <Route
-                path="entrepreneur/:id"
-                element={<EntrepreneurProfile />}
-              />
-              <Route path="investor/:id" element={<InvestorProfile />} />
-            </Route>
-
-            {/* Feature Routes */}
-            <Route path="/investors" element={<DashboardLayout />}>
-              <Route index element={<InvestorsPage />} />
-            </Route>
-
-            <Route path="/entrepreneurs" element={<DashboardLayout />}>
-              <Route index element={<EntrepreneursPage />} />
-            </Route>
-
-            <Route path="/messages" element={<DashboardLayout />}>
-              <Route index element={<MessagesPage />} />
-            </Route>
-
-            <Route path="/notifications" element={<DashboardLayout />}>
-              <Route index element={<NotificationsPage />} />
-            </Route>
-
-            <Route path="/documents" element={<DashboardLayout />}>
-              <Route index element={<DocumentsPage />} />
-            </Route>
-
-            <Route path="/settings" element={<DashboardLayout />}>
-              <Route index element={<SettingsPage />} />
-            </Route>
-
-            <Route path="/help" element={<DashboardLayout />}>
-              <Route index element={<HelpPage />} />
-            </Route>
-
-            <Route path="/call" element={<DashboardLayout />}></Route>
-
-            <Route path="/deals" element={<DashboardLayout />}>
-              <Route path="sent-deals" element={<DealsPage />} />
-              <Route path="view-deals" element={<ViewDeals />} />
-            </Route>
-
-            {/* Chat Routes */}
-            <Route path="/chat" element={<DashboardLayout />}>
-              <Route
-                path=":userId/audio-call/:roomId/:isIncommingCall"
-                element={<AudioCall />}
-              />
-              <Route
-                path=":userId/video-call/:roomId/:isIncommingCall"
-                element={<VideoCall />}
-              />
-              <Route path=":userId" element={<ChatPage />} />
-            </Route>
-
-            {/* Redirect root to homepage */}
-            <Route path="/" element={<HomePage />} />
-            <Route path="/All-Campaigns" element={<CampaignsPage />} />
-            <Route path="/Fundraises" element={<FundraisePage />} />
-            <Route path="/verify-2fa" element={<TwoFactorAuthPage />} />
-            <Route path="/fill-details" element={<UserDetails />} />
-            {/* Catch all other routes and redirect to login */}
-            <Route
-              path="/dashboard/entreprenuer"
-              element={<Navigate to="/login" replace />}
-            />
-          </Routes>
-        </Router>
-        <Toaster position="top-right" reverseOrder={false} />
+            </Routes>
+          </Router>
+          <Toaster position="top-right" reverseOrder={false} />
+        </NotificationProvider>
       </SocketProvider>
     </AuthProvider>
   );

@@ -5,6 +5,9 @@ import {
   AlertTriangle,
   Shield,
   MessageSquare,
+  UserX,
+  Ban,
+  UserCheck
 } from "lucide-react";
 import { Card, CardBody, CardHeader } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/Badge";
@@ -24,13 +27,14 @@ type ChartData = {
 };
 
 export const AdminDashboard: React.FC = () => {
+  const URL = import.meta.env.VITE_BACKEND_URL;
   const { user } = useAuth();
   const [stats, setStats] = useState({
-    startups: 0,
-    investors: 0,
+    approvedUsers: 0,
     supporters: 10,
     campaigns: 0,
-    flagged: 0,
+    suspendedUsers: 0,
+    blockedUsers: 0,
   });
   const navigate = useNavigate();
 
@@ -38,7 +42,46 @@ export const AdminDashboard: React.FC = () => {
     const fetchData = async () => {
       try {
         const res = await axios.get(`${URL}/admin/dashboard`);
-        setStats(res.data);
+        // Assuming the API returns total users, we'll need to calculate approved users
+        // For now, let's set a placeholder. In reality, you might need an API endpoint
+        // that specifically returns approved users count.
+        
+        // First, let's fetch all users to calculate counts
+        const usersRes = await axios.get(`${URL}/admin/get-users`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+        });
+        
+        const allUsers = usersRes.data;
+        
+        // Calculate counts based on user status
+        const approvedCount = allUsers.filter((u: any) => 
+          u.status === 'approved' || 
+          u.approvalStatus === 'approved' ||
+          u.isApproved === true ||
+          (u.status !== 'pending' && u.status !== 'rejected' && !u.isBlocked && !u.isSuspended)
+        ).length;
+        
+        const suspendedCount = allUsers.filter((u: any) => 
+          u.isSuspended === true || 
+          u.suspended === true ||
+          u.status === 'suspended'
+        ).length;
+        
+        const blockedCount = allUsers.filter((u: any) => 
+          u.isBlocked === true || 
+          u.blocked === true ||
+          u.status === 'blocked'
+        ).length;
+        
+        // Update stats with calculated values
+        setStats({
+          approvedUsers: approvedCount,
+          supporters: 10, // Keeping as static for now
+          campaigns: res.data.campaigns || 0,
+          suspendedUsers: suspendedCount,
+          blockedUsers: blockedCount
+        });
+        
       } catch (error) {
         console.error("Error fetching admin stats:", error);
       }
@@ -55,29 +98,22 @@ export const AdminDashboard: React.FC = () => {
 
   const fetchStartupGrowthChartData = async () => {
     const res = await fetch(
-      "http://localhost:5000/admin/users/users-last-year"
+      `${URL}/admin/users/users-last-year`
     );
     const data = await res.json();
     setStartupGrowthChartData(data);
   };
-  // const fetchFundingChartData = async () => {
-  //   const res = await fetch(
-  //     "http://localhost:5000/admin/users/users-last-year"
-  //   );
-  //   const data = await res.json();
-  //   setStartupGrowthChartData(data);
-  // };
 
   const fetchIndustryGrowthChartData = async () => {
     const res = await fetch(
-      "http://localhost:5000/admin/users/startup-by-industry"
+      `${URL}/admin/users/startup-by-industry`
     );
     const data = await res.json();
     setIndustryGrowthChartData(data);
   };
 
   const fetchFraudGrowthChartData = async () => {
-    const res = await fetch("http://localhost:5000/admin/risk-detection-flags");
+    const res = await fetch(`${URL}/admin/risk-detection-flags`);
     const data = await res.json();
     const { finalData } = data;
     setFraudGrowthChartData(finalData);
@@ -105,65 +141,86 @@ export const AdminDashboard: React.FC = () => {
       </div>
 
       {/* Top summary cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-purple-50 border border-purple-100">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        {/* Approved Users Card */}
+        <Card className="bg-green-50 border border-green-100">
           <CardBody>
             <div className="flex items-center">
-              <div className="p-3 bg-purple-100 rounded-full mr-4">
-                <Users size={20} className="text-purple-700" />
+              <div className="p-3 bg-green-100 rounded-full mr-4">
+                <UserCheck size={20} className="text-green-700" />
               </div>
-              <div className="flex gap-2 items-center">
-                <p className="text-sm font-medium text-purple-700">Users</p>
-                <h3 className="font-semibold text-purple-900">
-                  {stats.investors || 10}
+              <div className="flex flex-col">
+                <p className="text-sm font-medium text-green-700">Users</p>
+                <h3 className="text-lg font-semibold text-green-900">
+                  {stats.approvedUsers}
                 </h3>
               </div>
             </div>
           </CardBody>
         </Card>
 
+        {/* Supporters Card */}
         <Card className="bg-amber-50 border border-amber-100">
           <CardBody>
             <div className="flex items-center">
               <div className="p-3 bg-amber-100 rounded-full mr-4">
                 <Users size={20} className="text-amber-700" />
               </div>
-              <div className="flex gap-2 items-center">
+              <div className="flex flex-col">
                 <p className="text-sm font-medium text-amber-700">Supporters</p>
-                <h3 className="font-semibold text-amber-900">
-                  {stats.supporters || 10}
+                <h3 className="text-lg font-semibold text-amber-900">
+                  {stats.supporters}
                 </h3>
               </div>
             </div>
           </CardBody>
         </Card>
 
-        <Card className="bg-green-50 border border-green-100">
+        {/* Campaigns Card */}
+        <Card className="bg-blue-50 border border-blue-100">
           <CardBody>
             <div className="flex items-center">
-              <div className="p-3 bg-green-100 rounded-full mr-4">
-                <TrendingUp size={20} className="text-green-700" />
+              <div className="p-3 bg-blue-100 rounded-full mr-4">
+                <TrendingUp size={20} className="text-blue-700" />
               </div>
-              <div className="flex gap-2 items-center">
-                <p className="text-sm font-medium text-green-700">Campaigns</p>
-                <h3 className="font-semibold text-green-900">
-                  {stats.campaigns || 10}
+              <div className="flex flex-col">
+                <p className="text-sm font-medium text-blue-700">Campaigns</p>
+                <h3 className="text-lg font-semibold text-blue-900">
+                  {stats.campaigns}
                 </h3>
               </div>
             </div>
           </CardBody>
         </Card>
 
+        {/* Suspended Users Card */}
+        <Card className="bg-orange-50 border border-orange-100">
+          <CardBody>
+            <div className="flex items-center">
+              <div className="p-3 bg-orange-100 rounded-full mr-4">
+                <UserX size={20} className="text-orange-700" />
+              </div>
+              <div className="flex flex-col">
+                <p className="text-sm font-medium text-orange-700">Suspended</p>
+                <h3 className="text-lg font-semibold text-orange-900">
+                  {stats.suspendedUsers}
+                </h3>
+              </div>
+            </div>
+          </CardBody>
+        </Card>
+
+        {/* Blocked Users Card */}
         <Card className="bg-red-50 border border-red-100">
           <CardBody>
             <div className="flex items-center">
               <div className="p-3 bg-red-100 rounded-full mr-4">
-                <AlertTriangle size={20} className="text-red-700" />
+                <Ban size={20} className="text-red-700" />
               </div>
-              <div className="flex gap-2 items-center">
-                <p className="text-sm font-medium text-red-700">Flagged</p>
-                <h3 className="font-semibold text-red-900">
-                  {stats.flagged || 10}
+              <div className="flex flex-col">
+                <p className="text-sm font-medium text-red-700">Blocked</p>
+                <h3 className="text-lg font-semibold text-red-900">
+                  {stats.blockedUsers}
                 </h3>
               </div>
             </div>
@@ -184,17 +241,17 @@ export const AdminDashboard: React.FC = () => {
           </Link>
         </CardHeader>
 
-        <div className="grid grid-flow-col font-medium grid-cols-3 h-[60vh] bg-white shadow-md py-10 px-5">
-          <div className=" col-span-2">
+        <div className="grid grid-cols-1 lg:grid-cols-3 font-medium h-auto lg:h-[60vh] bg-white shadow-md py-6 md:py-10 px-4 md:px-5 gap-8">
+          <div className="lg:col-span-2 h-[40vh] md:h-full">
             <StartupGrowthChart data={startupGrowthChartData} />
-            <h3 className="mb-2 justify-center flex font-light text-sm underline text-blue-700">
+            <h3 className="mt-2 justify-center flex font-light text-sm underline text-blue-700">
               User Growth Chart
             </h3>
           </div>
 
-          <div className="">
+          <div className="h-[40vh] md:h-full">
             <StartupIndustryChart data={industryGrowthChartData} />
-            <h3 className="ml-10 mb-2 justify-center flex font-light text-sm underline text-blue-700">
+            <h3 className="mt-2 lg:ml-10 justify-center flex font-light text-sm underline text-blue-700">
               Startup industry growthRate
             </h3>
           </div>
@@ -212,24 +269,23 @@ export const AdminDashboard: React.FC = () => {
             <Badge variant="secondary">Crowdfunding</Badge>
           </CardHeader>
 
-          <CardBody className="flex flex-row pb-10 gap-5">
-            <div className="w-2/5 flex flex-col justify-evenly">
-              <p className="text-gray-600">
+          <CardBody className="flex flex-col lg:flex-row pb-10 gap-8">
+            <div className="w-full lg:w-2/5 flex flex-col justify-evenly">
+              <p className="text-gray-600 text-sm md:text-base">
                 Edit, approve, or remove user accounts. Monitor activity and
-                handle reports of fraudulent behavior.The user catched by
+                handle reports of fraudulent behavior. The user caught by
                 suspicious activity could be responsible for its own acts. the
-                admin will always viewing your activities either you are
-                approaching well and structured way or not .This info is just
-                filling the blanks.
+                admin will always be viewing your activities whether you are
+                approaching in a well and structured way or not.
               </p>
-              <div className="mt-4 flex gap-2">
+              <div className="mt-6 flex flex-wrap gap-2">
                 <Button leftIcon={<Shield size={16} />}>View Reports</Button>
                 <Button variant="outline">Take Action</Button>
               </div>
             </div>
-            <div className="h-[50vh] w-3/5">
+            <div className="h-[40vh] md:h-[50vh] w-full lg:w-3/5">
               <FundingChart />
-              <h3 className="ml-10 mb-2 justify-center flex font-light text-sm underline text-blue-700">
+              <h3 className="mt-2 lg:ml-10 justify-center flex font-light text-sm underline text-blue-700">
                 Fund GrowthRate
               </h3>
             </div>
@@ -244,25 +300,23 @@ export const AdminDashboard: React.FC = () => {
             </h2>
             <Badge variant="warning">Security</Badge>
           </CardHeader>
-          <CardBody className="flex flex-row pb-10 gap-5">
-            <div className="w-2/5 flex flex-col justify-evenly">
-              <p className="text-gray-600">
-                Edit, approve, or remove user accounts. Monitor activity and
-                handle reports of fraudulent behavior.The user catched by
-                suspicious activity could be responsible for its own acts. the
-                admin will always viewing your activities either you are
-                approaching well and structured way or not .This info is just
-                filling the blanks.
+          <CardBody className="flex flex-col lg:flex-row pb-10 gap-8">
+            <div className="w-full lg:w-2/5 flex flex-col justify-evenly">
+              <p className="text-gray-600 text-sm md:text-base">
+                Monitor platform safety and identify high-risk behaviors. Our
+                automated systems flag suspicious activities for manual review.
+                Ensuring a secure environment for all entrepreneurs and
+                investors is our top priority.
               </p>
-              <div className="mt-4 flex gap-2">
+              <div className="mt-6 flex flex-wrap gap-2">
                 <Button leftIcon={<Shield size={16} />}>View Reports</Button>
                 <Button variant="outline">Take Action</Button>
               </div>
             </div>
-            <div className="h-[50vh] w-3/5">
+            <div className="h-[40vh] md:h-[50vh] w-full lg:w-3/5">
               <FraudAndRiskDetectionChart data={fraudGrowthChartData} />
 
-              <h3 className="ml-10 mb-1 justify-center flex font-light text-sm underline text-blue-700">
+              <h3 className="mt-2 lg:ml-10 justify-center flex font-light text-sm underline text-blue-700">
                 Fraud and Risk Detection GrowthRate
               </h3>
             </div>

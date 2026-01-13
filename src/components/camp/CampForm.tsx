@@ -9,6 +9,7 @@ interface CampFormProps {
 }
 
 const CampForm: React.FC<CampFormProps> = ({ onSuccess }) => {
+  const URL = import.meta.env.VITE_BACKEND_URL;
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -135,7 +136,7 @@ const CampForm: React.FC<CampFormProps> = ({ onSuccess }) => {
       Object.entries(formData).forEach(([k, v]) => data.append(k, v));
       images.forEach((file) => data.append("images", file));
 
-      await axios.post("http://localhost:5000/admin/campaigns", data);
+      await axios.post(`${URL}/admin/campaigns`, data);
       toast.success("Campaign created successfully!");
 
       setFormData({

@@ -22,6 +22,7 @@ import {
 } from "../../data/collaborationRequests";
 import { Entrepreneur } from "../../types";
 import { AmountMeasureWithTags, getEnterpreneurById } from "../../data/users";
+import { suspendUser, blockUser, unsuspendUser, unblockUser } from "../../data/admin"; // Import admin actions
 
 type Props = {
   userId?: string | undefined;
@@ -33,6 +34,12 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
   const [hasRequestedCollaboration, setHasRequestedCollaboration] =
     useState<boolean>();
   const [isDealModalOpen, setIsDealModalOpen] = useState(false);
+
+  const [isSuspendModalOpen, setIsSuspendModalOpen] = useState(false);
+  const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
+  const [suspendReason, setSuspendReason] = useState("");
+  const [suspendDays, setSuspendDays] = useState(7);
+  const [blockReason, setBlockReason] = useState("");
 
   const navigate = useNavigate();
 
@@ -116,6 +123,48 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
     }
   };
 
+  const handleSuspend = async () => {
+    if (!entrepreneur?.userId) return;
+    try {
+      await suspendUser(entrepreneur.userId, suspendReason, suspendDays);
+      setIsSuspendModalOpen(false);
+      // Refresh data
+      const updated = await getEnterpreneurById(entrepreneur.userId);
+      setEnterpreneur(updated);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleBlock = async () => {
+    if (!entrepreneur?.userId) return;
+    try {
+      await blockUser(entrepreneur.userId, blockReason);
+      setIsBlockModalOpen(false);
+      navigate("/dashboard"); // Redirect after block as user is now hidden
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleUnsuspend = async () => {
+    if (!entrepreneur?.userId) return;
+    if (confirm("Are you sure you want to unsuspend this user?")) {
+      await unsuspendUser(entrepreneur.userId);
+      const updated = await getEnterpreneurById(entrepreneur.userId);
+      setEnterpreneur(updated);
+    }
+  };
+
+  const handleUnblock = async () => {
+    if (!entrepreneur?.userId) return;
+    if (confirm("Are you sure you want to unblock this user?")) {
+      await unblockUser(entrepreneur.userId);
+      const updated = await getEnterpreneurById(entrepreneur.userId);
+      setEnterpreneur(updated);
+    }
+  };
+
   const fundAmount = valuation ?? 0;
 
   return (
@@ -133,8 +182,13 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
             />
 
             <div className="mt-4 sm:mt-0 text-center sm:text-left">
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                 {entrepreneur.name}
+                {entrepreneur.isSuspended && (
+                  <span className="inline-flex items-center font-medium rounded text-sm px-2.5 py-0.5 bg-red-100 text-red-800">
+                    Suspended
+                  </span>
+                )}
               </h1>
               <p className="text-gray-600 flex items-center justify-center sm:justify-start mt-1">
                 <Building2 size={16} className="mr-1" />
@@ -186,7 +240,44 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
                 </>
               )
             ) : (
-              <></>
+              // Admin Actions
+              <div className="flex flex-col gap-2">
+                {entrepreneur.isSuspended ? (
+                  <Button
+                    variant="outline"
+                    className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
+                    onClick={handleUnsuspend}
+                  >
+                    Unsuspend User
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    className="bg-yellow-50 text-yellow-700 border-yellow-200 hover:bg-yellow-100"
+                    onClick={() => setIsSuspendModalOpen(true)}
+                  >
+                    Suspend User
+                  </Button>
+                )}
+
+                {entrepreneur.isBlocked ? (
+                  <Button
+                    variant="outline"
+                    className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
+                    onClick={handleUnblock}
+                  >
+                    Unblock User
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    className="bg-red-50 text-red-700 border-red-200 hover:bg-red-100"
+                    onClick={() => setIsBlockModalOpen(true)}
+                  >
+                    Block User
+                  </Button>
+                )}
+              </div>
             )}
 
             {hasRequestedCollaboration && (
@@ -198,7 +289,7 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
               </Button>
             )}
             {isDealModalOpen && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+              <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex justify-center items-center z-[9999]">
                 <div className="bg-white rounded-lg w-96 p-6 relative shadow-lg">
                   <h2 className="text-lg font-bold mb-4">Make a Deal</h2>
 
@@ -300,6 +391,60 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
           </div>
         </CardBody>
       </Card>
+
+      {/* Suspend Modal */}
+      {isSuspendModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex justify-center items-center z-[9999]">
+          <div className="bg-white rounded-lg w-96 p-6 relative shadow-lg">
+            <h2 className="text-lg font-bold mb-4">Suspend User</h2>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Reason</label>
+              <textarea
+                className="w-full border rounded p-2"
+                rows={3}
+                value={suspendReason}
+                onChange={(e) => setSuspendReason(e.target.value)}
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Duration (days)</label>
+              <input
+                type="number"
+                className="w-full border rounded p-2"
+                value={suspendDays}
+                onChange={(e) => setSuspendDays(parseInt(e.target.value))}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setIsSuspendModalOpen(false)}>Cancel</Button>
+              <Button onClick={handleSuspend} className="bg-yellow-600 hover:bg-yellow-700 text-white">Suspend</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Block Modal */}
+      {isBlockModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex justify-center items-center z-[9999]">
+          <div className="bg-white rounded-lg w-96 p-6 relative shadow-lg">
+            <h2 className="text-lg font-bold mb-4 text-red-600">Block User</h2>
+            <p className="text-sm text-gray-500 mb-4">Blocking a user will hide their profile and prevent them from accessing the platform. This action is severe.</p>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Reason</label>
+              <textarea
+                className="w-full border rounded p-2"
+                rows={3}
+                value={blockReason}
+                onChange={(e) => setBlockReason(e.target.value)}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setIsBlockModalOpen(false)}>Cancel</Button>
+              <Button onClick={handleBlock} className="bg-red-600 hover:bg-red-700 text-white">Block User</Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main content - left side */}
@@ -474,11 +619,10 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
                     <div className="flex justify-between items-center">
                       <span className="text-xs font-medium">Pre-seed</span>
                       <span
-                        className={`text-xs ${
-                          fundAmount > 100000
-                            ? " text-green-800 bg-green-100"
-                            : "text-yellow-800 bg-yellow-100"
-                        } px-2 py-0.5 rounded-full`}
+                        className={`text-xs ${fundAmount > 100000
+                          ? " text-green-800 bg-green-100"
+                          : "text-yellow-800 bg-yellow-100"
+                          } px-2 py-0.5 rounded-full`}
                       >
                         {fundAmount > 100000 ? "Completed" : "In progress"}
                       </span>
@@ -486,11 +630,10 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
                     <div className="flex justify-between items-center">
                       <span className="text-xs font-medium">Seed</span>
                       <span
-                        className={`text-xs  ${
-                          fundAmount > 2500000
-                            ? " text-green-800 bg-green-100"
-                            : "text-yellow-800 bg-yellow-100"
-                        } px-2 py-0.5 rounded-full`}
+                        className={`text-xs  ${fundAmount > 2500000
+                          ? " text-green-800 bg-green-100"
+                          : "text-yellow-800 bg-yellow-100"
+                          } px-2 py-0.5 rounded-full`}
                       >
                         {fundAmount > 2500000 ? "Completed" : "In progress"}
                       </span>
@@ -498,11 +641,10 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
                     <div className="flex justify-between items-center">
                       <span className="text-xs font-medium">Series A</span>
                       <span
-                        className={`text-xs ${
-                          fundAmount > 20000000
-                            ? " text-green-800 bg-green-100"
-                            : "text-yellow-800 bg-yellow-100"
-                        } px-2 py-0.5 rounded-full`}
+                        className={`text-xs ${fundAmount > 20000000
+                          ? " text-green-800 bg-green-100"
+                          : "text-yellow-800 bg-yellow-100"
+                          } px-2 py-0.5 rounded-full`}
                       >
                         {fundAmount > 20000000 ? "Completed" : "In progress"}
                       </span>

@@ -25,6 +25,7 @@ interface SuccessfulCompanyProps {
 }
 
 export const HomePage: React.FC = () => {
+  const URL = import.meta.env.VITE_BACKEND_URL;
   const [formData, setFormData] = useState({ name: "", email: "", message: "" });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
@@ -34,7 +35,7 @@ export const HomePage: React.FC = () => {
     setSuccess("");
 
     try {
-      const res = await fetch("http://localhost:5000/contact", {
+      const res = await fetch(`${URL}/contact`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -18,6 +18,7 @@ interface Campaign {
 }
 
 export const Campaigns: React.FC = () => {
+  const URL = import.meta.env.VITE_BACKEND_URL;
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [filtered, setFiltered] = useState<Campaign[]>([]);
   const [query, setQuery] = useState("");
@@ -26,7 +27,7 @@ export const Campaigns: React.FC = () => {
 
   const fetchCampaigns = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/admin/campaigns");
+      const res = await axios.get(`${URL}/admin/campaigns`);
       setCampaigns(res.data);
       setFiltered(res.data);
     } catch {
@@ -36,7 +37,7 @@ export const Campaigns: React.FC = () => {
 
   const updateStatus = async (id: string, status: string) => {
     try {
-      await axios.put(`http://localhost:5000/admin/campaigns/${id}/status`, {
+      await axios.put(`${URL}/admin/campaigns/${id}/status`, {
         status,
       });
       toast.success("Status updated!");
@@ -145,7 +146,7 @@ export const Campaigns: React.FC = () => {
       </div>
 
       {showForm && (
-        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4 overflow-auto">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-[9999] p-4 overflow-auto">
           <div className="bg-white rounded-2xl shadow-lg w-full max-w-lg relative">
             <div className="flex justify-end items-end p-5">
               <button
@@ -200,7 +201,7 @@ export const Campaigns: React.FC = () => {
                 {c.images.map((img, i) => (
                   <img
                     key={i}
-                    src={`http://localhost:5000${img}`}
+                    src={`${URL}${img}`}
                     alt={c.title}
                     className="w-20 h-20 object-cover rounded-lg shadow-sm flex-shrink-0 transition-transform duration-300 hover:scale-105"
                   />
@@ -245,9 +246,8 @@ export const Campaigns: React.FC = () => {
             <p className="text-xs mb-3">
               Status:{" "}
               <span
-                className={`font-semibold ${
-                  c.status === "active" ? "text-green-500" : "text-red-500"
-                }`}
+                className={`font-semibold ${c.status === "active" ? "text-green-500" : "text-red-500"
+                  }`}
               >
                 {c.status}
               </span>

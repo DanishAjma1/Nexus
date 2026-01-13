@@ -33,8 +33,7 @@ export const DashboardLayout: React.FC = () => {
     if (incomingCall) {
       socket?.emit("accept-call", { to: incomingCall.from });
       navigate(
-        `/chat/${incomingCall.from}/${incomingCall.callType}-call/${
-          incomingCall.roomId
+        `/chat/${incomingCall.from}/${incomingCall.callType}-call/${incomingCall.roomId
         }/${true}`
       );
       setIncomingCall(null);
@@ -82,9 +81,9 @@ export const DashboardLayout: React.FC = () => {
 
       <Navbar />
 
-      <div className="flex-0 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden">
         <Sidebar />
-        <main className="flex-1 overflow-y-auto p-6">
+        <main id="dashboard-main" className="flex-1 overflow-y-auto p-6">
           <div className="max-w-7xl mx-auto">
             <Outlet />
           </div>

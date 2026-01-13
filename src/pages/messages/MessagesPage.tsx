@@ -23,11 +23,11 @@ export const MessagesPage: React.FC = () => {
   }, [user?.userId]);
 
   return (
-    <div className="h-[calc(100vh-8rem)] bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden animate-fade-in flex justify-center">
-      {conversation? (
-        <div className="hidden md:block w-3/4 border-x border-gray-200">
-                <ChatUserList conversation={conversation || null} />
-              </div>
+    <div className="h-[calc(100vh-8rem)] bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden animate-fade-in">
+      {conversation ? (
+        <div className="w-full h-full border-gray-200 overflow-y-auto">
+          <ChatUserList conversation={conversation || null} />
+        </div>
       ) : (
         <div className="h-full flex flex-col items-center justify-center p-8">
           <div className="bg-gray-100 p-6 rounded-full mb-4">

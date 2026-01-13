@@ -135,7 +135,7 @@ export const AccountRejectedPage: React.FC = () => {
           </Button>
 
           <a
-            href="mailto:support@trustbridge.ai?subject=Account Rejection Appeal"
+            href="mailto:aitrustbridge@gmail.com?subject=Account Rejection Appeal"
             className="block"
           >
             <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 flex items-center justify-center gap-2">
@@ -161,10 +161,10 @@ export const AccountRejectedPage: React.FC = () => {
               <p className="text-gray-600">
                 📧 <strong>Email:</strong>{" "}
                 <a
-                  href="mailto:support@trustbridge.ai"
+                  href="mailto:aitrustbridge@gmail.com"
                   className="text-blue-600 hover:underline"
                 >
-                  support@trustbridge.ai
+                  aitrustbridge@gmail.com
                 </a>
               </p>
             </div>
