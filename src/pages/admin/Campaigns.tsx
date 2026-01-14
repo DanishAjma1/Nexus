@@ -23,6 +23,9 @@ export const Campaigns: React.FC = () => {
   const [filtered, setFiltered] = useState<Campaign[]>([]);
   const [query, setQuery] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [editingCampaign, setEditingCampaign] = useState<Campaign | undefined>(undefined);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [campaignToDelete, setCampaignToDelete] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const fetchCampaigns = async () => {
@@ -45,6 +48,35 @@ export const Campaigns: React.FC = () => {
     } catch {
       toast.error("Failed to update status");
     }
+  };
+
+  const handleDelete = (id: string) => {
+    setCampaignToDelete(id);
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!campaignToDelete) return;
+    try {
+      await axios.delete(`${URL}/admin/campaigns/${campaignToDelete}`);
+      toast.success("Campaign deleted");
+      fetchCampaigns();
+    } catch {
+      toast.error("Failed to delete campaign");
+    } finally {
+      setDeleteModalOpen(false);
+      setCampaignToDelete(null);
+    }
+  };
+
+  const cancelDelete = () => {
+    setDeleteModalOpen(false);
+    setCampaignToDelete(null);
+  };
+
+  const handleEdit = (c: Campaign) => {
+    setEditingCampaign(c);
+    setShowForm(true);
   };
 
   useEffect(() => {
@@ -84,7 +116,10 @@ export const Campaigns: React.FC = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Manage Campaigns</h1>
         <button
-          onClick={() => setShowForm(true)}
+          onClick={() => {
+            setEditingCampaign(undefined);
+            setShowForm(true);
+          }}
           className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-5 py-2.5 rounded-full shadow-lg hover:scale-105 hover:shadow-2xl transition-transform duration-300 font-semibold uppercase tracking-wide"
         >
           Add Campaign
@@ -146,22 +181,24 @@ export const Campaigns: React.FC = () => {
       </div>
 
       {showForm && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-[9999] p-4 overflow-auto">
-          <div className="bg-white rounded-2xl shadow-lg w-full max-w-lg relative">
-            <div className="flex justify-end items-end p-5">
-              <button
-                onClick={() => setShowForm(false)}
-                className="text-gray-700 hover:text-red-500 text-2xl font-bold py-4 px-5 rounded-full bg-white/90 hover:bg-white shadow-md transition"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="p-6">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-[9999] p-2 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-lg w-full max-w-5xl relative my-4 max-h-[95vh] overflow-y-auto">
+            <button
+              onClick={() => setShowForm(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-red-500 p-2 rounded-full hover:bg-gray-100 transition-colors z-10"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <div className="p-4 sm:p-6">
               <CampForm
                 onSuccess={() => {
                   fetchCampaigns();
                   setShowForm(false);
+                  setEditingCampaign(undefined);
                 }}
+                initialData={editingCampaign}
               />
             </div>
           </div>
@@ -254,28 +291,88 @@ export const Campaigns: React.FC = () => {
             </p>
 
             <div className="flex gap-2 mt-auto">
-              {c.status === "active" ? (
-                <button
-                  onClick={() => updateStatus(c._id, "stopped")}
-                  className="flex-1 relative overflow-hidden py-2 rounded-full text-white font-semibold shadow-lg 
+              <button
+                onClick={() => handleEdit(c)}
+                className="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded-full shadow transition-colors"
+                title="Edit"
+              >
+                ✏️
+              </button>
+              <button
+                onClick={() => handleDelete(c._id)}
+                className="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded-full shadow transition-colors"
+                title="Delete"
+              >
+                🗑️
+              </button>
+              <div className="flex-1 flex gap-2">
+                {c.status === "active" ? (
+                  <button
+                    onClick={() => updateStatus(c._id, "stopped")}
+                    className="flex-1 relative overflow-hidden py-2 rounded-full text-white font-semibold shadow-lg 
                              bg-red-500 transition-all duration-300 hover:shadow-red-400/50 hover:scale-110"
-                >
-                  Stop
-                </button>
-              ) : (
-                <button
-                  onClick={() => updateStatus(c._id, "active")}
-                  className="flex-1 relative overflow-hidden py-2 rounded-full text-white font-semibold shadow-lg 
+                  >
+                    Stop
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => updateStatus(c._id, "active")}
+                    className="flex-1 relative overflow-hidden py-2 rounded-full text-white font-semibold shadow-lg 
                              bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-300 
                              hover:scale-110 hover:shadow-indigo-400/50"
-                >
-                  Run
-                </button>
-              )}
+                  >
+                    Run
+                  </button>
+                )}
+              </div>
             </div>
           </div>
+
         ))}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteModalOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-[9999]"
+          onClick={cancelDelete}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start mb-4">
+              <div className="flex-shrink-0 w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                <svg className="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <div className="ml-4 flex-1">
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                  Delete Campaign?
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Are you sure you want to delete this campaign? This action cannot be undone and all data will be permanently removed.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={cancelDelete}
+                className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
