@@ -1,13 +1,16 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Navbar } from "../../components/home/Navbar";
 import { Button } from "../../components/ui/Button";
-import { Link } from "react-router-dom";
-import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
+
 interface CampaignProps {
+  _id: string;
   image: string;
   title: string;
   description: string;
-  goalAmount: string;
+  goalAmount: number;
+  raisedAmount: number;
 }
 
 interface FundraiserProps {
@@ -26,9 +29,35 @@ interface SuccessfulCompanyProps {
 
 export const HomePage: React.FC = () => {
   const URL = import.meta.env.VITE_BACKEND_URL;
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({ name: "", email: "", message: "" });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
+  const [recentCampaigns, setRecentCampaigns] = useState<any[]>([]);
+  const [campaignsLoading, setCampaignsLoading] = useState(true);
+
+  // Fetch recent active campaigns
+  useEffect(() => {
+    const fetchRecentCampaigns = async () => {
+      try {
+        setCampaignsLoading(true);
+        const response = await axios.get(`${URL}/admin/campaigns`);
+        // Filter only active campaigns and take the last 3 (most recent)
+        const activeCampaigns = response.data
+          .filter((c: any) => c.status === "active")
+          .slice(-3)
+          .reverse();
+        setRecentCampaigns(activeCampaigns);
+      } catch (error) {
+        console.error("Failed to fetch recent campaigns:", error);
+      } finally {
+        setCampaignsLoading(false);
+      }
+    };
+
+    fetchRecentCampaigns();
+  }, [URL]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -57,14 +86,20 @@ export const HomePage: React.FC = () => {
       setLoading(false);
     }
   };
+
   const CampaignDiv: React.FC<CampaignProps> = ({
+    _id,
     image,
     title,
     description,
     goalAmount,
+    raisedAmount
   }) => {
     return (
-      <div className="group relative w-full h-44 md:h-48 hover:scale-[1.02] transition-all duration-300 mx-auto max-w-xs bg-gradient-to-br from-gray-900/80 to-black/80 rounded-xl overflow-hidden border border-gray-700/50 shadow-lg hover:shadow-xl hover:border-orange-500/30">
+      <div
+        onClick={() => navigate(`/campaigns/${_id}`)}
+        className="group cursor-pointer relative w-full h-44 md:h-48 hover:scale-[1.02] transition-all duration-300 mx-auto max-w-xs bg-gradient-to-br from-gray-900/80 to-black/80 rounded-xl overflow-hidden border border-gray-700/50 shadow-lg hover:shadow-xl hover:border-orange-500/30"
+      >
         <img
           src={image}
           alt="Campaign"
@@ -80,11 +115,19 @@ export const HomePage: React.FC = () => {
             <p className="text-xs text-gray-300 mb-2 line-clamp-2">
               {description}
             </p>
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-gray-400">Goal:</span>
-              <span className="text-sm font-bold text-green-400">
-                ${goalAmount}
-              </span>
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-semibold text-gray-400">Raised:</span>
+                <span className="text-xs font-bold text-green-400">
+                  ${raisedAmount.toLocaleString()}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-semibold text-gray-400">Goal:</span>
+                <span className="text-xs font-bold text-blue-400">
+                  ${goalAmount.toLocaleString()}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -218,24 +261,27 @@ export const HomePage: React.FC = () => {
                 </div>
 
                 <div className="flex flex-col gap-4 lg:gap-5">
-                  <CampaignDiv
-                    image="app logo.jpeg"
-                    title="AI Startup"
-                    description="Revolutionizing healthcare with AI diagnostics"
-                    goalAmount="500K"
-                  />
-                  <CampaignDiv
-                    image="app logo.jpeg"
-                    title="Green Tech"
-                    description="Sustainable energy solutions for urban areas"
-                    goalAmount="750K"
-                  />
-                  <CampaignDiv
-                    image="app logo.jpeg"
-                    title="FinTech"
-                    description="Next-gen payment processing platform"
-                    goalAmount="1.2M"
-                  />
+                  {campaignsLoading ? (
+                    <div className="flex justify-center p-10">
+                      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-orange-500"></div>
+                    </div>
+                  ) : recentCampaigns.length === 0 ? (
+                    <div className="text-center py-10">
+                      <p className="text-gray-500 text-sm italic">No recent campaigns</p>
+                    </div>
+                  ) : (
+                    recentCampaigns.map((campaign) => (
+                      <CampaignDiv
+                        key={campaign._id}
+                        _id={campaign._id}
+                        image={campaign.images?.[0] ? `${URL}${campaign.images[0]}` : "app logo.jpeg"}
+                        title={campaign.title}
+                        description={campaign.description}
+                        goalAmount={campaign.goalAmount}
+                        raisedAmount={campaign.raisedAmount}
+                      />
+                    ))
+                  )}
                 </div>
               </div>
             </div>
@@ -392,9 +438,14 @@ export const HomePage: React.FC = () => {
               {/* LEFT: Contact Form */}
               <div className="bg-gray-800/50 p-6 rounded-xl backdrop-blur-sm shadow-lg">
                 <h2 className="text-2xl font-bold text-white mb-4">Get in Touch</h2>
-                <p className="text-gray-300 mb-6">
+                <p className="text-gray-300 mb-6 font-light">
                   Fill out the form below and we'll get back to you shortly.
                 </p>
+                {success && (
+                  <div className="mb-4 p-3 bg-green-500/20 text-green-400 rounded-lg text-sm border border-green-500/30 animate-pulse">
+                    {success}
+                  </div>
+                )}
                 <form className="space-y-4">
                   <div>
                     <label className="block text-xs text-gray-400 mb-1" htmlFor="name">

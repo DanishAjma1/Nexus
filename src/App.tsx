@@ -46,6 +46,7 @@ import { Users } from "./pages/admin/Users";
 import { Campaigns } from "./pages/admin/Campaigns";
 import { DealsPage } from "./pages/deals/DealsPage";
 import { CampaignsPage } from "./pages/campaignPage/CampaignPage";
+import { CampaignDetailPage } from "./pages/campaignPage/CampaignDetailPage";
 import { FundraisePage } from "./pages/fundraises/Fundraises-Page";
 import { AdminDashboard } from "./pages/dashboard/AdminDashboard";
 import { Activities } from "./pages/admin/activities";
@@ -172,6 +173,7 @@ function App() {
               {/* Redirect root to homepage */}
               <Route path="/" element={<HomePage />} />
               <Route path="/All-Campaigns" element={<CampaignsPage />} />
+              <Route path="/campaigns/:id" element={<CampaignDetailPage />} />
               <Route path="/Fundraises" element={<FundraisePage />} />
               <Route path="/verify-2fa" element={<TwoFactorAuthPage />} />
               <Route path="/fill-details" element={<UserDetails />} />
