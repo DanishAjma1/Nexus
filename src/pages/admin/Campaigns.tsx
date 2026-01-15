@@ -3,6 +3,8 @@ import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import CampForm from "../../components/camp/CampForm";
+import { CampaignAnalyticsChart } from "../../components/admin/CampaignAnalyticsChart";
+import { Card, CardHeader } from "../../components/ui/Card";
 
 interface Campaign {
   _id: string;
@@ -26,6 +28,7 @@ export const Campaigns: React.FC = () => {
   const [editingCampaign, setEditingCampaign] = useState<Campaign | undefined>(undefined);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [campaignToDelete, setCampaignToDelete] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState("All");
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const fetchCampaigns = async () => {
@@ -111,6 +114,16 @@ export const Campaigns: React.FC = () => {
     }
   };
 
+  const categories = ["All", ...new Set(campaigns.map((c) => c.category))];
+  const chartData = campaigns
+    .filter((c) => c.status === "active")
+    .filter((c) => selectedCategory === "All" || c.category === selectedCategory)
+    .map((c) => ({
+      name: c.title,
+      raised: c.raisedAmount,
+      goal: c.goalAmount,
+    }));
+
   return (
     <div className="p-4 relative">
       <div className="flex justify-between items-center mb-6">
@@ -163,6 +176,51 @@ export const Campaigns: React.FC = () => {
             </svg>
           </button>
         </form>
+      </div>
+
+      {/* Campaign Analytics Section */}
+      <div className="mb-8">
+        <Card className="w-full bg-white/50 backdrop-blur-sm border-gray-100 shadow-xl rounded-2xl overflow-hidden">
+          <CardHeader className="flex flex-row justify-between items-center py-4 px-6 border-b border-gray-50">
+            <div>
+              <h2 className="text-xl font-bold bg-gradient-to-r from-indigo-700 to-purple-700 bg-clip-text text-transparent">
+                Campaign Progress Analytics
+              </h2>
+              <p className="text-xs text-gray-500 mt-1">Funding status of active campaigns</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <label htmlFor="category-select" className="text-sm font-semibold text-gray-600">
+                Filter:
+              </label>
+              <select
+                id="category-select"
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="bg-white/80 border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-medium text-gray-700 shadow-sm cursor-pointer hover:border-indigo-300"
+              >
+                {categories.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat === "All" ? "All Categories" : cat}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </CardHeader>
+          <div className="p-6 h-[400px] bg-white">
+            {chartData.length > 0 ? (
+              <CampaignAnalyticsChart data={chartData} />
+            ) : (
+              <div className="h-full flex flex-col items-center justify-center text-gray-400 gap-3">
+                <div className="p-4 bg-gray-50 rounded-full">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                </div>
+                <p className="font-medium">No active campaigns found in this category</p>
+              </div>
+            )}
+          </div>
+        </Card>
       </div>
 
       <div className="bg-white rounded-xl shadow p-3 mb-6 flex justify-around text-center">
