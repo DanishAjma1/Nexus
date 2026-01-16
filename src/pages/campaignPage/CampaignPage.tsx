@@ -1,7 +1,13 @@
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { toast } from "react-hot-toast";
 import { Share2 } from "lucide-react";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import { StripeDonationForm } from "../../components/camp/StripeDonationForm";
+import { Navbar } from "../../components/home/Navbar";
+import { Button } from "../../components/ui/Button";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 

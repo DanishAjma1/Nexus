@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 import { Rocket, Clock, Target, TrendingUp, X } from "lucide-react";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
-import { StripeDonationForm } from "../../components/camp/StripeDonationForm";
+import { StripeDashboardPaymentForm } from "../../components/dashboard/StripeDashboardPaymentForm";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
@@ -147,7 +147,7 @@ export const DashboardCampaigns: React.FC = () => {
 
                         <div className="grid grid-cols-2 gap-3 mt-auto">
                             <Button
-                                onClick={() => navigate(`/ dashboard / campaigns / ${_id} `)}
+                                onClick={() => navigate(`/dashboard/campaigns/${_id}`)}
                                 className="py-2.5 text-xs font-bold bg-blue-50 text-blue-700 border-none hover:bg-blue-100 transition-all duration-300 transform hover:-translate-y-0.5"
                             >
                                 View Details
@@ -170,116 +170,120 @@ export const DashboardCampaigns: React.FC = () => {
     };
 
     return (
-        <div className="space-y-6 animate-fade-in pb-10">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Active Campaigns</h1>
-                    <p className="text-gray-600">Discover and support life-changing causes within our community.</p>
-                </div>
+        <>
+            <div className="space-y-6 animate-fade-in pb-10">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900">Active Campaigns</h1>
+                        <p className="text-gray-600">Discover and support life-changing causes within our community.</p>
+                    </div>
 
-                <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0">
-                    <button
-                        onClick={() => setSelectedCategory("All")}
-                        className={`px - 4 py - 2 rounded - lg text - sm font - medium whitespace - nowrap transition - all ${selectedCategory === "All"
-                            ? "bg-primary-600 text-white shadow-md shadow-primary-200"
-                            : "bg-white text-gray-600 border border-gray-200 hover:border-primary-300"
-                            } `}
-                    >
-                        All
-                    </button>
-                    {categories.map((cat) => (
+                    <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0">
                         <button
-                            key={cat}
-                            onClick={() => setSelectedCategory(cat)}
-                            className={`px - 4 py - 2 rounded - lg text - sm font - medium whitespace - nowrap transition - all ${selectedCategory === cat
+                            onClick={() => setSelectedCategory("All")}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${selectedCategory === "All"
                                 ? "bg-primary-600 text-white shadow-md shadow-primary-200"
                                 : "bg-white text-gray-600 border border-gray-200 hover:border-primary-300"
-                                } `}
+                                }`}
                         >
-                            {cat}
+                            All
                         </button>
-                    ))}
-                </div>
-            </div>
-
-            {/* Stats Summary */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card className="bg-gradient-to-br from-blue-50 to-white border-blue-100">
-                    <CardBody className="flex items-center p-6">
-                        <div className="p-3 bg-blue-100 rounded-lg mr-4 text-blue-600">
-                            <Rocket size={24} />
-                        </div>
-                        <div>
-                            <p className="text-sm font-medium text-blue-700">Active Campaigns</p>
-                            <h3 className="text-2xl font-bold text-gray-900">{campaigns.length}</h3>
-                        </div>
-                    </CardBody>
-                </Card>
-
-                <Card className="bg-gradient-to-br from-green-50 to-white border-green-100">
-                    <CardBody className="flex items-center p-6">
-                        <div className="p-3 bg-green-100 rounded-lg mr-4 text-green-600">
-                            <Target size={24} />
-                        </div>
-                        <div>
-                            <p className="text-sm font-medium text-green-700">Total Goal</p>
-                            <h3 className="text-2xl font-bold text-gray-900">
-                                ${campaigns.reduce((sum, c) => sum + c.goalAmount, 0).toLocaleString()}
-                            </h3>
-                        </div>
-                    </CardBody>
-                </Card>
-
-                <Card className="bg-gradient-to-br from-purple-50 to-white border-purple-100">
-                    <CardBody className="flex items-center p-6">
-                        <div className="p-3 bg-purple-100 rounded-lg mr-4 text-purple-600">
-                            <TrendingUp size={24} />
-                        </div>
-                        <div>
-                            <p className="text-sm font-medium text-purple-700">Total Raised</p>
-                            <h3 className="text-2xl font-bold text-gray-900">
-                                ${campaigns.reduce((sum, c) => sum + c.raisedAmount, 0).toLocaleString()}
-                            </h3>
-                        </div>
-                    </CardBody>
-                </Card>
-            </div>
-
-            {loading ? (
-                <div className="flex justify-center items-center py-20">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
-                </div>
-            ) : filteredCampaigns.length === 0 ? (
-                <Card className="p-12 text-center border-dashed">
-                    <div className="mx-auto w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
-                        <Rocket size={32} className="text-gray-300" />
+                        {categories.map((cat) => (
+                            <button
+                                key={cat}
+                                onClick={() => setSelectedCategory(cat)}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${selectedCategory === cat
+                                    ? "bg-primary-600 text-white shadow-md shadow-primary-200"
+                                    : "bg-white text-gray-600 border border-gray-200 hover:border-primary-300"
+                                    }`}
+                            >
+                                {cat}
+                            </button>
+                        ))}
                     </div>
-                    <h3 className="text-lg font-bold text-gray-900 mb-1">No campaigns found</h3>
-                    <p className="text-gray-500">
-                        {selectedCategory === "All"
-                            ? "There are no active campaigns at the moment."
-                            : `No active campaigns in the ${selectedCategory} category.`}
-                    </p>
-                    <Button
-                        className="mt-6"
-                        variant="outline"
-                        onClick={() => setSelectedCategory("All")}
-                    >
-                        Clear Filters
-                    </Button>
-                </Card>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredCampaigns.map((campaign) => (
-                        <CampaignCardInternal key={campaign._id} {...campaign} />
-                    ))}
                 </div>
-            )}
+
+                {/* Stats Summary */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <Card className="bg-gradient-to-br from-blue-50 to-white border-blue-100">
+                        <CardBody className="flex items-center p-6">
+                            <div className="p-3 bg-blue-100 rounded-lg mr-4 text-blue-600">
+                                <Rocket size={24} />
+                            </div>
+                            <div>
+                                <p className="text-sm font-medium text-blue-700">Active Campaigns</p>
+                                <h3 className="text-2xl font-bold text-gray-900">{campaigns.length}</h3>
+                            </div>
+                        </CardBody>
+                    </Card>
+
+                    <Card className="bg-gradient-to-br from-green-50 to-white border-green-100">
+                        <CardBody className="flex items-center p-6">
+                            <div className="p-3 bg-green-100 rounded-lg mr-4 text-green-600">
+                                <Target size={24} />
+                            </div>
+                            <div>
+                                <p className="text-sm font-medium text-green-700">Total Goal</p>
+                                <h3 className="text-2xl font-bold text-gray-900">
+                                    ${campaigns.reduce((sum, c) => sum + c.goalAmount, 0).toLocaleString()}
+                                </h3>
+                            </div>
+                        </CardBody>
+                    </Card>
+
+                    <Card className="bg-gradient-to-br from-purple-50 to-white border-purple-100">
+                        <CardBody className="flex items-center p-6">
+                            <div className="p-3 bg-purple-100 rounded-lg mr-4 text-purple-600">
+                                <TrendingUp size={24} />
+                            </div>
+                            <div>
+                                <p className="text-sm font-medium text-purple-700">Total Raised</p>
+                                <h3 className="text-2xl font-bold text-gray-900">
+                                    ${campaigns.reduce((sum, c) => sum + c.raisedAmount, 0).toLocaleString()}
+                                </h3>
+                            </div>
+                        </CardBody>
+                    </Card>
+                </div>
+
+                {loading ? (
+                    <div className="flex justify-center items-center py-20">
+                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
+                    </div>
+                ) : filteredCampaigns.length === 0 ? (
+                    <Card className="p-12 text-center border-dashed">
+                        <div className="mx-auto w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                            <Rocket size={32} className="text-gray-300" />
+                        </div>
+                        <h3 className="text-lg font-bold text-gray-900 mb-1">No campaigns found</h3>
+                        <p className="text-gray-500">
+                            {selectedCategory === "All"
+                                ? "There are no active campaigns at the moment."
+                                : `No active campaigns in the ${selectedCategory} category.`}
+                        </p>
+                        <Button
+                            className="mt-6"
+                            variant="outline"
+                            onClick={() => setSelectedCategory("All")}
+                        >
+                            Clear Filters
+                        </Button>
+                    </Card>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {filteredCampaigns.map((campaign) => (
+                            <CampaignCardInternal key={campaign._id} {...campaign} />
+                        ))}
+                    </div>
+                )}
+
+            </div>
+
 
             {/* Donation Form Modal */}
             {showDonationForm && selectedCampaign && (
-                <div className="fixed inset-0 z-50 flex items-start justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-sm animate-fade-in overflow-y-auto">
-                    <div className="relative w-full max-w-md my-4 bg-white rounded-2xl border border-gray-100 shadow-2xl overflow-hidden max-h-[90vh]">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-sm animate-fade-in overflow-y-auto">
+                    <div className="relative w-full max-w-md bg-white rounded-2xl border border-gray-100 shadow-2xl overflow-hidden max-h-[90vh]">
                         {/* Header */}
                         <div className="sticky top-0 z-20 flex items-center justify-between p-4 bg-white border-b border-gray-100">
                             <div className="flex items-center">
@@ -308,10 +312,10 @@ export const DashboardCampaigns: React.FC = () => {
                                             key={amount}
                                             type="button"
                                             onClick={() => setDonationAmount(amount)}
-                                            className={`py - 3 rounded - xl font - bold transition - all text - sm ${donationAmount === amount
+                                            className={`py-3 rounded-xl font-bold transition-all text-sm ${donationAmount === amount
                                                 ? 'bg-primary-600 text-white shadow-lg shadow-primary-200'
                                                 : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-                                                } `}
+                                                }`}
                                         >
                                             ${amount}
                                         </button>
@@ -330,7 +334,7 @@ export const DashboardCampaigns: React.FC = () => {
                             </div>
 
                             <Elements stripe={stripePromise}>
-                                <StripeDonationForm
+                                <StripeDashboardPaymentForm
                                     amount={donationAmount}
                                     campaignId={selectedCampaign._id}
                                     onSuccess={() => {
@@ -344,6 +348,6 @@ export const DashboardCampaigns: React.FC = () => {
                     </div>
                 </div>
             )}
-        </div>
+        </>
     );
 };

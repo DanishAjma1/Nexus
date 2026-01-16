@@ -18,7 +18,9 @@ const CampForm: React.FC<CampFormProps> = ({ onSuccess, initialData }) => {
     startDate: "",
     endDate: "",
     category: "Other",
+
     organizer: "",
+    isLifetime: false,
   });
 
   const [images, setImages] = useState<File[]>([]);
@@ -37,8 +39,10 @@ const CampForm: React.FC<CampFormProps> = ({ onSuccess, initialData }) => {
         goalAmount: initialData.goalAmount || "",
         startDate: initialData.startDate ? new Date(initialData.startDate).toISOString().split('T')[0] : "",
         endDate: initialData.endDate ? new Date(initialData.endDate).toISOString().split('T')[0] : "",
+
         category: initialData.category || "Other",
         organizer: initialData.organizer || "",
+        isLifetime: initialData.isLifetime || false,
       });
       if (initialData.images && initialData.images.length > 0) {
         setExistingImages(initialData.images);
@@ -55,7 +59,14 @@ const CampForm: React.FC<CampFormProps> = ({ onSuccess, initialData }) => {
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
     >
   ) => {
-    const { name, value } = e.target;
+    const { name, value, type } = e.target;
+    // @ts-ignore
+    const checked = (e.target as HTMLInputElement).checked;
+
+    if (type === "checkbox") {
+      setFormData({ ...formData, [name]: checked });
+      return;
+    }
 
     // Title: only letters and spaces
     if (name === "title" && !/^[A-Za-z\s]*$/.test(value)) return;
@@ -130,7 +141,7 @@ const CampForm: React.FC<CampFormProps> = ({ onSuccess, initialData }) => {
   };
 
   const validateForm = () => {
-    const { title, description, goalAmount, startDate, endDate, category } =
+    const { title, description, goalAmount, startDate, endDate, category, isLifetime } =
       formData;
 
     if (!title.trim()) {
@@ -172,14 +183,16 @@ const CampForm: React.FC<CampFormProps> = ({ onSuccess, initialData }) => {
       return false;
     }
 
-    if (!endDate) {
-      toast.error("End date is required");
-      return false;
-    }
+    if (!isLifetime) {
+      if (!endDate) {
+        toast.error("End date is required");
+        return false;
+      }
 
-    if (new Date(startDate) > new Date(endDate)) {
-      toast.error("Start date cannot be after end date");
-      return false;
+      if (new Date(startDate) > new Date(endDate)) {
+        toast.error("Start date cannot be after end date");
+        return false;
+      }
     }
 
     if (!category.trim()) {
@@ -350,15 +363,28 @@ const CampForm: React.FC<CampFormProps> = ({ onSuccess, initialData }) => {
 
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-1">End Date</label>
-          <input
-            type="date"
-            name="endDate"
-            value={formData.endDate}
-            min={formData.startDate || undefined}
-            onChange={handleChange}
-            className="w-full border border-gray-300 bg-gray-50 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
-            required
-          />
+          <div className="space-y-2">
+            <input
+              type="date"
+              name="endDate"
+              value={formData.endDate}
+              min={formData.startDate || undefined}
+              onChange={handleChange}
+              disabled={formData.isLifetime}
+              className={`w-full border border-gray-300 bg-gray-50 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none ${formData.isLifetime ? 'opacity-50 cursor-not-allowed' : ''}`}
+              required={!formData.isLifetime}
+            />
+            <label className="flex items-center space-x-2 cursor-pointer">
+              <input
+                type="checkbox"
+                name="isLifetime"
+                checked={formData.isLifetime}
+                onChange={handleChange}
+                className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+              />
+              <span className="text-sm text-gray-700 font-medium">Run for Lifetime</span>
+            </label>
+          </div>
         </div>
       </div>
 

@@ -41,7 +41,6 @@ import { AudioCall } from "./pages/webRTC/AudioCall";
 import { Toaster } from "react-hot-toast";
 import { HomePage } from "./pages/home/HomePage";
 import { Supporters } from "./pages/admin/supporters";
-import { FlaggedAccounts } from "./pages/admin/flaggedAccounts";
 import { Users } from "./pages/admin/Users";
 import { Campaigns } from "./pages/admin/Campaigns";
 import { DealsPage } from "./pages/deals/DealsPage";
@@ -103,7 +102,6 @@ function App() {
                 <Route path="investors" element={<Investors />} />
                 <Route path="campaigns" element={<Campaigns />} />
                 <Route path="supporters" element={<Supporters />} />
-                <Route path="flaggedAccounts" element={<FlaggedAccounts />} />
                 <Route path="suspended-blocked" element={<SuspendedBlockedUsers />} />
                 <Route
                   path="fraud-and-risk-detection"
