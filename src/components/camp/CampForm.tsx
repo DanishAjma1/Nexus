@@ -18,6 +18,7 @@ const CampForm: React.FC<CampFormProps> = ({ onSuccess, initialData }) => {
     startDate: "",
     endDate: "",
     category: "Other",
+    organizer: "",
   });
 
   const [images, setImages] = useState<File[]>([]);
@@ -37,6 +38,7 @@ const CampForm: React.FC<CampFormProps> = ({ onSuccess, initialData }) => {
         startDate: initialData.startDate ? new Date(initialData.startDate).toISOString().split('T')[0] : "",
         endDate: initialData.endDate ? new Date(initialData.endDate).toISOString().split('T')[0] : "",
         category: initialData.category || "Other",
+        organizer: initialData.organizer || "",
       });
       if (initialData.images && initialData.images.length > 0) {
         setExistingImages(initialData.images);
@@ -63,6 +65,9 @@ const CampForm: React.FC<CampFormProps> = ({ onSuccess, initialData }) => {
 
     // Category: only letters and spaces
     if (name === "category" && !/^[A-Za-z\s]*$/.test(value)) return;
+
+    // Organizer: only letters and spaces
+    if (name === "organizer" && !/^[A-Za-z\s]*$/.test(value)) return;
 
     // Goal amount: only numbers
     if (name === "goalAmount" && !/^[0-9]*$/.test(value)) return;
@@ -143,6 +148,11 @@ const CampForm: React.FC<CampFormProps> = ({ onSuccess, initialData }) => {
     }
     if (!/^[A-Za-z0-9\s]+$/.test(description)) {
       toast.error("Description can contain only letters, numbers, and spaces");
+      return false;
+    }
+
+    if (!formData.organizer.trim()) {
+      toast.error("Organizer is required");
       return false;
     }
 
@@ -228,6 +238,7 @@ const CampForm: React.FC<CampFormProps> = ({ onSuccess, initialData }) => {
         startDate: "",
         endDate: "",
         category: "Other",
+        organizer: "",
       });
       setImages([]);
       setExistingImages([]);
@@ -279,6 +290,18 @@ const CampForm: React.FC<CampFormProps> = ({ onSuccess, initialData }) => {
             onChange={handleChange}
             className="w-full border border-gray-300 bg-gray-50 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none resize-none"
             rows={5}
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1">Organizer</label>
+          <input
+            name="organizer"
+            placeholder="e.g., Jane Doe"
+            value={formData.organizer}
+            onChange={handleChange}
+            className="w-full border border-gray-300 bg-gray-50 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
             required
           />
         </div>

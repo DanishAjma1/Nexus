@@ -65,6 +65,8 @@ import { SuspendedBlockedUsers } from "./pages/admin/SuspendedBlockedUsers";
 import { TermsOfService } from "./pages/legal/TermsOfService";
 import { CommunityGuidelines } from "./pages/legal/CommunityGuidelines";
 import SendMassNotification from "./pages/admin/SendMassNotification";
+import { DashboardCampaigns } from "./pages/dashCamp/DashboardCampaigns";
+import { DashboardCampaignDetail } from "./pages/dashCamp/DashboardCampaignDetail";
 
 function App() {
   return (
@@ -91,6 +93,8 @@ function App() {
                 <Route path="entrepreneur" element={<EntrepreneurDashboard />} />
                 <Route path="investor" element={<InvestorDashboard />} />
                 <Route path="admin" element={<AdminDashboard />} />
+                <Route path="campaigns" element={<DashboardCampaigns />} />
+                <Route path="campaigns/:id" element={<DashboardCampaignDetail />} />
               </Route>
 
               <Route path="/admin" element={<DashboardLayout />}>

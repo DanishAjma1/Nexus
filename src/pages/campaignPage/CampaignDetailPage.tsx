@@ -4,6 +4,8 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { Navbar } from "../../components/home/Navbar";
 import { Button } from "../../components/ui/Button";
+import { Share2 } from "lucide-react";
+import { ShareModal } from "../../components/common/ShareModal";
 
 interface Campaign {
     _id: string;
@@ -44,6 +46,7 @@ export const CampaignDetailPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [showDonationForm, setShowDonationForm] = useState(false);
+    const [isShareModalOpen, setIsShareModalOpen] = useState(false);
     const [donationForm, setDonationForm] = useState<DonationFormData>({
         cardNumber: "",
         cardHolder: "",
@@ -267,6 +270,13 @@ export const CampaignDetailPage: React.FC = () => {
                                 <span className="px-4 py-2 text-sm font-semibold bg-gray-900/80 backdrop-blur-sm text-white rounded-full border border-gray-700">
                                     ⏳ {daysLeft} days left
                                 </span>
+                                <button
+                                    onClick={() => setIsShareModalOpen(true)}
+                                    className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-full border border-gray-700 transition-all group"
+                                    title="Share Campaign"
+                                >
+                                    <Share2 size={20} className="group-hover:scale-110 transition-transform" />
+                                </button>
                             </div>
 
                             {/* Title */}
@@ -527,6 +537,14 @@ export const CampaignDetailPage: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            <ShareModal
+                isOpen={isShareModalOpen}
+                onClose={() => setIsShareModalOpen(false)}
+                title={campaign.title}
+                url={window.location.href}
+                theme="dark"
+            />
         </div>
     );
 };

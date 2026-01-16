@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { Badge } from "../../components/ui/Badge";
 import { Button } from "../../components/ui/Button";
 import { Card, CardBody } from "../../components/ui/Card";
@@ -19,6 +20,16 @@ export const NotificationsPage: React.FC = () => {
   } = useNotification();
 
   // Removed admin-only restriction to allow all users to view their notifications
+  const navigate = useNavigate();
+
+  const handleNotificationClick = (notification: any) => {
+    if (!notification.isRead) {
+      markAsRead(notification._id);
+    }
+    if (notification.link) {
+      navigate(notification.link);
+    }
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -55,7 +66,8 @@ export const NotificationsPage: React.FC = () => {
           notifications.map((notification) => (
             <Card
               key={notification._id}
-              className={`transition-all duration-300 hover:shadow-md ${!notification.isRead ? "bg-primary-50/50 border-l-4 border-l-primary-500" : ""
+              onClick={() => handleNotificationClick(notification)}
+              className={`transition-all duration-300 hover:shadow-md cursor-pointer ${!notification.isRead ? "bg-primary-50/50 border-l-4 border-l-primary-500" : ""
                 }`}
             >
               <CardBody className="flex items-start p-6">
