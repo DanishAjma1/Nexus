@@ -1,17 +1,26 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Navbar } from "../../components/home/Navbar";
 import { Button } from "../../components/ui/Button";
+import axios from "axios";
+import toast from "react-hot-toast";
 
 interface CampaignCardProps {
-  id: number;
+  _id: string;
   title: string;
   description: string;
   category: string;
   goalAmount: number;
   raisedAmount: number;
-  image: string;
-  organizer: string;
-  daysLeft: number;
+  images?: string[];
+  organizer?: string;
+  endDate: string;
+  status: string;
+  supporters?: Array<{
+    supporterId: string;
+    amount: number;
+    date: Date;
+  }>;
 }
 
 interface DonationFormData {
@@ -20,11 +29,17 @@ interface DonationFormData {
   expiryDate: string;
   cvv: string;
   amount: number;
-  campaignId: number;
+  campaignId: string;
   campaignTitle: string;
 }
 
 export const CampaignsPage: React.FC = () => {
+  const URL = import.meta.env.VITE_BACKEND_URL;
+  const navigate = useNavigate();
+  const [campaigns, setCampaigns] = useState<CampaignCardProps[]>([]);
+  const [filteredCampaigns, setFilteredCampaigns] = useState<CampaignCardProps[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [selectedCampaign, setSelectedCampaign] = useState<CampaignCardProps | null>(null);
   const [showDonationForm, setShowDonationForm] = useState(false);
   const [donationForm, setDonationForm] = useState<DonationFormData>({
@@ -33,93 +48,67 @@ export const CampaignsPage: React.FC = () => {
     expiryDate: "",
     cvv: "",
     amount: 0,
-    campaignId: 0,
+    campaignId: "",
     campaignTitle: ""
   });
 
-  // Sample campaign data
-  const campaigns: CampaignCardProps[] = [
-    {
-      id: 1,
-      title: "Clean Water Initiative",
-      description: "Providing clean drinking water to rural communities in Africa. Every $10 provides clean water for one person for a year.",
-      category: "Humanitarian",
-      goalAmount: 50000,
-      raisedAmount: 32500,
-      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800",
-      organizer: "Water for Life Foundation",
-      daysLeft: 15
-    },
-    {
-      id: 2,
-      title: "Reforestation Project",
-      description: "Planting 1 million trees in the Amazon rainforest to combat deforestation and climate change.",
-      category: "Environment",
-      goalAmount: 100000,
-      raisedAmount: 75000,
-      image: "https://images.unsplash.com/photo-1418065460487-3e41a6c84dc5?w=800",
-      organizer: "Green Earth Alliance",
-      daysLeft: 30
-    },
-    {
-      id: 3,
-      title: "Children's Education Fund",
-      description: "Supporting education for underprivileged children by providing school supplies, uniforms, and tuition fees.",
-      category: "Education",
-      goalAmount: 30000,
-      raisedAmount: 18500,
-      image: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800",
-      organizer: "Education for All",
-      daysLeft: 10
-    },
-    {
-      id: 4,
-      title: "Cancer Research",
-      description: "Funding innovative research for early detection and treatment of pediatric cancer.",
-      category: "Health",
-      goalAmount: 200000,
-      raisedAmount: 120500,
-      image: "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=800",
-      organizer: "Hope Medical Research",
-      daysLeft: 45
-    },
-    {
-      id: 5,
-      title: "Animal Rescue Center",
-      description: "Building a sanctuary for rescued animals and providing medical care for endangered species.",
-      category: "Animal Welfare",
-      goalAmount: 75000,
-      raisedAmount: 42000,
-      image: "https://images.unsplash.com/photo-1514984879728-be0aff75a6e8?w=800",
-      organizer: "Wildlife Protectors",
-      daysLeft: 20
-    },
-    {
-      id: 6,
-      title: "Tech Scholarships",
-      description: "Providing coding bootcamp scholarships for underprivileged youth to enter the tech industry.",
-      category: "Education",
-      goalAmount: 60000,
-      raisedAmount: 38500,
-      image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800",
-      organizer: "Code for Future",
-      daysLeft: 25
+  // Categories from backend campaign model
+  const categories = ["Technology", "Health", "Education", "Environment", "Other"];
+
+  // Fetch active campaigns from database
+  useEffect(() => {
+    const fetchCampaigns = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(`${URL}/admin/campaigns`);
+        // Filter only active campaigns
+        const activeCampaigns = response.data.filter((campaign: CampaignCardProps) => campaign.status === "active");
+        setCampaigns(activeCampaigns);
+        setFilteredCampaigns(activeCampaigns);
+      } catch (error) {
+        console.error("Failed to fetch campaigns:", error);
+        toast.error("Failed to load campaigns");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCampaigns();
+  }, [URL]);
+
+  // Filter campaigns by category
+  useEffect(() => {
+    if (selectedCategory === "All") {
+      setFilteredCampaigns(campaigns);
+    } else {
+      setFilteredCampaigns(campaigns.filter(campaign => campaign.category === selectedCategory));
     }
-  ];
+  }, [selectedCategory, campaigns]);
+
+  // Calculate days left from end date
+  const calculateDaysLeft = (endDate: string): number => {
+    const end = new Date(endDate);
+    const now = new Date();
+    const diffTime = end.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 0 ? diffDays : 0;
+  };
 
   const CampaignCard: React.FC<CampaignCardProps> = ({
-    id,
+    _id,
     title,
     description,
     category,
     goalAmount,
     raisedAmount,
-    image,
+    images,
     organizer,
-    daysLeft
+    endDate
   }) => {
     const progress = (raisedAmount / goalAmount) * 100;
-    
+    const daysLeft = calculateDaysLeft(endDate);
+    const displayImage = images && images.length > 0 ? `${URL}${images[0]}` : "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800";
+
     return (
       <div className="group relative bg-gradient-to-br from-gray-900 to-black rounded-2xl overflow-hidden border border-gray-800 hover:border-orange-500/50 transition-all duration-300 shadow-xl hover:shadow-2xl hover:shadow-orange-500/10">
         {/* Category Badge */}
@@ -128,24 +117,24 @@ export const CampaignsPage: React.FC = () => {
             {category}
           </span>
         </div>
-        
+
         {/* Days Left Badge */}
         <div className="absolute top-4 right-4 z-10">
           <span className="px-3 py-1 text-xs font-semibold bg-gray-900/80 backdrop-blur-sm text-white rounded-full border border-gray-700">
             ⏳ {daysLeft} days left
           </span>
         </div>
-        
+
         {/* Campaign Image */}
         <div className="relative h-48 overflow-hidden">
-          <img 
-            src={image} 
+          <img
+            src={displayImage}
             alt={title}
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
         </div>
-        
+
         {/* Campaign Content */}
         <div className="p-6">
           <div className="mb-4">
@@ -155,12 +144,14 @@ export const CampaignsPage: React.FC = () => {
             <p className="text-sm text-gray-400 mb-3 line-clamp-2">
               {description}
             </p>
-            <div className="flex items-center text-sm text-gray-500 mb-4">
-              <span className="mr-2">👤</span>
-              <span>Organized by {organizer}</span>
-            </div>
+            {organizer && (
+              <div className="flex items-center text-sm text-gray-500 mb-4">
+                <span className="mr-2">👤</span>
+                <span>Organized by {organizer}</span>
+              </div>
+            )}
           </div>
-          
+
           {/* Progress Bar */}
           <div className="mb-4">
             <div className="flex justify-between text-sm mb-2">
@@ -172,7 +163,7 @@ export const CampaignsPage: React.FC = () => {
               </span>
             </div>
             <div className="w-full bg-gray-800 rounded-full h-2.5">
-              <div 
+              <div
                 className="bg-gradient-to-r from-green-500 to-emerald-400 h-2.5 rounded-full transition-all duration-500"
                 style={{ width: `${Math.min(progress, 100)}%` }}
               />
@@ -181,23 +172,31 @@ export const CampaignsPage: React.FC = () => {
               {progress.toFixed(1)}% funded
             </div>
           </div>
-          
-          {/* Action Button */}
-          <Button 
-            onClick={() => {
-              setSelectedCampaign({ id, title, description, category, goalAmount, raisedAmount, image, organizer, daysLeft });
-              setDonationForm(prev => ({
-                ...prev,
-                campaignId: id,
-                campaignTitle: title,
-                amount: Math.max(25, Math.ceil((goalAmount - raisedAmount) * 0.01))
-              }));
-              setShowDonationForm(true);
-            }}
-            className="w-full py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-300 transform hover:-translate-y-0.5 shadow-lg hover:shadow-orange-500/30"
-          >
-             Donate Now
-          </Button>
+
+          {/* Action Buttons */}
+          <div className="grid grid-cols-2 gap-3">
+            <Button
+              onClick={() => navigate(`/campaigns/${_id}`)}
+              className="py-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white font-semibold rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all duration-300 transform hover:-translate-y-0.5 shadow-lg hover:shadow-purple-500/30"
+            >
+              View More
+            </Button>
+            <Button
+              onClick={() => {
+                setSelectedCampaign({ _id, title, description, category, goalAmount, raisedAmount, images, organizer, endDate, status: "active" });
+                setDonationForm(prev => ({
+                  ...prev,
+                  campaignId: _id,
+                  campaignTitle: title,
+                  amount: Math.max(25, Math.ceil((goalAmount - raisedAmount) * 0.01))
+                }));
+                setShowDonationForm(true);
+              }}
+              className="py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-300 transform hover:-translate-y-0.5 shadow-lg hover:shadow-orange-500/30"
+            >
+              Donate Now
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -213,7 +212,7 @@ export const CampaignsPage: React.FC = () => {
       expiryDate: "",
       cvv: "",
       amount: 0,
-      campaignId: 0,
+      campaignId: "",
       campaignTitle: ""
     });
   };
@@ -231,7 +230,7 @@ export const CampaignsPage: React.FC = () => {
       expiryDate: "",
       cvv: "",
       amount: 0,
-      campaignId: 0,
+      campaignId: "",
       campaignTitle: ""
     });
   };
@@ -239,14 +238,14 @@ export const CampaignsPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
       <Navbar />
-      
+
       {/* Hero Section */}
       <div className="relative overflow-hidden py-12 md:py-20">
         <div className="absolute inset-0">
           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl animate-pulse" />
           <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
         </div>
-        
+
         <div className="relative container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto">
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
@@ -255,23 +254,29 @@ export const CampaignsPage: React.FC = () => {
             <p className="text-lg md:text-xl text-gray-300 mb-8">
               Discover and donate to campaigns making a real difference in people's lives. Every contribution matters.
             </p>
-            
+
             {/* Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
               <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-gray-800">
-                <div className="text-2xl md:text-3xl font-bold text-blue-500">{campaigns.length}+</div>
+                <div className="text-2xl md:text-3xl font-bold text-blue-500">{campaigns.length}</div>
                 <div className="text-sm text-gray-400">Active Campaigns</div>
               </div>
               <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-gray-800">
-                <div className="text-2xl md:text-3xl font-bold text-green-500">$985K+</div>
+                <div className="text-2xl md:text-3xl font-bold text-green-500">
+                  ${campaigns.reduce((sum, c) => sum + c.raisedAmount, 0).toLocaleString()}
+                </div>
                 <div className="text-sm text-gray-400">Total Raised</div>
               </div>
               <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-gray-800">
-                <div className="text-2xl md:text-3xl font-bold text-blue-500">15K+</div>
+                <div className="text-2xl md:text-3xl font-bold text-blue-500">
+                  {campaigns.reduce((sum, c) => sum + (c.supporters?.length || 0), 0)}+
+                </div>
                 <div className="text-sm text-gray-400">Donors</div>
               </div>
               <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-gray-800">
-                <div className="text-2xl md:text-3xl font-bold text-purple-500">89%</div>
+                <div className="text-2xl md:text-3xl font-bold text-purple-500">
+                  {campaigns.length > 0 ? Math.round((campaigns.filter(c => c.raisedAmount >= c.goalAmount).length / campaigns.length) * 100) : 0}%
+                </div>
                 <div className="text-sm text-gray-400">Success Rate</div>
               </div>
             </div>
@@ -284,13 +289,23 @@ export const CampaignsPage: React.FC = () => {
         {/* Filter Tabs */}
         <div className="mb-8">
           <div className="flex flex-wrap gap-2 justify-center">
-            <button className="px-4 py-2 bg-blue-500 text-white rounded-full font-semibold">
+            <button
+              onClick={() => setSelectedCategory("All")}
+              className={`px-4 py-2 rounded-full font-semibold transition-colors ${selectedCategory === "All"
+                ? "bg-blue-500 text-white"
+                : "bg-white/5 text-gray-300 hover:text-white hover:bg-white/10"
+                }`}
+            >
               All Causes
             </button>
-            {["Humanitarian", "Environment", "Education", "Health", "Animal Welfare"].map((cat) => (
+            {categories.map((cat) => (
               <button
                 key={cat}
-                className="px-4 py-2 bg-white/5 text-gray-300 hover:text-white rounded-full font-medium hover:bg-white/10 transition-colors"
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-4 py-2 rounded-full font-medium transition-colors ${selectedCategory === cat
+                  ? "bg-blue-500 text-white"
+                  : "bg-white/5 text-gray-300 hover:text-white hover:bg-white/10"
+                  }`}
               >
                 {cat}
               </button>
@@ -299,11 +314,29 @@ export const CampaignsPage: React.FC = () => {
         </div>
 
         {/* Campaigns Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-          {campaigns.map((campaign) => (
-            <CampaignCard key={campaign.id} {...campaign} />
-          ))}
-        </div>
+        {loading ? (
+          <div className="flex justify-center items-center py-20">
+            <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500"></div>
+          </div>
+        ) : filteredCampaigns.length === 0 ? (
+          <div className="text-center py-20">
+            <div className="text-6xl mb-4">📢</div>
+            <h3 className="text-2xl font-bold text-white mb-2">
+              {selectedCategory === "All" ? "No Active Campaigns" : `No ${selectedCategory} Campaigns`}
+            </h3>
+            <p className="text-gray-400">
+              {selectedCategory === "All"
+                ? "Check back soon for new campaigns to support!"
+                : `No active campaigns in the ${selectedCategory} category right now.`}
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+            {filteredCampaigns.map((campaign) => (
+              <CampaignCard key={campaign._id} {...campaign} />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Donation Form Modal */}
@@ -318,7 +351,7 @@ export const CampaignsPage: React.FC = () => {
                   Donate to: {selectedCampaign.title}
                 </h3>
               </div>
-              
+
               {/* Close Button */}
               <button
                 onClick={handleCloseModal}
@@ -330,7 +363,7 @@ export const CampaignsPage: React.FC = () => {
                 </svg>
               </button>
             </div>
-            
+
             {/* Scrollable Content */}
             <div className="overflow-y-auto max-h-[calc(90vh-60px)]">
               <div className="p-4 sm:p-6">
@@ -342,7 +375,7 @@ export const CampaignsPage: React.FC = () => {
                   <div className="text-sm text-gray-500">
                     Organized by <span className="text-orange-400">{selectedCampaign.organizer}</span>
                   </div>
-                  
+
                   {/* Progress Info */}
                   <div className="mt-4 p-4 bg-gray-900/50 rounded-lg border border-gray-800">
                     <div className="flex justify-between text-sm mb-2">
@@ -354,7 +387,7 @@ export const CampaignsPage: React.FC = () => {
                       </span>
                     </div>
                     <div className="w-full bg-gray-800 rounded-full h-2">
-                      <div 
+                      <div
                         className="bg-gradient-to-r from-green-500 to-emerald-400 h-2 rounded-full"
                         style={{ width: `${Math.min((selectedCampaign.raisedAmount / selectedCampaign.goalAmount) * 100, 100)}%` }}
                       />
@@ -373,17 +406,16 @@ export const CampaignsPage: React.FC = () => {
                         key={amount}
                         type="button"
                         onClick={() => handleAmountClick(amount)}
-                        className={`py-3 rounded-lg font-semibold transition-all text-sm sm:text-base ${
-                          donationForm.amount === amount
-                            ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg'
-                            : 'bg-white/5 text-gray-300 hover:bg-white/10'
-                        }`}
+                        className={`py-3 rounded-lg font-semibold transition-all text-sm sm:text-base ${donationForm.amount === amount
+                          ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg'
+                          : 'bg-white/5 text-gray-300 hover:bg-white/10'
+                          }`}
                       >
                         ${amount}
                       </button>
                     ))}
                   </div>
-                  
+
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">$</span>
                     <input
@@ -457,7 +489,7 @@ export const CampaignsPage: React.FC = () => {
                           required
                         />
                       </div>
-                      
+
                       <div>
                         <label className="block text-sm font-medium text-gray-300 mb-2">
                           CVV
@@ -488,7 +520,7 @@ export const CampaignsPage: React.FC = () => {
                   >
                     💳 Donate ${donationForm.amount.toLocaleString()}
                   </Button>
-                  
+
                   {/* Security Notice */}
                   <div className="mt-4 p-3 bg-gray-900/30 rounded-lg border border-gray-800">
                     <div className="flex items-center justify-center gap-2 text-xs text-gray-500">

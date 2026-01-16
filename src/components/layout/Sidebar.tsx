@@ -72,6 +72,7 @@ export const Sidebar: React.FC = () => {
     { to: "/messages", icon: <MessageCircle size={20} />, text: "Messages" },
     { to: "/notifications", icon: <Bell size={20} />, text: "Notifications" },
     { to: "/documents", icon: <FileText size={20} />, text: "Documents" },
+    { to: "/dashboard/campaigns", icon: <Rocket size={20} />, text: "Campaigns" },
     { to: "/deals/view-deals", icon: <DollarSign size={20} />, text: "View Deals" },
   ];
 
@@ -86,6 +87,7 @@ export const Sidebar: React.FC = () => {
     { to: "/entrepreneurs", icon: <Users size={20} />, text: "Find Startups" },
     { to: "/messages", icon: <MessageCircle size={20} />, text: "Messages" },
     { to: "/notifications", icon: <Bell size={20} />, text: "Notifications" },
+    { to: "/dashboard/campaigns", icon: <Rocket size={20} />, text: "Campaigns" },
     { to: "/deals/sent-deals", icon: <FileText size={20} />, text: "Sent Deals" },
   ];
 
