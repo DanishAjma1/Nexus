@@ -24,6 +24,7 @@ interface Campaign {
     organizer?: string;
     endDate: string;
     startDate: string;
+    isLifetime?: boolean;
     status: string;
     supporters?: Array<{
         supporterId: string;
@@ -177,7 +178,7 @@ export const DashboardCampaignDetail: React.FC = () => {
                                             {campaign.category}
                                         </span>
                                         <span className="px-3 py-1 bg-white/90 backdrop-blur-sm text-gray-900 text-xs font-bold rounded-full flex items-center gap-1">
-                                            <Clock size={12} /> {daysLeft} Days Left
+                                            <Clock size={12} /> {campaign.isLifetime ? "Lifetime" : `${daysLeft} Days Left`}
                                         </span>
                                     </div>
                                 </div>
@@ -241,7 +242,7 @@ export const DashboardCampaignDetail: React.FC = () => {
                                     </div>
                                     <div className="text-center border-l border-gray-100">
                                         <p className="text-gray-400 text-[10px] uppercase font-bold tracking-widest mb-1">Days Left</p>
-                                        <p className="text-xl font-bold text-gray-900">{daysLeft}</p>
+                                        <p className="text-xl font-bold text-gray-900">{campaign.isLifetime ? "Lifetime" : daysLeft}</p>
                                     </div>
                                 </div>
                             </CardBody>
@@ -267,7 +268,7 @@ export const DashboardCampaignDetail: React.FC = () => {
                                     <div>
                                         <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider">Timeline</p>
                                         <p className="text-sm font-bold text-gray-900">
-                                            {new Date(campaign.startDate).toLocaleDateString()} - {new Date(campaign.endDate).toLocaleDateString()}
+                                            {new Date(campaign.startDate).toLocaleDateString()} - {campaign.isLifetime ? "Lifetime" : new Date(campaign.endDate).toLocaleDateString()}
                                         </p>
                                     </div>
                                 </div>

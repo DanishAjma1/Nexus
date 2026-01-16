@@ -22,6 +22,7 @@ interface CampaignCardProps {
   organizer?: string;
   endDate: string;
   status: string;
+  isLifetime?: boolean;
   supporters?: Array<{
     supporterId: string;
     amount: number;
@@ -109,7 +110,8 @@ export const CampaignsPage: React.FC = () => {
     raisedAmount,
     images,
     organizer,
-    endDate
+    endDate,
+    isLifetime
   }) => {
     const progress = (raisedAmount / goalAmount) * 100;
     const daysLeft = calculateDaysLeft(endDate);
@@ -127,7 +129,7 @@ export const CampaignsPage: React.FC = () => {
         {/* Days Left Badge */}
         <div className="absolute top-4 right-4 z-10">
           <span className="px-3 py-1 text-xs font-semibold bg-gray-900/80 backdrop-blur-sm text-white rounded-full border border-gray-700">
-            ⏳ {daysLeft} days left
+            {isLifetime ? "⏳ Lifetime" : `⏳ ${daysLeft} days left`}
           </span>
         </div>
 

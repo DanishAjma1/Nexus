@@ -22,6 +22,7 @@ interface CampaignCardProps {
     organizer?: string;
     endDate: string;
     status: string;
+    isLifetime?: boolean;
     supporters?: Array<{
         supporterId: string;
         amount: number;
@@ -86,7 +87,8 @@ export const DashboardCampaigns: React.FC = () => {
         raisedAmount,
         images,
         organizer,
-        endDate
+        endDate,
+        isLifetime
     }) => {
         const progress = (raisedAmount / goalAmount) * 100;
         const daysLeft = calculateDaysLeft(endDate);
@@ -108,7 +110,7 @@ export const DashboardCampaigns: React.FC = () => {
                     <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent">
                         <div className="flex items-center text-white text-xs font-medium">
                             <Clock size={14} className="mr-1" />
-                            {daysLeft} days left
+                            {isLifetime ? "Lifetime" : `${daysLeft} days left`}
                         </div>
                     </div>
                 </div>

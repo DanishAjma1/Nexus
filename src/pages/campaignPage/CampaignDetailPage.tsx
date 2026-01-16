@@ -25,6 +25,7 @@ interface Campaign {
     endDate: string;
     startDate: string;
     status: string;
+    isLifetime?: boolean;
     supporters?: Array<{
         supporterId: string;
         amount: number;
@@ -273,7 +274,7 @@ export const CampaignDetailPage: React.FC = () => {
                                     {campaign.category}
                                 </span>
                                 <span className="px-4 py-2 text-sm font-semibold bg-gray-900/80 backdrop-blur-sm text-white rounded-full border border-gray-700">
-                                    ⏳ {daysLeft} days left
+                                    {campaign.isLifetime ? "⏳ Lifetime" : `⏳ ${daysLeft} days left`}
                                 </span>
                                 <button
                                     onClick={() => setIsShareModalOpen(true)}
@@ -354,7 +355,7 @@ export const CampaignDetailPage: React.FC = () => {
                                 <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-gray-800">
                                     <p className="text-xs text-gray-400 mb-1">End Date</p>
                                     <p className="text-white font-semibold">
-                                        {new Date(campaign.endDate).toLocaleDateString('en-US', {
+                                        {campaign.isLifetime ? "Lifetime" : new Date(campaign.endDate).toLocaleDateString('en-US', {
                                             month: 'long',
                                             day: 'numeric',
                                             year: 'numeric'

@@ -482,7 +482,7 @@ export const FundraisePage: React.FC = () => {
                 <>
                   <Link to="/register">
                     <Button className="px-8 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-blue-500/30">
-                      Create Investor Account
+                      Create Account
                     </Button>
                   </Link>
                   <Link to="/login">

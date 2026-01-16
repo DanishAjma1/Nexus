@@ -222,7 +222,11 @@ const CampForm: React.FC<CampFormProps> = ({ onSuccess, initialData }) => {
     setLoading(true);
     try {
       const data = new FormData();
-      Object.entries(formData).forEach(([k, v]) => data.append(k, v));
+      Object.entries(formData).forEach(([k, v]) => {
+        if (k === "endDate" && (formData.isLifetime || !v)) return;
+        // @ts-ignore
+        data.append(k, v);
+      });
       images.forEach((file) => data.append("images", file));
       existingImages.forEach((url) => data.append("existingImages", url));
 
