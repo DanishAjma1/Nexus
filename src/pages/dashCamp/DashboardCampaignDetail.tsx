@@ -4,8 +4,13 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { Button } from "../../components/ui/Button";
 import { Card, CardBody } from "../../components/ui/Card";
-import { ArrowLeft, Calendar, Clock, Share2, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, Share2, ShieldCheck, X, Rocket } from "lucide-react";
 import { ShareModal } from "../../components/common/ShareModal";
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements } from "@stripe/react-stripe-js";
+import { StripeDonationForm } from "../../components/camp/StripeDonationForm";
+
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 interface Campaign {
     _id: string;
@@ -36,29 +41,31 @@ export const DashboardCampaignDetail: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+    const [showDonationForm, setShowDonationForm] = useState(false);
+    const [donationAmount, setDonationAmount] = useState<number>(0);
+
+    const fetchCampaign = async () => {
+        try {
+            setLoading(true);
+            const response = await axios.get(`${URL}/admin/campaigns`);
+            const foundCampaign = response.data.find((c: Campaign) => c._id === id);
+
+            if (foundCampaign) {
+                setCampaign(foundCampaign);
+            } else {
+                toast.error("Campaign not found");
+                navigate("/dashboard/campaigns");
+            }
+        } catch (error) {
+            console.error("Failed to fetch campaign:", error);
+            toast.error("Failed to load campaign details");
+            navigate("/dashboard/campaigns");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchCampaign = async () => {
-            try {
-                setLoading(true);
-                const response = await axios.get(`${URL}/admin/campaigns`);
-                const foundCampaign = response.data.find((c: Campaign) => c._id === id);
-
-                if (foundCampaign) {
-                    setCampaign(foundCampaign);
-                } else {
-                    toast.error("Campaign not found");
-                    navigate("/dashboard/campaigns");
-                }
-            } catch (error) {
-                console.error("Failed to fetch campaign:", error);
-                toast.error("Failed to load campaign details");
-                navigate("/dashboard/campaigns");
-            } finally {
-                setLoading(false);
-            }
-        };
-
         if (id) {
             fetchCampaign();
         }
@@ -274,7 +281,10 @@ export const DashboardCampaignDetail: React.FC = () => {
                             Your contribution can help achieve the goal and change lives. Support this campaign directly on our main platform.
                         </p>
                         <Button
-                            onClick={() => navigate("/All-Campaigns")}
+                            onClick={() => {
+                                setDonationAmount(Math.max(25, Math.ceil((campaign.goalAmount - campaign.raisedAmount) * 0.01)));
+                                setShowDonationForm(true);
+                            }}
                             className="w-full font-bold shadow-md shadow-primary-200"
                         >
                             Contribute Now
@@ -290,6 +300,74 @@ export const DashboardCampaignDetail: React.FC = () => {
                 url={window.location.href}
                 theme="light"
             />
+            {/* Donation Form Modal */}
+            {showDonationForm && campaign && (
+                <div className="fixed inset-0 z-50 flex items-start justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-sm animate-fade-in overflow-y-auto">
+                    <div className="relative w-full max-w-md my-4 bg-white rounded-2xl border border-gray-100 shadow-2xl overflow-hidden max-h-[90vh]">
+                        {/* Header */}
+                        <div className="sticky top-0 z-20 flex items-center justify-between p-4 bg-white border-b border-gray-100">
+                            <div className="flex items-center">
+                                <Rocket className="w-5 h-5 text-primary-600 mr-3" />
+                                <h3 className="text-lg font-bold text-gray-900 line-clamp-1">
+                                    Support {campaign.title}
+                                </h3>
+                            </div>
+                            <button
+                                onClick={() => setShowDonationForm(false)}
+                                className="p-2 rounded-full hover:bg-gray-100 text-gray-400 transition-colors"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <div className="overflow-y-auto max-h-[calc(90vh-60px)] p-6">
+                            {/* Donation Amount Selection */}
+                            <div className="mb-6">
+                                <label className="block text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">
+                                    Select Amount
+                                </label>
+                                <div className="grid grid-cols-3 gap-2 mb-4">
+                                    {[25, 50, 100, 250, 500, 1000].map((amount) => (
+                                        <button
+                                            key={amount}
+                                            type="button"
+                                            onClick={() => setDonationAmount(amount)}
+                                            className={`py-3 rounded-xl font-bold transition-all text-sm ${donationAmount === amount
+                                                ? 'bg-primary-600 text-white shadow-lg shadow-primary-200'
+                                                : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                                                }`}
+                                        >
+                                            ${amount}
+                                        </button>
+                                    ))}
+                                </div>
+                                <div className="relative">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold">$</span>
+                                    <input
+                                        type="number"
+                                        value={donationAmount || ""}
+                                        onChange={(e) => setDonationAmount(parseInt(e.target.value) || 0)}
+                                        className="w-full pl-8 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-gray-900 focus:outline-none focus:border-primary-500 transition-colors font-bold"
+                                        placeholder="Custom Amount"
+                                    />
+                                </div>
+                            </div>
+
+                            <Elements stripe={stripePromise}>
+                                <StripeDonationForm
+                                    amount={donationAmount}
+                                    campaignId={campaign._id}
+                                    onSuccess={() => {
+                                        setShowDonationForm(false);
+                                        fetchCampaign();
+                                    }}
+                                    onCancel={() => setShowDonationForm(false)}
+                                />
+                            </Elements>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

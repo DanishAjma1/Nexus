@@ -4,7 +4,12 @@ import { Button } from "../../components/ui/Button";
 import { Card, CardBody } from "../../components/ui/Card";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { Rocket, Clock, Target, TrendingUp } from "lucide-react";
+import { Rocket, Clock, Target, TrendingUp, X } from "lucide-react";
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements } from "@stripe/react-stripe-js";
+import { StripeDonationForm } from "../../components/camp/StripeDonationForm";
+
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 interface CampaignCardProps {
     _id: string;
@@ -31,25 +36,28 @@ export const DashboardCampaigns: React.FC = () => {
     const [filteredCampaigns, setFilteredCampaigns] = useState<CampaignCardProps[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedCategory, setSelectedCategory] = useState<string>("All");
+    const [showDonationForm, setShowDonationForm] = useState(false);
+    const [selectedCampaign, setSelectedCampaign] = useState<CampaignCardProps | null>(null);
+    const [donationAmount, setDonationAmount] = useState<number>(0);
 
     const categories = ["Technology", "Health", "Education", "Environment", "Other"];
 
-    useEffect(() => {
-        const fetchCampaigns = async () => {
-            try {
-                setLoading(true);
-                const response = await axios.get(`${URL}/admin/campaigns`);
-                const activeCampaigns = response.data.filter((campaign: CampaignCardProps) => campaign.status === "active");
-                setCampaigns(activeCampaigns);
-                setFilteredCampaigns(activeCampaigns);
-            } catch (error) {
-                console.error("Failed to fetch campaigns:", error);
-                toast.error("Failed to load campaigns");
-            } finally {
-                setLoading(false);
-            }
-        };
+    const fetchCampaigns = async () => {
+        try {
+            setLoading(true);
+            const response = await axios.get(`${URL}/admin/campaigns`);
+            const activeCampaigns = response.data.filter((campaign: CampaignCardProps) => campaign.status === "active");
+            setCampaigns(activeCampaigns);
+            setFilteredCampaigns(activeCampaigns);
+        } catch (error) {
+            console.error("Failed to fetch campaigns:", error);
+            toast.error("Failed to load campaigns");
+        } finally {
+            setLoading(false);
+        }
+    };
 
+    useEffect(() => {
         fetchCampaigns();
     }, [URL]);
 
@@ -82,7 +90,7 @@ export const DashboardCampaigns: React.FC = () => {
     }) => {
         const progress = (raisedAmount / goalAmount) * 100;
         const daysLeft = calculateDaysLeft(endDate);
-        const displayImage = images && images.length > 0 ? `${URL}${images[0]}` : "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800";
+        const displayImage = images && images.length > 0 ? `${URL}${images[0]} ` : "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800";
 
         return (
             <Card hoverable className="h-full flex flex-col group border-gray-100 hover:border-primary-200 transition-all duration-300">
@@ -129,7 +137,7 @@ export const DashboardCampaigns: React.FC = () => {
                             <div className="w-full bg-gray-100 rounded-full h-2">
                                 <div
                                     className="bg-primary-600 h-2 rounded-full transition-all duration-500"
-                                    style={{ width: `${Math.min(progress, 100)}%` }}
+                                    style={{ width: `${Math.min(progress, 100)}% ` }}
                                 />
                             </div>
                             <div className="flex justify-between mt-1 text-[10px] text-gray-400">
@@ -139,13 +147,17 @@ export const DashboardCampaigns: React.FC = () => {
 
                         <div className="grid grid-cols-2 gap-3 mt-auto">
                             <Button
-                                onClick={() => navigate(`/dashboard/campaigns/${_id}`)}
+                                onClick={() => navigate(`/ dashboard / campaigns / ${_id} `)}
                                 className="py-2.5 text-xs font-bold bg-blue-50 text-blue-700 border-none hover:bg-blue-100 transition-all duration-300 transform hover:-translate-y-0.5"
                             >
                                 View Details
                             </Button>
                             <Button
-                                onClick={() => navigate(`/All-Campaigns`)}
+                                onClick={() => {
+                                    setSelectedCampaign({ _id, title, description, category, goalAmount, raisedAmount, images, organizer, endDate, status: "active" });
+                                    setDonationAmount(Math.max(25, Math.ceil((goalAmount - raisedAmount) * 0.01)));
+                                    setShowDonationForm(true);
+                                }}
                                 className="py-2.5 text-xs font-bold bg-primary-600 text-white hover:bg-primary-700 shadow-sm hover:shadow-primary-200 transition-all duration-300 transform hover:-translate-y-0.5"
                             >
                                 Contribute
@@ -168,10 +180,10 @@ export const DashboardCampaigns: React.FC = () => {
                 <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0">
                     <button
                         onClick={() => setSelectedCategory("All")}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${selectedCategory === "All"
+                        className={`px - 4 py - 2 rounded - lg text - sm font - medium whitespace - nowrap transition - all ${selectedCategory === "All"
                             ? "bg-primary-600 text-white shadow-md shadow-primary-200"
                             : "bg-white text-gray-600 border border-gray-200 hover:border-primary-300"
-                            }`}
+                            } `}
                     >
                         All
                     </button>
@@ -179,10 +191,10 @@ export const DashboardCampaigns: React.FC = () => {
                         <button
                             key={cat}
                             onClick={() => setSelectedCategory(cat)}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${selectedCategory === cat
+                            className={`px - 4 py - 2 rounded - lg text - sm font - medium whitespace - nowrap transition - all ${selectedCategory === cat
                                 ? "bg-primary-600 text-white shadow-md shadow-primary-200"
                                 : "bg-white text-gray-600 border border-gray-200 hover:border-primary-300"
-                                }`}
+                                } `}
                         >
                             {cat}
                         </button>
@@ -261,6 +273,75 @@ export const DashboardCampaigns: React.FC = () => {
                     {filteredCampaigns.map((campaign) => (
                         <CampaignCardInternal key={campaign._id} {...campaign} />
                     ))}
+                </div>
+            )}
+
+            {/* Donation Form Modal */}
+            {showDonationForm && selectedCampaign && (
+                <div className="fixed inset-0 z-50 flex items-start justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-sm animate-fade-in overflow-y-auto">
+                    <div className="relative w-full max-w-md my-4 bg-white rounded-2xl border border-gray-100 shadow-2xl overflow-hidden max-h-[90vh]">
+                        {/* Header */}
+                        <div className="sticky top-0 z-20 flex items-center justify-between p-4 bg-white border-b border-gray-100">
+                            <div className="flex items-center">
+                                <Rocket className="w-5 h-5 text-primary-600 mr-3" />
+                                <h3 className="text-lg font-bold text-gray-900 line-clamp-1">
+                                    Support {selectedCampaign.title}
+                                </h3>
+                            </div>
+                            <button
+                                onClick={() => setShowDonationForm(false)}
+                                className="p-2 rounded-full hover:bg-gray-100 text-gray-400 transition-colors"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <div className="overflow-y-auto max-h-[calc(90vh-60px)] p-6">
+                            {/* Donation Amount Selection */}
+                            <div className="mb-6">
+                                <label className="block text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">
+                                    Select Amount
+                                </label>
+                                <div className="grid grid-cols-3 gap-2 mb-4">
+                                    {[25, 50, 100, 250, 500, 1000].map((amount) => (
+                                        <button
+                                            key={amount}
+                                            type="button"
+                                            onClick={() => setDonationAmount(amount)}
+                                            className={`py - 3 rounded - xl font - bold transition - all text - sm ${donationAmount === amount
+                                                ? 'bg-primary-600 text-white shadow-lg shadow-primary-200'
+                                                : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                                                } `}
+                                        >
+                                            ${amount}
+                                        </button>
+                                    ))}
+                                </div>
+                                <div className="relative">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold">$</span>
+                                    <input
+                                        type="number"
+                                        value={donationAmount || ""}
+                                        onChange={(e) => setDonationAmount(parseInt(e.target.value) || 0)}
+                                        className="w-full pl-8 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-gray-900 focus:outline-none focus:border-primary-500 transition-colors font-bold"
+                                        placeholder="Custom Amount"
+                                    />
+                                </div>
+                            </div>
+
+                            <Elements stripe={stripePromise}>
+                                <StripeDonationForm
+                                    amount={donationAmount}
+                                    campaignId={selectedCampaign._id}
+                                    onSuccess={() => {
+                                        setShowDonationForm(false);
+                                        fetchCampaigns();
+                                    }}
+                                    onCancel={() => setShowDonationForm(false)}
+                                />
+                            </Elements>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
