@@ -126,11 +126,11 @@ export const Sidebar: React.FC = () => {
       icon: <ShieldBan size={20} />,
       text: "Fraud and Risk Detection",
     },
-    {
-      to: "/admin/flaggedAccounts",
-      icon: <AlertTriangle size={20} />,
-      text: "Flagged Accounts",
-    },
+    // {
+    //   to: "/admin/flaggedAccounts",
+    //   icon: <AlertTriangle size={20} />,
+    //   text: "Flagged Accounts",
+    // },
     {
       to: "/admin/send-notification",
       icon: <Send size={20} />,

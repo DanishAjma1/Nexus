@@ -1,9 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { toast } from "react-hot-toast";
+import { Share2 } from "lucide-react";
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements } from "@stripe/react-stripe-js";
+import { StripeDonationForm } from "../../components/camp/StripeDonationForm";
 import { Navbar } from "../../components/home/Navbar";
 import { Button } from "../../components/ui/Button";
-import axios from "axios";
-import toast from "react-hot-toast";
+
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 interface CampaignCardProps {
   _id: string;
@@ -16,6 +22,7 @@ interface CampaignCardProps {
   organizer?: string;
   endDate: string;
   status: string;
+  isLifetime?: boolean;
   supporters?: Array<{
     supporterId: string;
     amount: number;
@@ -56,23 +63,23 @@ export const CampaignsPage: React.FC = () => {
   const categories = ["Technology", "Health", "Education", "Environment", "Other"];
 
   // Fetch active campaigns from database
-  useEffect(() => {
-    const fetchCampaigns = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get(`${URL}/admin/campaigns`);
-        // Filter only active campaigns
-        const activeCampaigns = response.data.filter((campaign: CampaignCardProps) => campaign.status === "active");
-        setCampaigns(activeCampaigns);
-        setFilteredCampaigns(activeCampaigns);
-      } catch (error) {
-        console.error("Failed to fetch campaigns:", error);
-        toast.error("Failed to load campaigns");
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchCampaigns = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`${URL}/admin/campaigns`);
+      // Filter only active campaigns
+      const activeCampaigns = response.data.filter((campaign: CampaignCardProps) => campaign.status === "active");
+      setCampaigns(activeCampaigns);
+      setFilteredCampaigns(activeCampaigns);
+    } catch (error) {
+      console.error("Failed to fetch campaigns:", error);
+      toast.error("Failed to load campaigns");
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchCampaigns();
   }, [URL]);
 
@@ -103,7 +110,8 @@ export const CampaignsPage: React.FC = () => {
     raisedAmount,
     images,
     organizer,
-    endDate
+    endDate,
+    isLifetime
   }) => {
     const progress = (raisedAmount / goalAmount) * 100;
     const daysLeft = calculateDaysLeft(endDate);
@@ -121,7 +129,7 @@ export const CampaignsPage: React.FC = () => {
         {/* Days Left Badge */}
         <div className="absolute top-4 right-4 z-10">
           <span className="px-3 py-1 text-xs font-semibold bg-gray-900/80 backdrop-blur-sm text-white rounded-full border border-gray-700">
-            ⏳ {daysLeft} days left
+            {isLifetime ? "⏳ Lifetime" : `⏳ ${daysLeft} days left`}
           </span>
         </div>
 
@@ -429,108 +437,20 @@ export const CampaignsPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Payment Form */}
-                <form onSubmit={handleDonationSubmit}>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
-                        Card Number
-                      </label>
-                      <input
-                        type="text"
-                        maxLength={19}
-                        placeholder="1234 5678 9012 3456"
-                        value={donationForm.cardNumber.replace(/\s/g, '').replace(/(\d{4})/g, '$1 ').trim()}
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/\s/g, '').replace(/\D/g, '');
-                          if (value.length <= 16) {
-                            setDonationForm(prev => ({ ...prev, cardNumber: value }));
-                          }
-                        }}
-                        className="w-full px-4 py-3 bg-gray-900/50 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-orange-500 transition-colors"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
-                        Card Holder Name
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="John Doe"
-                        value={donationForm.cardHolder}
-                        onChange={(e) => setDonationForm(prev => ({ ...prev, cardHolder: e.target.value }))}
-                        className="w-full px-4 py-3 bg-gray-900/50 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-orange-500 transition-colors"
-                        required
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
-                          Expiry Date
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="MM/YY"
-                          maxLength={5}
-                          value={donationForm.expiryDate}
-                          onChange={(e) => {
-                            let value = e.target.value.replace(/\D/g, '');
-                            if (value.length >= 2) {
-                              value = value.slice(0, 2) + '/' + value.slice(2, 4);
-                            }
-                            if (value.length <= 5) {
-                              setDonationForm(prev => ({ ...prev, expiryDate: value }));
-                            }
-                          }}
-                          className="w-full px-4 py-3 bg-gray-900/50 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-orange-500 transition-colors"
-                          required
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
-                          CVV
-                        </label>
-                        <input
-                          type="password"
-                          maxLength={4}
-                          placeholder="123"
-                          value={donationForm.cvv}
-                          onChange={(e) => {
-                            const value = e.target.value.replace(/\D/g, '');
-                            if (value.length <= 4) {
-                              setDonationForm(prev => ({ ...prev, cvv: value }));
-                            }
-                          }}
-                          className="w-full px-4 py-3 bg-gray-900/50 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-orange-500 transition-colors"
-                          required
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Submit Button */}
-                  <Button
-                    type="submit"
-                    className="w-full mt-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all duration-300 transform hover:-translate-y-0.5 shadow-lg hover:shadow-green-500/30"
-                    disabled={donationForm.amount <= 0}
-                  >
-                    💳 Donate ${donationForm.amount.toLocaleString()}
-                  </Button>
-
-                  {/* Security Notice */}
-                  <div className="mt-4 p-3 bg-gray-900/30 rounded-lg border border-gray-800">
-                    <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                      </svg>
-                      <span>Your donation is secure and encrypted</span>
-                    </div>
-                  </div>
-                </form>
+                {/* Stripe Donation Form */}
+                <div className="mt-2">
+                  <Elements stripe={stripePromise}>
+                    <StripeDonationForm
+                      amount={donationForm.amount}
+                      campaignId={selectedCampaign._id}
+                      onSuccess={() => {
+                        handleCloseModal();
+                        fetchCampaigns();
+                      }}
+                      onCancel={handleCloseModal}
+                    />
+                  </Elements>
+                </div>
               </div>
             </div>
           </div>
