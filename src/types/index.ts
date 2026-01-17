@@ -14,6 +14,13 @@ export interface User {
   isSuspended?: boolean;
 }
 
+export interface TeamMember {
+  _id?: string;
+  name: string;
+  role: string[];
+  avatarUrl: string;
+}
+
 export interface Entrepreneur extends User {
   startupName: string | undefined;
   pitchSummary: string | undefined;
@@ -21,6 +28,7 @@ export interface Entrepreneur extends User {
   industry: string | undefined;
   foundedYear: number | undefined;
   teamSize: number | undefined;
+  team?: TeamMember[];
   revenue: string | undefined;
   profitMargin: number | undefined;
   growthRate: number | undefined;

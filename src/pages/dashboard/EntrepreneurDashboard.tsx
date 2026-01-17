@@ -25,7 +25,7 @@ export const EntrepreneurDashboard: React.FC = () => {
     CollaborationRequest[]
   >([]);
   const [recommendedInvestors, setRecommendedInvestors] = useState([]);
-  
+
   useEffect(() => {
     const fetchData = async () => {
       if (user) {
@@ -48,8 +48,8 @@ export const EntrepreneurDashboard: React.FC = () => {
 
   const pendingRequests =
     collaborationRequests.length > 0 &&
-    Array.isArray(collaborationRequests) &&
-    collaborationRequests.length > 0
+      Array.isArray(collaborationRequests) &&
+      collaborationRequests.length > 0
       ? collaborationRequests.filter((req) => req.requestStatus === "pending")
       : [];
 
@@ -59,10 +59,10 @@ export const EntrepreneurDashboard: React.FC = () => {
   ) => {
     setCollaborationRequests((prevRequests) =>
       prevRequests.map((req) =>
-        req._id === requestId ? { ...req, requestStatus:status } : req
+        req._id === requestId ? { ...req, requestStatus: status } : req
       )
     );
-    updateRequestStatus(requestId,status)
+    updateRequestStatus(requestId, status)
   };
 
   return (
@@ -77,9 +77,16 @@ export const EntrepreneurDashboard: React.FC = () => {
           </p>
         </div>
 
-        <Link to="/investors">
-          <Button leftIcon={<PlusCircle size={18} />}>Find Investors</Button>
-        </Link>
+        <div className="flex gap-2">
+          <Link to="/dashboard/entrepreneur/requests">
+            <Button variant="outline" leftIcon={<Bell size={18} />}>
+              Requests
+            </Button>
+          </Link>
+          <Link to="/investors">
+            <Button leftIcon={<PlusCircle size={18} />}>Find Investors</Button>
+          </Link>
+        </div>
       </div>
 
       {/* Summary cards */}

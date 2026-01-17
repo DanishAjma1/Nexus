@@ -10,6 +10,9 @@ import {
   FileText,
   DollarSign,
   Send,
+  Check,
+  X,
+  Clock,
 } from "lucide-react";
 import { Avatar } from "../../components/ui/Avatar";
 import { Button } from "../../components/ui/Button";
@@ -31,8 +34,9 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
   const { id } = useParams<{ id: string }>();
   const { user: currentUser } = useAuth();
   const [entrepreneur, setEnterpreneur] = useState<Entrepreneur>();
-  const [hasRequestedCollaboration, setHasRequestedCollaboration] =
-    useState<boolean>();
+  const [requestStatus, setRequestStatus] = useState<
+    "pending" | "accepted" | "rejected" | null
+  >(null);
   const [isDealModalOpen, setIsDealModalOpen] = useState(false);
 
   const [isSuspendModalOpen, setIsSuspendModalOpen] = useState(false);
@@ -80,7 +84,10 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
       if (currentUser?.userId && id) {
         const request = await checkRequestsFromInvestor(currentUser.userId, id);
         console.log(request);
-        setHasRequestedCollaboration(Boolean(request));
+        // The endpoint returns the status string directly or 'pending' if error/not found?
+        // Let's assume it returns the request object or status string as per `checkRequestsFromInvestor` implementation
+        // The data helper returns: return request.requestStatus;
+        setRequestStatus(request as any);
       }
     };
     checkInvestor();
@@ -108,6 +115,10 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
   }
 
   const isCurrentUser = currentUser?.userId === entrepreneur?.userId;
+  console.log("CurrentUser:", currentUser?.userId);
+  console.log("EntrepreneurUser:", entrepreneur?.userId);
+  console.log("IsCurrentUser:", isCurrentUser);
+
   const isInvestor = currentUser?.role === "investor";
   const isAdmin = currentUser?.role === "admin";
   // Check if the current investor has already sent a request to this entrepreneur
@@ -119,7 +130,7 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
         id,
         `I'm interested in learning more about ${entrepreneur.startupName} and would like to explore potential investment opportunities.`
       );
-      await setHasRequestedCollaboration(true);
+      setRequestStatus("pending");
     }
   };
 
@@ -217,31 +228,44 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
             {!isAdmin ? (
               !isCurrentUser && (
                 <>
-                  <Link to={`/chat/${entrepreneur.userId}`}>
-                    <Button
-                      variant="outline"
-                      leftIcon={<MessageCircle size={18} />}
-                    >
-                      Message
-                    </Button>
-                  </Link>
+                  {(!isInvestor || requestStatus === "accepted") && (
+                    <Link to={`/chat/${entrepreneur.userId}`}>
+                      <Button
+                        variant="outline"
+                        leftIcon={<MessageCircle size={18} />}
+                      >
+                        Message
+                      </Button>
+                    </Link>
+                  )}
 
                   {isInvestor && (
                     <Button
-                      leftIcon={<Send size={18} />}
-                      disabled={hasRequestedCollaboration}
+                      leftIcon={
+                        requestStatus === "pending" ? (
+                          <Clock size={18} />
+                        ) : requestStatus === "accepted" ? (
+                          <Check size={18} />
+                        ) : (
+                          <Send size={18} />
+                        )
+                      }
+                      disabled={requestStatus === "pending" || requestStatus === "accepted"}
                       onClick={handleSendRequest}
                     >
-                      {hasRequestedCollaboration
+                      {requestStatus === "pending"
                         ? "Request Sent"
-                        : "Request Collaboration"}
+                        : requestStatus === "accepted"
+                          ? "Request Accepted"
+                          : "Request Collaboration"}
                     </Button>
                   )}
                 </>
               )
             ) : (
-              // Admin Actions
+              // Admin Actions ... (omitted for brevity, assume unchanged context)
               <div className="flex flex-col gap-2">
+                {/* ... admin buttons ... */}
                 {entrepreneur.isSuspended ? (
                   <Button
                     variant="outline"
@@ -280,7 +304,7 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
               </div>
             )}
 
-            {hasRequestedCollaboration && (
+            {isInvestor && requestStatus === "accepted" && (
               <Button
                 className="ml-2 bg-blue-600 text-white hover:bg-blue-700"
                 onClick={() => setIsDealModalOpen(true)}
@@ -513,64 +537,131 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
           <Card>
             <CardHeader className="flex justify-between items-center">
               <h2 className="text-lg font-medium text-gray-900">Team</h2>
-              <span className="text-sm text-gray-500">
-                {entrepreneur.teamSize || 0} members
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-500">
+                  {entrepreneur.team?.length || 0} members
+                </span>
+                {isCurrentUser && (
+                  <Link to="/dashboard/entrepreneur/team">
+                    <Button variant="outline" size="sm" className="text-xs">
+                      Manage Team
+                    </Button>
+                  </Link>
+                )}
+              </div>
             </CardHeader>
             <CardBody>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="flex items-center p-3 border border-gray-200 rounded-md">
-                  <Avatar
-                    src={entrepreneur.avatarUrl}
-                    alt={entrepreneur.name}
-                    size="md"
-                    className="mr-3"
-                  />
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-900">
-                      {entrepreneur.name}
-                    </h3>
-                    <p className="text-xs text-gray-500">Founder & CEO</p>
-                  </div>
-                </div>
+                {entrepreneur.team &&
+                  entrepreneur.team.filter(member =>
+                    !member.role.some(role => role.toLowerCase() === "member")
+                  ).length > 0 ? (
+                  entrepreneur.team
+                    .filter(member =>
+                      !member.role.some(role => role.toLowerCase() === "member")
+                    )
+                    .sort((a, b) => {
+                      // Define role priority order
+                      const rolePriority: { [key: string]: number } = {
+                        "CEO": 1,
+                        "Founder": 2,
+                        "Co-Founder": 3,
+                        "CTO": 4,
+                        "CFO": 5,
+                        "COO": 6,
+                        "President": 7,
+                        "VP": 8,
+                        "Director": 9,
+                        "Head": 10,
+                        "Manager": 11,
+                        "Lead": 12,
+                        "Senior": 13
+                      };
 
-                <div className="flex items-center p-3 border border-gray-200 rounded-md">
-                  <Avatar
-                    src="https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg"
-                    alt="Team Member"
-                    size="md"
-                    className="mr-3"
-                  />
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-900">
-                      Alex Johnson
-                    </h3>
-                    <p className="text-xs text-gray-500">CTO</p>
-                  </div>
-                </div>
+                      // Get the highest priority role for each member (lowest number = higher priority)
+                      const getHighestPriority = (roles: string[]): number => {
+                        let highestPriority = Infinity;
+                        roles.forEach(role => {
+                          // Check for exact matches first
+                          if (rolePriority[role] && rolePriority[role] < highestPriority) {
+                            highestPriority = rolePriority[role];
+                          } else {
+                            // Check for partial matches (e.g., "VP of Engineering" contains "VP")
+                            for (const [key, priority] of Object.entries(rolePriority)) {
+                              if (role.toLowerCase().includes(key.toLowerCase()) && priority < highestPriority) {
+                                highestPriority = priority;
+                              }
+                            }
+                          }
+                        });
+                        return highestPriority === Infinity ? 100 : highestPriority;
+                      };
 
-                <div className="flex items-center p-3 border border-gray-200 rounded-md">
-                  <Avatar
-                    src="https://images.pexels.com/photos/773371/pexels-photo-773371.jpeg"
-                    alt="Team Member"
-                    size="md"
-                    className="mr-3"
-                  />
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-900">
-                      Jessica Chen
-                    </h3>
-                    <p className="text-xs text-gray-500">Head of Product</p>
-                  </div>
-                </div>
+                      const priorityA = getHighestPriority(a.role);
+                      const priorityB = getHighestPriority(b.role);
 
-                {entrepreneur.teamSize && entrepreneur?.teamSize > 3 && (
-                  <div className="flex items-center justify-center p-3 border border-dashed border-gray-200 rounded-md">
-                    <p className="text-sm text-gray-500">
-                      + {entrepreneur?.teamSize - 3} more team members
-                    </p>
+                      // Sort by priority (lower number = higher priority)
+                      return priorityA - priorityB;
+                    })
+                    .slice(0, 4)
+                    .map((member) => (
+                      <div key={member._id} className="flex items-center p-3 border border-gray-200 rounded-md">
+                        <Avatar
+                          src={member.avatarUrl}
+                          alt={member.name}
+                          size="md"
+                          className="mr-3"
+                        />
+                        <div>
+                          <h3 className="text-sm font-medium text-gray-900">
+                            {member.name}
+                          </h3>
+                          <p className="text-xs text-gray-500">
+                            {member.role
+                              .sort((roleA, roleB) => {
+                                // Sort roles within member by priority too
+                                const rolePriority: { [key: string]: number } = {
+                                  "CEO": 1, "Founder": 2, "Co-Founder": 3, "CTO": 4,
+                                  "CFO": 5, "COO": 6, "President": 7, "VP": 8,
+                                  "Director": 9, "Head": 10, "Manager": 11, "Lead": 12,
+                                  "Senior": 13
+                                };
+
+                                const getRolePriority = (role: string): number => {
+                                  if (rolePriority[role]) return rolePriority[role];
+                                  for (const [key, priority] of Object.entries(rolePriority)) {
+                                    if (role.toLowerCase().includes(key.toLowerCase())) {
+                                      return priority;
+                                    }
+                                  }
+                                  return 100;
+                                };
+
+                                return getRolePriority(roleA) - getRolePriority(roleB);
+                              })
+                              .join(", ")}
+                          </p>
+                        </div>
+                      </div>
+                    ))
+                ) : (
+                  <div className="col-span-full text-center py-4 text-gray-500 text-sm">
+                    No team members with specific roles listed.
                   </div>
                 )}
+
+                {entrepreneur.team &&
+                  entrepreneur.team.filter(member =>
+                    !member.role.some(role => role.toLowerCase() === "member")
+                  ).length > 4 && (
+                    <div className="flex items-center justify-center p-3 border border-dashed border-gray-200 rounded-md">
+                      <p className="text-sm text-gray-500">
+                        + {entrepreneur.team.filter(member =>
+                          !member.role.some(role => role.toLowerCase() === "member")
+                        ).length - 4} more team members with specific roles
+                      </p>
+                    </div>
+                  )}
               </div>
             </CardBody>
           </Card>
@@ -717,13 +808,13 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
                     sending a collaboration request.
                   </p>
 
-                  {!hasRequestedCollaboration ? (
+                  {requestStatus !== "pending" && requestStatus !== "accepted" ? (
                     <Button className="mt-3 w-full" onClick={handleSendRequest}>
                       Request Collaboration
                     </Button>
                   ) : (
                     <Button className="mt-3 w-full" disabled>
-                      Request Sent
+                      {requestStatus === "accepted" ? "Access Granted" : "Request Sent"}
                     </Button>
                   )}
                 </div>

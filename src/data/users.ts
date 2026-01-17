@@ -164,3 +164,57 @@ export const AmountMeasureWithTags = (amount: number) => {
   }
   return "0";
 };
+export const addTeamMember = async (userId: string, formData: FormData) => {
+  try {
+    const res = await axios.post(
+      `${URL}/entrepreneur/add-team-member/${userId}`,
+      formData,
+      {
+        withCredentials: true,
+        headers: { "Content-Type": "multipart/form-data" },
+      }
+    );
+    toast.success("Team member added successfully");
+    return res.data;
+  } catch (err) {
+    console.error(err);
+    toast.error("Failed to add team member");
+    throw err;
+  }
+};
+
+export const updateTeamMember = async (userId: string, memberId: string, formData: FormData) => {
+  try {
+    const res = await axios.put(
+      `${URL}/entrepreneur/update-team-member/${userId}/${memberId}`,
+      formData,
+      {
+        withCredentials: true,
+        headers: { "Content-Type": "multipart/form-data" },
+      }
+    );
+    toast.success("Team member updated successfully");
+    return res.data;
+  } catch (err) {
+    console.error(err);
+    toast.error("Failed to update team member");
+    throw err;
+  }
+};
+
+export const deleteTeamMember = async (userId: string, memberId: string) => {
+  try {
+    const res = await axios.delete(
+      `${URL}/entrepreneur/delete-team-member/${userId}/${memberId}`,
+      {
+        withCredentials: true,
+      }
+    );
+    toast.success("Team member removed successfully");
+    return res.data;
+  } catch (err) {
+    console.error(err);
+    toast.error("Failed to remove team member");
+    throw err;
+  }
+};

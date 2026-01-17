@@ -17,6 +17,8 @@ import { RegisterPage } from "./pages/auth/RegisterPage";
 
 // Dashboard Pages
 import { EntrepreneurDashboard } from "./pages/dashboard/EntrepreneurDashboard";
+import { EntrepreneurRequests } from "./pages/dashboard/EntrepreneurRequests";
+import { ManageTeam } from "./pages/dashboard/ManageTeam";
 import { InvestorDashboard } from "./pages/dashboard/InvestorDashboard";
 
 // Profile Pages
@@ -90,6 +92,14 @@ function App() {
               {/* Dashboard Routes */}
               <Route path="/dashboard" element={<DashboardLayout />}>
                 <Route path="entrepreneur" element={<EntrepreneurDashboard />} />
+                <Route
+                  path="entrepreneur/requests"
+                  element={<EntrepreneurRequests />}
+                />
+                <Route
+                  path="entrepreneur/team"
+                  element={<ManageTeam />}
+                />
                 <Route path="investor" element={<InvestorDashboard />} />
                 <Route path="admin" element={<AdminDashboard />} />
                 <Route path="campaigns" element={<DashboardCampaigns />} />
