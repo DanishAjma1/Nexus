@@ -141,6 +141,16 @@ export const Sidebar: React.FC = () => {
       icon: <Ban size={20} />,
       text: "Suspended & Blocked",
     },
+    {
+      to: "/admin/deals",
+      icon: <FileText size={20} />,
+      text: "Deal Records",
+    },
+    {
+      to: "/admin/payments",
+      icon: <DollarSign size={20} />,
+      text: "Payment Records",
+    },
     { to: "/notifications", icon: <Bell size={20} />, text: "Notifications" },
   ];
 

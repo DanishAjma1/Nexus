@@ -34,6 +34,10 @@ export interface Entrepreneur extends User {
   growthRate: number | undefined;
   marketOpportunity: string | undefined;
   advantage: string | undefined;
+  valuation?: number;
+  preSeedStatus?: 'pending' | 'in-progress' | 'completed';
+  seedStatus?: 'pending' | 'in-progress' | 'completed';
+  seriesAStatus?: 'pending' | 'in-progress' | 'completed';
 }
 
 export interface Investor extends User {

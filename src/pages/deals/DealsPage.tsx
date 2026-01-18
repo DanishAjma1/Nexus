@@ -1,29 +1,78 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import { Card, CardBody, CardHeader } from "../../components/ui/Card";
+import { Button } from "../../components/ui/Button";
+import { toast } from "react-hot-toast";
+import { useAuth } from "../../context/AuthContext";
+import { DealForm } from "../../components/DealForm";
+import { NegotiationModal } from "../../components/NegotiationModal";
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements } from "@stripe/react-stripe-js";
+import { DealPaymentModal } from "../../components/DealPaymentModal";
+
+// Initialize Stripe outside component to avoid recreation
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+
+const URL = import.meta.env.VITE_BACKEND_URL;
 
 export const DealsPage: React.FC = () => {
-  const [deals, setDeals] = useState([
-    {
-      _id: "1",
-      investorName: "John Doe",
-      investorEmail: "john@example.com",
-      businessName: "Acme Startup",
-      amount: 50000,
-      equity: 5,
-      message: "We want to invest in your startup.",
-      status: "accepted",
-    },
-    {
-      _id: "2",
-      investorName: "Jane Smith",
-      investorEmail: "jane@example.com",
-      businessName: "Acme Startup",
-      amount: 100000,
-      equity: 10,
-      message: "We are interested in funding your growth.",
-      status: "pending",
-    },
-  ]);
+  const { user } = useAuth();
+  const [deals, setDeals] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Modal states
+  const [selectedDeal, setSelectedDeal] = useState<any>(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isNegotiationModalOpen, setIsNegotiationModalOpen] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+
+  useEffect(() => {
+    fetchDeals();
+  }, [user]);
+
+  const fetchDeals = async () => {
+    if (!user?.userId) return;
+    try {
+      setLoading(true);
+      const res = await axios.get(`${URL}/deal/get-deals/${user.userId}`);
+      setDeals(res.data);
+    } catch (error) {
+      console.error("Error fetching deals:", error);
+      toast.error("Failed to load deals.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDealStatus = async (
+    dealId: string,
+    action: "accept" | "reject"
+  ) => {
+    try {
+      await axios.put(`${URL}/deal/update-deal/${dealId}`, {
+        action,
+        role: "investor",
+      });
+      toast.success(`Deal ${action === 'accept' ? 'accepted' : 'rejected'}!`);
+      fetchDeals(); // Refresh list
+    } catch (error) {
+      console.error(`Error ${action}ing deal:`, error);
+      toast.error(`Failed to ${action} deal.`);
+    }
+  };
+
+
+  const openViewModal = (deal: any) => {
+    setSelectedDeal(deal);
+    setIsViewModalOpen(true);
+  };
+
+  const openNegotiationModal = (deal: any) => {
+    setSelectedDeal(deal);
+    setIsNegotiationModalOpen(true);
+  };
+
+  if (loading) return <div className="p-4">Loading deals...</div>;
 
   return (
     <div className="space-y-6 animate-fade-in p-4">
@@ -38,39 +87,150 @@ export const DealsPage: React.FC = () => {
               <CardHeader className="flex justify-between items-center">
                 <div>
                   <h3 className="text-lg font-medium text-gray-900">
-                    {deal.investorName}
+                    {deal.entrepreneurId?.startupName || "Startup"}
                   </h3>
-                  <p className="text-sm text-gray-500">{deal.investorEmail}</p>
+                  <p className="text-sm text-gray-500">{deal.entrepreneurId?.name}</p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Sent {new Date(deal.createdAt).toLocaleDateString()}
+                  </p>
                 </div>
                 <span
-                  className={`text-sm font-medium px-2 py-0.5 rounded-full ${
-                    deal.status === "pending"
-                      ? "bg-yellow-100 text-yellow-800"
-                      : deal.status === "accepted"
+                  className={`text-sm font-medium px-2 py-0.5 rounded-full ${deal.status === "pending"
+                    ? "bg-yellow-100 text-yellow-800"
+                    : deal.status === "accepted"
                       ? "bg-green-100 text-green-800"
-                      : "bg-red-100 text-red-800"
-                  }`}
+                      : deal.status === "negotiating"
+                        ? "bg-blue-100 text-blue-800"
+                        : "bg-red-100 text-red-800"
+                    }`}
                 >
-                  {deal.status}
+                  {deal.status.charAt(0).toUpperCase() + deal.status.slice(1)}
                 </span>
               </CardHeader>
               <CardBody className="space-y-2">
                 <p>
-                  <strong>Business:</strong> {deal.businessName}
+                  <strong>Investment Amount:</strong> ${deal.investmentAmount?.toLocaleString()}
                 </p>
                 <p>
-                  <strong>Investment Amount:</strong> ${deal.amount}
+                  <strong>Valuation (Post-Money):</strong> ${deal.postMoneyValuation?.toLocaleString()}
                 </p>
                 <p>
-                  <strong>Requested Equity:</strong> {deal.equity}%
+                  <strong>Equity Offered:</strong> {deal.equityOffered}%
                 </p>
-                <p>
-                  <strong>Message:</strong> {deal.message}
-                </p>
+
+                <div className="flex flex-wrap gap-2 mt-4 pt-2 border-t">
+                  <Button
+                    variant="secondary"
+                    onClick={() => openViewModal(deal)}
+                  >
+                    See Details
+                  </Button>
+
+                  {(deal.status === "negotiating" && deal.lastActionBy === 'entrepreneur') && (
+                    <>
+                      <Button
+                        variant="outline"
+                        onClick={() => openNegotiationModal(deal)}
+                      >
+                        Review Counter Offer
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="border-green-600 text-green-600 hover:bg-green-50"
+                        onClick={() => handleDealStatus(deal._id, "accept")}
+                      >
+                        Accept Offer
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        className="text-red-600 hover:bg-red-50"
+                        onClick={() => handleDealStatus(deal._id, "reject")}
+                      >
+                        Reject
+                      </Button>
+                    </>
+                  )}
+
+                  {deal.status === 'accepted' && (
+                    <Button variant="outline" onClick={() => window.location.href = `/messages`}>
+                      Chat with Founder
+                    </Button>
+                  )}
+
+                  {deal.negotiationHistory &&
+                    deal.negotiationHistory.length > 0 &&
+                    deal.lastActionBy === "entrepreneur" &&
+                    deal.status === "negotiating" && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="w-full bg-blue-50 text-blue-600 hover:bg-blue-100"
+                        onClick={() => openNegotiationModal(deal)}
+                      >
+                        Review Counter Offer
+                      </Button>
+                    )}
+
+                  {deal.status === 'accepted' && deal.paymentStatus !== 'paid' && deal.paymentStatus !== 'funds_released' && (
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      className="w-full bg-green-600 hover:bg-green-700 mt-2"
+                      onClick={() => {
+                        setSelectedDeal(deal);
+                        setIsPaymentModalOpen(true);
+                      }}
+                    >
+                      Invest & Pay
+                    </Button>
+                  )}
+
+                  {(deal.paymentStatus === 'paid' || deal.paymentStatus === 'funds_released') && (
+                    <div className="w-full text-center py-2 bg-green-50 text-green-700 font-medium rounded text-sm mt-2 border border-green-200">
+                      Payment {deal.paymentStatus === 'funds_released' ? 'Released' : 'Pending Approval'}
+                    </div>
+                  )}
+                </div>
               </CardBody>
             </Card>
           ))}
         </div>
+      )}
+
+      {/* View Modal (Read Only) */}
+      {isViewModalOpen && selectedDeal && (
+        <DealForm
+          entrepreneur={selectedDeal.entrepreneurId}
+          investor={selectedDeal.investorId}
+          valuation={selectedDeal.preMoneyValuation}
+          onClose={() => setIsViewModalOpen(false)}
+          readOnly={true}
+          initialData={selectedDeal}
+        />
+      )}
+
+      {/* Negotiation Modal */}
+      {isNegotiationModalOpen && selectedDeal && (
+        <NegotiationModal
+          deal={selectedDeal}
+          onClose={() => {
+            setIsNegotiationModalOpen(false);
+            fetchDeals();
+          }}
+          role="investor"
+        />
+      )}
+
+      {isPaymentModalOpen && selectedDeal && (
+        <Elements stripe={stripePromise}>
+          <DealPaymentModal
+            deal={selectedDeal}
+            onClose={() => setIsPaymentModalOpen(false)}
+            onSuccess={() => {
+              fetchDeals();
+            }}
+          />
+        </Elements>
       )}
     </div>
   );

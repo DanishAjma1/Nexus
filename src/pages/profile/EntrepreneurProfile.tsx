@@ -24,8 +24,9 @@ import {
   createCollaborationRequest,
 } from "../../data/collaborationRequests";
 import { Entrepreneur } from "../../types";
-import { AmountMeasureWithTags, getEnterpreneurById } from "../../data/users";
+import { AmountMeasureWithTags, getEnterpreneurById, updateEntrepreneurData } from "../../data/users";
 import { suspendUser, blockUser, unsuspendUser, unblockUser } from "../../data/admin"; // Import admin actions
+import { DealForm } from "../../components/DealForm";
 
 type Props = {
   userId?: string | undefined;
@@ -62,21 +63,14 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
     fetchEntrepreneur();
   }, [id, userId]);
 
+
+
+  // Removed legacy auto-calculation of valuation that was overwriting backend data.
+  // Valuation and Status are now managed by backend events (e.g. Fund Release).
   useEffect(() => {
-    const calculateValuation = () => {
-      if (entrepreneur?.growthRate && entrepreneur?.profitMargin)
-        return (
-          5 *
-          (1 +
-            entrepreneur?.growthRate / 100 +
-            entrepreneur?.profitMargin / 100)
-        );
-    };
-    const nichevalue = calculateValuation();
-    // ensure we multiply two numbers: use a numeric default for nichevalue and revenue
-    const base = nichevalue ?? 1;
-    const revenue = entrepreneur?.revenue ?? 0;
-    setValuation(base * revenue);
+    if (entrepreneur) {
+      setValuation(entrepreneur.valuation);
+    }
   }, [entrepreneur]);
 
   useEffect(() => {
@@ -312,92 +306,13 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
                 Make a Deal
               </Button>
             )}
-            {isDealModalOpen && (
-              <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex justify-center items-center z-[9999]">
-                <div className="bg-white rounded-lg w-96 p-6 relative shadow-lg">
-                  <h2 className="text-lg font-bold mb-4">Make a Deal</h2>
-
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      alert("Deal successfully submitted");
-
-                      setIsDealModalOpen(false);
-                    }}
-                  >
-                    {/* Entrepreneur Info */}
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Entrepreneur Name
-                      </label>
-                      <input
-                        type="text"
-                        value={entrepreneur?.name || "Zain"}
-                        readOnly
-                        className="mt-1 block w-full border border-gray-300 rounded-md p-2 bg-gray-100"
-                      />
-                    </div>
-
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Business Name
-                      </label>
-                      <input
-                        type="text"
-                        value={entrepreneur?.startupName || "Abcdmedia Startup"}
-                        readOnly
-                        className="mt-1 block w-full border border-gray-300 rounded-md p-2 bg-gray-100"
-                      />
-                    </div>
-
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Deal Details
-                      </label>
-                      <textarea
-                        required
-                        defaultValue="We propose an initial investment of $100,000 for 10% equity."
-                        className="mt-1 block w-full border border-gray-300 rounded-md p-2"
-                      />
-                    </div>
-
-                    {/* Investor Input Fields */}
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Investment Amount ($)
-                      </label>
-                      <input
-                        type="number"
-                        defaultValue={50000} // dummy amount
-                        className="mt-1 block w-full border border-gray-300 rounded-md p-2"
-                      />
-                    </div>
-
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Requested Equity (%)
-                      </label>
-                      <input
-                        type="number"
-                        defaultValue={5} // dummy equity
-                        className="mt-1 block w-full border border-gray-300 rounded-md p-2"
-                      />
-                    </div>
-
-                    {/* Buttons */}
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        type="button"
-                        onClick={() => setIsDealModalOpen(false)}
-                      >
-                        Cancel
-                      </Button>
-                      <Button type="submit">Send Deal</Button>
-                    </div>
-                  </form>
-                </div>
-              </div>
+            {isDealModalOpen && entrepreneur && currentUser && (
+              <DealForm
+                entrepreneur={entrepreneur}
+                investor={currentUser}
+                valuation={valuation || 0}
+                onClose={() => setIsDealModalOpen(false)}
+              />
             )}
 
             {isCurrentUser && (
@@ -697,9 +612,19 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
                   <span className="text-sm text-gray-500">
                     Previous Funding
                   </span>
-                  <p className="text-md font-medium text-gray-900">
-                    $750K Seed (2022)
-                  </p>
+                  {entrepreneur.fundingHistory && entrepreneur.fundingHistory.length > 0 ? (
+                    <div className="space-y-1 mt-1">
+                      {entrepreneur.fundingHistory.map((fund: any, index: number) => (
+                        <p key={index} className="text-md font-medium text-gray-900">
+                          ${AmountMeasureWithTags(fund.amount)} {fund.stage} ({fund.year})
+                        </p>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-md font-medium text-gray-900">
+                      N/A
+                    </p>
+                  )}
                 </div>
 
                 <div className="pt-3 border-t border-gray-100">
