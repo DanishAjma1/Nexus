@@ -45,34 +45,34 @@ export const AdminDashboard: React.FC = () => {
         // Assuming the API returns total users, we'll need to calculate approved users
         // For now, let's set a placeholder. In reality, you might need an API endpoint
         // that specifically returns approved users count.
-        
+
         // First, let's fetch all users to calculate counts
         const usersRes = await axios.get(`${URL}/admin/get-users`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
         });
-        
+
         const allUsers = usersRes.data;
-        
+
         // Calculate counts based on user status
         const approvedCount = allUsers.filter((u: any) => 
           u.status === 'approved' || 
           u.approvalStatus === 'approved' ||
           u.isApproved === true ||
-          (u.status !== 'pending' && u.status !== 'rejected' && !u.isBlocked && !u.isSuspended)
+          !(u.status !== 'pending' && u.status !== 'rejected')
         ).length;
-        
-        const suspendedCount = allUsers.filter((u: any) => 
-          u.isSuspended === true || 
+
+        const suspendedCount = allUsers.filter((u: any) =>
+          u.isSuspended === true ||
           u.suspended === true ||
           u.status === 'suspended'
         ).length;
-        
-        const blockedCount = allUsers.filter((u: any) => 
-          u.isBlocked === true || 
+
+        const blockedCount = allUsers.filter((u: any) =>
+          u.isBlocked === true ||
           u.blocked === true ||
           u.status === 'blocked'
         ).length;
-        
+
         // Update stats with calculated values
         setStats({
           approvedUsers: approvedCount,
@@ -81,7 +81,7 @@ export const AdminDashboard: React.FC = () => {
           suspendedUsers: suspendedCount,
           blockedUsers: blockedCount
         });
-        
+
       } catch (error) {
         console.error("Error fetching admin stats:", error);
       }
