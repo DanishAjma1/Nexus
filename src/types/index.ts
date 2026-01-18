@@ -38,6 +38,12 @@ export interface Entrepreneur extends User {
   preSeedStatus?: 'pending' | 'in-progress' | 'completed';
   seedStatus?: 'pending' | 'in-progress' | 'completed';
   seriesAStatus?: 'pending' | 'in-progress' | 'completed';
+  fundingHistory?: {
+    amount: number;
+    stage: string;
+    year: number;
+    date: Date;
+  }[];
 }
 
 export interface Investor extends User {
