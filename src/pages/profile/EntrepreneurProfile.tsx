@@ -13,7 +13,10 @@ import {
   Check,
   X,
   Clock,
+  Eye,
 } from "lucide-react";
+import axios from "axios";
+import { PdfPreviewModal } from "../../components/ui/PdfPreviewModal";
 import { Avatar } from "../../components/ui/Avatar";
 import { Button } from "../../components/ui/Button";
 import { Card, CardBody, CardHeader } from "../../components/ui/Card";
@@ -31,6 +34,14 @@ import { DealForm } from "../../components/DealForm";
 type Props = {
   userId?: string | undefined;
 };
+
+interface DBDocument {
+  _id: string;
+  type: string;
+  fileUrl: string;
+  fileName: string;
+  uploadedAt: string;
+}
 export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
   const { id } = useParams<{ id: string }>();
   const { user: currentUser } = useAuth();
@@ -39,6 +50,8 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
     "pending" | "accepted" | "rejected" | null
   >(null);
   const [isDealModalOpen, setIsDealModalOpen] = useState(false);
+  const [documents, setDocuments] = useState<DBDocument[]>([]);
+  const [previewDoc, setPreviewDoc] = useState<{ url: string; name: string } | null>(null);
 
   const [isSuspendModalOpen, setIsSuspendModalOpen] = useState(false);
   const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
@@ -49,15 +62,23 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
   const navigate = useNavigate();
 
   const [valuation, setValuation] = useState<number | undefined>(0);
+  const URL = import.meta.env.VITE_BACKEND_URL;
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
     const fetchEntrepreneur = async () => {
-      if (id) {
-        const entrepreneur = await getEnterpreneurById(id);
+      const targetId = id || userId;
+      if (targetId) {
+        const entrepreneur = await getEnterpreneurById(targetId);
         setEnterpreneur(entrepreneur);
-      } else {
-        const entrepreneur = await getEnterpreneurById(userId);
-        setEnterpreneur(entrepreneur);
+
+        // Fetch documents
+        try {
+          const res = await axios.get(`${URL}/document/user/${entrepreneur.userId}`);
+          setDocuments(res.data.documents);
+        } catch (error) {
+          console.error("Failed to fetch documents", error);
+        }
       }
     };
     fetchEntrepreneur();
@@ -678,52 +699,32 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
             </CardHeader>
             <CardBody>
               <div className="space-y-3">
-                <div className="flex items-center p-3 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors">
-                  <div className="p-2 bg-primary-50 rounded-md mr-3">
-                    <FileText size={18} className="text-primary-700" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-sm font-medium text-gray-900">
-                      Pitch Deck
-                    </h3>
-                    <p className="text-xs text-gray-500">
-                      Updated 2 months ago
-                    </p>
-                  </div>
-                  <Button variant="outline" size="sm">
-                    View
-                  </Button>
-                </div>
-
-                <div className="flex items-center p-3 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors">
-                  <div className="p-2 bg-primary-50 rounded-md mr-3">
-                    <FileText size={18} className="text-primary-700" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-sm font-medium text-gray-900">
-                      Business Plan
-                    </h3>
-                    <p className="text-xs text-gray-500">Updated 1 month ago</p>
-                  </div>
-                  <Button variant="outline" size="sm">
-                    View
-                  </Button>
-                </div>
-
-                <div className="flex items-center p-3 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors">
-                  <div className="p-2 bg-primary-50 rounded-md mr-3">
-                    <FileText size={18} className="text-primary-700" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-sm font-medium text-gray-900">
-                      Financial Projections
-                    </h3>
-                    <p className="text-xs text-gray-500">Updated 2 weeks ago</p>
-                  </div>
-                  <Button variant="outline" size="sm">
-                    View
-                  </Button>
-                </div>
+                {documents.length > 0 ? (
+                  documents.map((doc) => (
+                    <div key={doc._id} className="flex items-center p-3 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors">
+                      <div className="p-2 bg-primary-50 rounded-md mr-3">
+                        <FileText size={18} className="text-primary-700" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-sm font-medium text-gray-900 truncate">
+                          {doc.type}
+                        </h3>
+                        <p className="text-[10px] text-gray-500 truncate">
+                          Updated on {new Date(doc.uploadedAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPreviewDoc({ url: `${URL}${doc.fileUrl}`, name: doc.fileName })}
+                      >
+                        View
+                      </Button>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-500 text-center py-4 italic">No documents uploaded yet.</p>
+                )}
               </div>
 
               {/* Investors Section */}
@@ -767,7 +768,17 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
             </CardBody>
           </Card>
         </div>
+
       </div>
+
+      {previewDoc && (
+        <PdfPreviewModal
+          isOpen={!!previewDoc}
+          onClose={() => setPreviewDoc(null)}
+          fileUrl={previewDoc.url}
+          fileName={previewDoc.name}
+        />
+      )}
     </div>
   );
 };
