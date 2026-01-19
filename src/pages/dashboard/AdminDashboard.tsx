@@ -2,9 +2,7 @@ import React, { useEffect, useState } from "react";
 import {
   Users,
   TrendingUp,
-  AlertTriangle,
   Shield,
-  MessageSquare,
   UserX,
   Ban,
   UserCheck
@@ -18,7 +16,7 @@ import axios from "axios";
 import { FraudAndRiskDetectionChart } from "../../components/admin/FraudAndRiskDetectionChart";
 import { StartupGrowthChart } from "../../components/admin/StartupGrowthChart";
 import { StartupIndustryChart } from "../../components/admin/StartupIndustryChart";
-import { FundingChart } from "../../components/admin/FundingChart";
+import { CampaignAnalyticsChart } from "../../components/admin/CampaignAnalyticsChart";
 
 type ChartData = {
   month: string;
@@ -31,12 +29,15 @@ export const AdminDashboard: React.FC = () => {
   const { user } = useAuth();
   const [stats, setStats] = useState({
     approvedUsers: 0,
-    supporters: 10,
+    supporters: 0,
     campaigns: 0,
     suspendedUsers: 0,
     blockedUsers: 0,
   });
   const navigate = useNavigate();
+  const [campaignsChartData, setCampaignsChartData] = useState<
+    { name: string; raised: number; goal: number }[]
+  >([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -54,8 +55,8 @@ export const AdminDashboard: React.FC = () => {
         const allUsers = usersRes.data;
 
         // Calculate counts based on user status
-        const approvedCount = allUsers.filter((u: any) => 
-          u.status === 'approved' || 
+        const approvedCount = allUsers.filter((u: any) =>
+          u.status === 'approved' ||
           u.approvalStatus === 'approved' ||
           u.isApproved === true ||
           !(u.status !== 'pending' && u.status !== 'rejected')
@@ -76,11 +77,24 @@ export const AdminDashboard: React.FC = () => {
         // Update stats with calculated values
         setStats({
           approvedUsers: approvedCount,
-          supporters: 10, // Keeping as static for now
+          supporters: res.data.supporters || 0,
           campaigns: res.data.campaigns || 0,
           suspendedUsers: suspendedCount,
           blockedUsers: blockedCount
         });
+
+        // Also fetch active campaigns for the chart
+        const campaignsRes = await axios.get(`${URL}/admin/campaigns`);
+        if (campaignsRes.data && Array.isArray(campaignsRes.data)) {
+          const activeCampaignsData = campaignsRes.data
+            .filter((c: any) => c.status === "active")
+            .map((c: any) => ({
+              name: c.title,
+              raised: c.raisedAmount,
+              goal: c.goalAmount,
+            }));
+          setCampaignsChartData(activeCampaignsData);
+        }
 
       } catch (error) {
         console.error("Error fetching admin stats:", error);
@@ -284,9 +298,9 @@ export const AdminDashboard: React.FC = () => {
               </div>
             </div>
             <div className="h-[40vh] md:h-[50vh] w-full lg:w-3/5">
-              <FundingChart />
+              <CampaignAnalyticsChart data={campaignsChartData} />
               <h3 className="mt-2 lg:ml-10 justify-center flex font-light text-sm underline text-blue-700">
-                Fund GrowthRate
+                Campaign Progress Analytics
               </h3>
             </div>
           </CardBody>

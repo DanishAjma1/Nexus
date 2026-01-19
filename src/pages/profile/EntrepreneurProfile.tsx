@@ -10,12 +10,20 @@ import {
   FileText,
   DollarSign,
   Send,
-  Check,
   X,
   Clock,
   Eye,
+  Edit2,
+  Save,
+  Loader2,
+  Check,
+  Upload,
+  Image as ImageIcon,
+  Trash2,
+  Plus,
 } from "lucide-react";
 import axios from "axios";
+import toast from "react-hot-toast";
 import { PdfPreviewModal } from "../../components/ui/PdfPreviewModal";
 import { Avatar } from "../../components/ui/Avatar";
 import { Button } from "../../components/ui/Button";
@@ -52,6 +60,11 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
   const [isDealModalOpen, setIsDealModalOpen] = useState(false);
   const [documents, setDocuments] = useState<DBDocument[]>([]);
   const [previewDoc, setPreviewDoc] = useState<{ url: string; name: string } | null>(null);
+  const [isEditingBio, setIsEditingBio] = useState(false);
+  const [editedBio, setEditedBio] = useState("");
+  const [isSavingBio, setIsSavingBio] = useState(false);
+  const [isUploadingThumbnails, setIsUploadingThumbnails] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [isSuspendModalOpen, setIsSuspendModalOpen] = useState(false);
   const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
@@ -69,15 +82,20 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
     const fetchEntrepreneur = async () => {
       const targetId = id || userId;
       if (targetId) {
-        const entrepreneur = await getEnterpreneurById(targetId);
-        setEnterpreneur(entrepreneur);
-
-        // Fetch documents
+        setIsLoading(true);
         try {
-          const res = await axios.get(`${URL}/document/user/${entrepreneur.userId}`);
-          setDocuments(res.data.documents);
+          const entrepreneur = await getEnterpreneurById(targetId);
+          setEnterpreneur(entrepreneur);
+
+          // Fetch documents
+          if (entrepreneur && entrepreneur.userId) {
+            const res = await axios.get(`${URL}/document/user/${entrepreneur.userId}`);
+            setDocuments(res.data.documents);
+          }
         } catch (error) {
           console.error("Failed to fetch documents", error);
+        } finally {
+          setIsLoading(false);
         }
       }
     };
@@ -91,6 +109,7 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
   useEffect(() => {
     if (entrepreneur) {
       setValuation(entrepreneur.valuation);
+      setEditedBio(entrepreneur.bio || "");
     }
   }, [entrepreneur]);
 
@@ -109,6 +128,15 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
   }, [currentUser?.userId, id]);
 
   if (!currentUser) return null;
+
+  if (isLoading) {
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
+      </div>
+    );
+  }
+
   if (!entrepreneur || entrepreneur.role !== "entrepreneur") {
     return (
       <div className="text-center py-12">
@@ -119,7 +147,6 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
           The entrepreneur profile you're looking for doesn't exist or has been
           removed.
         </p>
-        s
         <Link to="/dashboard/investor">
           <Button variant="outline" className="mt-4">
             Back to Dashboard
@@ -188,6 +215,72 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
       await unblockUser(entrepreneur.userId);
       const updated = await getEnterpreneurById(entrepreneur.userId);
       setEnterpreneur(updated);
+    }
+  };
+
+  const handleSaveBio = async () => {
+    if (!entrepreneur?.userId) return;
+    setIsSavingBio(true);
+    try {
+      await axios.post(`${URL}/user/update-profile/${entrepreneur.userId}`, {
+        bio: editedBio
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setEnterpreneur(prev => prev ? { ...prev, bio: editedBio } : undefined);
+      setIsEditingBio(false);
+      toast.success("Bio updated successfully");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to update bio");
+    } finally {
+      setIsSavingBio(false);
+    }
+  };
+
+  const handleThumbnailUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+
+    const files = Array.from(e.target.files);
+    const currentCount = entrepreneur?.businessThumbnails?.length || 0;
+
+    if (currentCount + files.length > 3) {
+      toast.error("You can only have up to 3 thumbnails");
+      return;
+    }
+
+    const formData = new FormData();
+    files.forEach(file => {
+      formData.append("thumbnails", file);
+    });
+
+    try {
+      setIsUploadingThumbnails(true);
+      const res = await axios.post(`${URL}/entrepreneur/upload-thumbnails/${entrepreneur?.userId}`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data"
+        }
+      });
+      setEnterpreneur(prev => prev ? { ...prev, businessThumbnails: res.data.businessThumbnails } : undefined);
+      toast.success("Thumbnails uploaded successfully");
+    } catch (error: any) {
+      console.error("Upload failed", error);
+      toast.error(error.response?.data?.message || "Failed to upload thumbnails");
+    } finally {
+      setIsUploadingThumbnails(false);
+    }
+  };
+
+  const handleThumbnailDelete = async (imageUrl: string) => {
+    try {
+      const res = await axios.delete(`${URL}/entrepreneur/delete-thumbnail/${entrepreneur?.userId}`, {
+        data: { imageUrl }
+      });
+      setEnterpreneur(prev => prev ? { ...prev, businessThumbnails: res.data.businessThumbnails } : undefined);
+      toast.success("Thumbnail deleted");
+    } catch (error) {
+      console.error("Delete failed", error);
+      toast.error("Failed to delete thumbnail");
     }
   };
 
@@ -411,13 +504,48 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
         <div className="lg:col-span-2 space-y-6">
           {/* About */}
           <Card>
-            <CardHeader>
+            <CardHeader className="flex justify-between items-center">
               <h2 className="text-lg font-medium text-gray-900">About</h2>
+              {isCurrentUser && (
+                <button
+                  onClick={() => isEditingBio ? handleSaveBio() : setIsEditingBio(true)}
+                  disabled={isSavingBio}
+                  className="p-1 hover:bg-gray-100 rounded-full transition-colors text-primary-600"
+                  title={isEditingBio ? "Save bio" : "Edit bio"}
+                >
+                  {isSavingBio ? (
+                    <Loader2 className="animate-spin" size={18} />
+                  ) : isEditingBio ? (
+                    <Save size={18} />
+                  ) : (
+                    <Edit2 size={18} />
+                  )}
+                </button>
+              )}
             </CardHeader>
             <CardBody>
-              <p className="text-gray-700">
-                {entrepreneur.bio || "Say about yours..?"}
-              </p>
+              {isEditingBio ? (
+                <div className="space-y-3">
+                  <textarea
+                    className="w-full border rounded-lg p-3 text-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent min-h-[120px]"
+                    value={editedBio}
+                    onChange={(e) => setEditedBio(e.target.value)}
+                    placeholder="Tell us about yourself and your journey..."
+                  />
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" size="sm" onClick={() => { setIsEditingBio(false); setEditedBio(entrepreneur.bio || ""); }}>
+                      Cancel
+                    </Button>
+                    <Button size="sm" onClick={handleSaveBio} disabled={isSavingBio}>
+                      Save
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-gray-700 whitespace-pre-wrap">
+                  {entrepreneur.bio || "No information provided yet."}
+                </p>
+              )}
             </CardBody>
           </Card>
 
@@ -468,6 +596,68 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
               </div>
             </CardBody>
           </Card>
+
+          {/* Business Showcase - Only visible to Owner or Admin */}
+          {(isCurrentUser || currentUser?.role === "admin") && (
+            <Card>
+              <CardHeader className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <ImageIcon size={20} className="text-gray-500" />
+                  <h2 className="text-lg font-medium text-gray-900">
+                    Business Showcase
+                  </h2>
+                </div>
+                {isCurrentUser && (entrepreneur?.businessThumbnails?.length || 0) < 3 && (
+                  <div className="relative">
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                      onChange={handleThumbnailUpload}
+                      disabled={isUploadingThumbnails}
+                    />
+                    <Button variant="outline" size="sm" className="flex items-center gap-1" disabled={isUploadingThumbnails}>
+                      {isUploadingThumbnails ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
+                      Upload
+                    </Button>
+                  </div>
+                )}
+              </CardHeader>
+              <CardBody>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {entrepreneur?.businessThumbnails && entrepreneur.businessThumbnails.length > 0 ? (
+                    entrepreneur.businessThumbnails.map((url, idx) => (
+                      <div key={idx} className="relative group aspect-video rounded-xl overflow-hidden border border-gray-200 shadow-sm">
+                        <img 
+                          src={url} 
+                          alt={`Showcase ${idx + 1}`} 
+                          className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                        />
+                        {isCurrentUser && (
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <button
+                              onClick={() => handleThumbnailDelete(url)}
+                              className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-lg"
+                              title="Delete image"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="col-span-full py-8 border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center text-gray-400">
+                      <ImageIcon size={40} className="mb-2 opacity-50" />
+                      <p>No business images uploaded yet.</p>
+                      {isCurrentUser && <p className="text-sm">Upload up to 3 images to showcase your business.</p>}
+                    </div>
+                  )}
+                </div>
+              </CardBody>
+            </Card>
+          )}
 
           {/* Team */}
           <Card>

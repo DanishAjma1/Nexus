@@ -5,7 +5,7 @@ import { Card, CardHeader, CardBody } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/Badge";
 import { InvestorCard } from "../../components/investor/InvestorCard";
 import { useAuth } from "../../context/AuthContext";
-import { getInvestorsFromDb ,AmountMeasureWithTags} from "../../data/users";
+import { getInvestorsFromDb } from "../../data/users";
 
 import { Investor } from "../../types";
 
@@ -13,6 +13,7 @@ export const InvestorsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStages, setSelectedStages] = useState<string[]>([]);
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+  const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
 
   const [investors, setInvestors] = useState<Investor[]>([]);
   const { user } = useAuth();
@@ -33,7 +34,10 @@ export const InvestorsPage: React.FC = () => {
   );
   const allInterests = Array.from(
     new Set(investors.flatMap((i) => i.investmentInterests || ""))
-  );
+  ).filter(Boolean);
+  const allLocations = Array.from(
+    new Set(investors.map((i) => i.location).filter(Boolean))
+  ) as string[];
 
   // Filter investors based on search and filters
   const filteredInvestors = investors && investors.filter((investor) => {
@@ -57,7 +61,9 @@ export const InvestorsPage: React.FC = () => {
 
     const isApproved = investor.approvalStatus === 'approved';
 
-    return matchesSearch && matchesStages && matchesInterests && isApproved;
+    const matchesLocation = !selectedLocation || investor.location === selectedLocation;
+
+    return matchesSearch && matchesStages && matchesInterests && isApproved && matchesLocation;
   });
 
   const toggleStage = (stage: string) => {
@@ -138,18 +144,23 @@ export const InvestorsPage: React.FC = () => {
                   Location
                 </h3>
                 <div className="space-y-2">
-                  <button className="flex items-center w-full text-left px-3 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-50">
-                    <MapPin size={16} className="mr-2" />
-                    San Francisco, CA
-                  </button>
-                  <button className="flex items-center w-full text-left px-3 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-50">
-                    <MapPin size={16} className="mr-2" />
-                    New York, NY
-                  </button>
-                  <button className="flex items-center w-full text-left px-3 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-50">
-                    <MapPin size={16} className="mr-2" />
-                    Boston, MA
-                  </button>
+                  {allLocations.length > 0 ? (
+                    allLocations.map((location) => (
+                      <button
+                        key={location}
+                        onClick={() => setSelectedLocation(selectedLocation === location ? null : location)}
+                        className={`flex items-center w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${selectedLocation === location
+                          ? "bg-primary-50 text-primary-700 font-medium"
+                          : "text-gray-700 hover:bg-gray-50"
+                          }`}
+                      >
+                        <MapPin size={16} className={`mr-2 ${selectedLocation === location ? "text-primary-600" : "text-gray-400"}`} />
+                        {location}
+                      </button>
+                    ))
+                  ) : (
+                    <p className="text-xs text-gray-500 italic px-3">No locations available</p>
+                  )}
                 </div>
               </div>
             </CardBody>
@@ -177,7 +188,7 @@ export const InvestorsPage: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {filteredInvestors.map((investor) => (
-              <InvestorCard key={investor.id} investor={investor} />
+              <InvestorCard key={investor.userId} investor={investor} />
             ))}
           </div>
         </div>

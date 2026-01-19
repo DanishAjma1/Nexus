@@ -44,15 +44,18 @@ export interface Entrepreneur extends User {
     year: number;
     date: Date;
   }[];
+  businessThumbnails?: string[];
   investors?: {
     name: string;
     avatarUrl: string;
     userId: string;
   }[];
+  totalRaised?: number;
 }
 
 export interface Investor extends User {
   investmentInterests: string[] | undefined;
+  investmentStage: string[] | undefined;
   portfolioCompanies: string[] | undefined;
   totalInvestments: number | undefined;
   minimumInvestment: number | undefined;

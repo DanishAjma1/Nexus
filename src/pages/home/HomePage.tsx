@@ -34,28 +34,54 @@ export const HomePage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
   const [recentCampaigns, setRecentCampaigns] = useState<any[]>([]);
+  const [recentFundraisers, setRecentFundraisers] = useState<any[]>([]);
   const [campaignsLoading, setCampaignsLoading] = useState(true);
+  const [fundraisersLoading, setFundraisersLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalStartups: 0,
+    totalFunded: 0,
+    successRate: 95
+  });
 
-  // Fetch recent active campaigns
+  // Fetch recent active campaigns and platform stats
   useEffect(() => {
-    const fetchRecentCampaigns = async () => {
+    const fetchData = async () => {
       try {
         setCampaignsLoading(true);
-        const response = await axios.get(`${URL}/admin/campaigns`);
-        // Filter only active campaigns and take the last 3 (most recent)
-        const activeCampaigns = response.data
+        setFundraisersLoading(true);
+
+        const [campaignsRes, entrepreneursRes, statsRes] = await Promise.all([
+          axios.get(`${URL}/admin/campaigns`),
+          axios.get(`${URL}/entrepreneur/get-entrepreneurs`),
+          axios.get(`${URL}/user/platform-stats`)
+        ]);
+
+        // Recent Campaigns
+        const activeCampaigns = campaignsRes.data
           .filter((c: any) => c.status === "active")
-          .slice(-3)
-          .reverse();
+          .slice(0, 3);
         setRecentCampaigns(activeCampaigns);
+
+        // Recent Fundraisers (already sorted by latest on backend)
+        setRecentFundraisers((entrepreneursRes.data.entrepreneurs || []).slice(0, 3));
+
+        // Stats
+        if (statsRes.data) {
+          setStats({
+            totalStartups: statsRes.data.totalStartups || 0,
+            totalFunded: statsRes.data.totalFunded || 0,
+            successRate: statsRes.data.successRate || 95
+          });
+        }
       } catch (error) {
-        console.error("Failed to fetch recent campaigns:", error);
+        console.error("Failed to fetch home page data:", error);
       } finally {
         setCampaignsLoading(false);
+        setFundraisersLoading(false);
       }
     };
 
-    fetchRecentCampaigns();
+    fetchData();
   }, [URL]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -135,14 +161,27 @@ export const HomePage: React.FC = () => {
     );
   };
 
+  interface FundraiserProps {
+    id: string;
+    image: string;
+    fundNeeded: number;
+    company: string;
+    description: string;
+    totalRaised: number;
+  }
   const FundraiserDiv: React.FC<FundraiserProps> = ({
+    id,
     image,
     fundNeeded,
     company,
     description,
+    totalRaised
   }) => {
     return (
-      <div className="group relative w-full h-44 md:h-48 hover:scale-[1.02] transition-all duration-300 mx-auto max-w-xs bg-gradient-to-br from-blue-900/80 to-purple-900/80 rounded-xl overflow-hidden border border-gray-700/50 shadow-lg hover:shadow-xl hover:border-blue-500/30">
+      <div
+        onClick={() => navigate(`/fundraises`)}
+        className="group cursor-pointer relative w-full h-44 md:h-48 hover:scale-[1.02] transition-all duration-300 mx-auto max-w-xs bg-gradient-to-br from-blue-900/80 to-purple-900/80 rounded-xl overflow-hidden border border-gray-700/50 shadow-lg hover:shadow-xl hover:border-blue-500/30"
+      >
         <img
           src={image}
           alt="Fundraiser"
@@ -152,22 +191,36 @@ export const HomePage: React.FC = () => {
 
         <div className="absolute inset-0 flex flex-col justify-end text-white p-4">
           <div className="bg-gradient-to-r from-blue-500/20 to-transparent p-3 rounded-lg backdrop-blur-sm">
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between mb-1">
               <h1 className="text-sm font-bold text-white truncate">
                 {company}
               </h1>
-              <span className="text-xs px-2 py-1 bg-blue-500/30 rounded-full">
+              <span className="text-[10px] px-2 py-0.5 bg-blue-500/30 rounded-full">
                 Active
               </span>
             </div>
-            <p className="text-xs text-gray-300 mb-3 line-clamp-2">
+            <p className="text-[10px] text-gray-300 mb-2 line-clamp-2">
               {description}
             </p>
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-blue-300">Need:</span>
-              <span className="text-sm font-bold text-white">
-                ${fundNeeded}
-              </span>
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center justify-between">
+                <span className="text-[8px] font-semibold text-blue-300">Raised:</span>
+                <span className="text-[10px] font-bold text-white">
+                  ${totalRaised.toLocaleString()}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[8px] font-semibold text-blue-300">Target:</span>
+                <span className="text-[10px] font-bold text-white">
+                  ${fundNeeded.toLocaleString()}
+                </span>
+              </div>
+              <div className="mt-1 h-1 w-full bg-gray-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-blue-500 transition-all duration-1000"
+                  style={{ width: `${Math.min((totalRaised / (fundNeeded || 1)) * 100, 100)}%` }}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -318,18 +371,18 @@ export const HomePage: React.FC = () => {
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pt-8">
                   <div className="text-center p-4 bg-white/5 rounded-xl backdrop-blur-sm">
                     <div className="text-2xl font-bold text-orange-500">
-                      500+
+                      {stats.totalStartups || 0}+
                     </div>
                     <div className="text-sm text-gray-400">Startups</div>
                   </div>
                   <div className="text-center p-4 bg-white/5 rounded-xl backdrop-blur-sm">
                     <div className="text-2xl font-bold text-blue-500">
-                      $50M+
+                      ${(stats.totalFunded / 1000000).toFixed(1)}M+
                     </div>
                     <div className="text-sm text-gray-400">Funded</div>
                   </div>
                   <div className="text-center p-4 bg-white/5 rounded-xl backdrop-blur-sm md:col-span-1 col-span-2">
-                    <div className="text-2xl font-bold text-green-500">95%</div>
+                    <div className="text-2xl font-bold text-green-500">{stats.successRate}%</div>
                     <div className="text-sm text-gray-400">Success Rate</div>
                   </div>
                 </div>
@@ -350,24 +403,34 @@ export const HomePage: React.FC = () => {
                 </div>
 
                 <div className="flex flex-col gap-4 lg:gap-5">
-                  <FundraiserDiv
-                    image="app logo.jpeg"
-                    company="Quantum AI"
-                    fundNeeded="2.5M"
-                    description="Advanced quantum computing for enterprise solutions with guaranteed returns"
-                  />
-                  <FundraiserDiv
-                    image="app logo.jpeg"
-                    company="NeuroTech"
-                    fundNeeded="1.8M"
-                    description="Breakthrough neural interface technology with 3-year ROI projection"
-                  />
-                  <FundraiserDiv
-                    image="app logo.jpeg"
-                    company="Space Logistics"
-                    fundNeeded="5.2M"
-                    description="Orbital delivery systems with government contracts secured"
-                  />
+                  {fundraisersLoading ? (
+                    <div className="flex justify-center p-10">
+                      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-blue-500"></div>
+                    </div>
+                  ) : recentFundraisers.length === 0 ? (
+                    <div className="text-center py-10">
+                      <p className="text-gray-500 text-sm italic">No active fundraisers</p>
+                    </div>
+                  ) : (
+                    recentFundraisers.map((entrepreneur) => {
+                      const businessImage = entrepreneur.businessThumbnails?.[0] ||
+                        (entrepreneur.avatarUrl
+                          ? (entrepreneur.avatarUrl.startsWith('http') ? entrepreneur.avatarUrl : `${URL}/${entrepreneur.avatarUrl}`)
+                          : "app logo.jpeg");
+
+                      return (
+                        <FundraiserDiv
+                          key={entrepreneur.userId}
+                          id={entrepreneur.userId}
+                          image={businessImage}
+                          company={entrepreneur.startupName || "Unnamed Startup"}
+                          fundNeeded={entrepreneur.fundingNeeded || 0}
+                          totalRaised={entrepreneur.totalRaised || 0}
+                          description={entrepreneur.pitchSummary || "No description provided."}
+                        />
+                      );
+                    })
+                  )}
                 </div>
               </div>
             </div>

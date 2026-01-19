@@ -8,7 +8,12 @@ import {
   BarChart3,
   Briefcase,
   DollarSign,
+  Edit2,
+  Save,
+  Loader2,
 } from "lucide-react";
+import axios from "axios";
+import toast from "react-hot-toast";
 import { Avatar } from "../../components/ui/Avatar";
 import { Button } from "../../components/ui/Button";
 import { Card, CardBody, CardHeader } from "../../components/ui/Card";
@@ -33,16 +38,23 @@ export const InvestorProfile: React.FC<Props> = ({ userId }) => {
   const [suspendReason, setSuspendReason] = useState("");
   const [suspendDays, setSuspendDays] = useState(7);
   const [blockReason, setBlockReason] = useState("");
+  const [isEditingBio, setIsEditingBio] = useState(false);
+  const [editedBio, setEditedBio] = useState("");
+  const [isSavingBio, setIsSavingBio] = useState(false);
+
+  const URL = import.meta.env.VITE_BACKEND_URL;
+  const token = localStorage.getItem("token");
 
   // Fetch investor data
   useEffect(() => {
     const fetchInvestors = async () => {
-      if (id) {
-        const investor = await getInvestorById(id);
-        setInvestor(investor);
-      } else {
-        const investor = await getInvestorById(userId);
-        setInvestor(investor);
+      const targetId = id || userId;
+      if (targetId) {
+        const investor = await getInvestorById(targetId);
+        if (investor) {
+          setInvestor(investor);
+          setEditedBio(investor.bio || "");
+        }
       }
     };
     fetchInvestors();
@@ -107,6 +119,26 @@ export const InvestorProfile: React.FC<Props> = ({ userId }) => {
       await unblockUser(investor.userId);
       const updated = await getInvestorById(investor.userId);
       setInvestor(updated);
+    }
+  };
+
+  const handleSaveBio = async () => {
+    if (!investor?.userId) return;
+    setIsSavingBio(true);
+    try {
+      await axios.post(`${URL}/user/update-profile/${investor.userId}`, {
+        bio: editedBio
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setInvestor(prev => prev ? { ...prev, bio: editedBio } : undefined);
+      setIsEditingBio(false);
+      toast.success("Bio updated successfully");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to update bio");
+    } finally {
+      setIsSavingBio(false);
     }
   };
 
@@ -224,13 +256,48 @@ export const InvestorProfile: React.FC<Props> = ({ userId }) => {
         <div className="lg:col-span-2 space-y-6">
           {/* About */}
           <Card>
-            <CardHeader>
+            <CardHeader className="flex justify-between items-center">
               <h2 className="text-lg font-medium text-gray-900">About</h2>
+              {isCurrentUser && (
+                <button
+                  onClick={() => isEditingBio ? handleSaveBio() : setIsEditingBio(true)}
+                  disabled={isSavingBio}
+                  className="p-1 hover:bg-gray-100 rounded-full transition-colors text-primary-600"
+                  title={isEditingBio ? "Save bio" : "Edit bio"}
+                >
+                  {isSavingBio ? (
+                    <Loader2 className="animate-spin" size={18} />
+                  ) : isEditingBio ? (
+                    <Save size={18} />
+                  ) : (
+                    <Edit2 size={18} />
+                  )}
+                </button>
+              )}
             </CardHeader>
             <CardBody>
-              <p className="text-gray-700">
-                {investor.bio || "Say something about u..?"}
-              </p>
+              {isEditingBio ? (
+                <div className="space-y-3">
+                  <textarea
+                    className="w-full border rounded-lg p-3 text-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent min-h-[120px]"
+                    value={editedBio}
+                    onChange={(e) => setEditedBio(e.target.value)}
+                    placeholder="Tell us about your investment philosophy..."
+                  />
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" size="sm" onClick={() => { setIsEditingBio(false); setEditedBio(investor.bio || ""); }}>
+                      Cancel
+                    </Button>
+                    <Button size="sm" onClick={handleSaveBio} disabled={isSavingBio}>
+                      Save
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-gray-700 whitespace-pre-wrap">
+                  {investor.bio || "No information provided yet."}
+                </p>
+              )}
             </CardBody>
           </Card>
 
