@@ -44,6 +44,11 @@ export interface Entrepreneur extends User {
     year: number;
     date: Date;
   }[];
+  investors?: {
+    name: string;
+    avatarUrl: string;
+    userId: string;
+  }[];
 }
 
 export interface Investor extends User {
@@ -56,6 +61,13 @@ export interface Investor extends User {
   successfullExits: number | undefined;
   minTimline: number | undefined;
   maxTimline: number | undefined;
+  portfolio?: {
+    startupName: string;
+    avatarUrl: string;
+    amount: number;
+    entrepreneurId: string;
+    userId: string;
+  }[];
 }
 
 export interface Message {

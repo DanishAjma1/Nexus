@@ -5,7 +5,7 @@ import { Card, CardHeader, CardBody } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/Badge";
 import { InvestorCard } from "../../components/investor/InvestorCard";
 import { useAuth } from "../../context/AuthContext";
-import { getInvestorsFromDb } from "../../data/users";
+import { getInvestorsFromDb ,AmountMeasureWithTags} from "../../data/users";
 
 import { Investor } from "../../types";
 

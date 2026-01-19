@@ -38,10 +38,9 @@ export const DealForm: React.FC<DealFormProps> = ({
         dividends: initialData?.dividends || "On Exit Only",
         rofr: initialData?.rofr || "No",
         exitStrategy: initialData?.exitStrategy || "Acquisition",
-        exitTimeline: initialData?.exitTimeline || "3-5 years",
-        exitTimeline: initialData?.exitTimeline || "3-5 years",
+        exitTimeline: initialData?.exitTimeline,
         additionalTerms: initialData?.additionalTerms || "",
-        stage: initialData?.stage || "Seed", // Default
+        stage: initialData?.stage || "Seed", 
     });
 
     // Auto-calculate Post-Money Valuation

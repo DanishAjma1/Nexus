@@ -726,6 +726,26 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
                 </div>
               </div>
 
+              {/* Investors Section */}
+              <div className="mt-6 pt-6 border-t border-gray-100">
+                <h2 className="text-lg font-medium text-gray-900 mb-4">Investors</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {entrepreneur.investors && entrepreneur.investors.length > 0 ? (
+                    entrepreneur.investors.map((inv, idx) => (
+                      <Link to={`/profile/investor/${inv.userId}`} key={idx} className="flex items-center p-3 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors">
+                        <Avatar src={inv.avatarUrl} alt={inv.name} size="md" className="mr-3" />
+                        <div>
+                          <h3 className="text-sm font-medium text-gray-900">{inv.name}</h3>
+                          <p className="text-xs text-primary-600 font-medium">Verified Investor</p>
+                        </div>
+                      </Link>
+                    ))
+                  ) : (
+                    <p className="text-sm text-gray-500 col-span-2">No investors yet.</p>
+                  )}
+                </div>
+              </div>
+
               {!isCurrentUser && isInvestor && (
                 <div className="mt-4 pt-4 border-t border-gray-100">
                   <p className="text-sm text-gray-500">

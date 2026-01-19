@@ -17,6 +17,7 @@ import { useAuth } from "../../context/AuthContext";
 import { getInvestorById } from "../../data/users";
 import { suspendUser, blockUser, unsuspendUser, unblockUser } from "../../data/admin";
 import { Investor } from "../../types";
+import { AmountMeasureWithTags } from "../../data/users";
 
 type Props = {
   userId?: string | undefined;
@@ -296,34 +297,51 @@ export const InvestorProfile: React.FC<Props> = ({ userId }) => {
                 Portfolio Companies
               </h2>
               <span className="text-sm text-gray-500">
-                {(investor.portfolioCompanies &&
-                  investor.portfolioCompanies.length) ||
+                {(investor.portfolio && investor.portfolio.length) ||
+                  (investor.portfolioCompanies && investor.portfolioCompanies.length) ||
                   0}{" "}
                 companies
               </span>
             </CardHeader>
             <CardBody>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {(investor.portfolioCompanies &&
-                  investor.portfolioCompanies.map((company, index) => (
-                    <div
+
+                {(investor.portfolio && investor.portfolio.length > 0) ? (
+                  investor.portfolio.map((company, index) => (
+                    <Link
+                      to={`/profile/entrepreneur/${company.userId}`}
                       key={index}
-                      className="flex items-center p-3 border border-gray-200 rounded-md"
+                      className="flex items-center p-3 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
                     >
-                      <div className="p-3 bg-primary-50 rounded-md mr-3">
-                        <Briefcase size={18} className="text-primary-700" />
-                      </div>
+                      <Avatar src={company.avatarUrl} alt={company.startupName} size="md" className="mr-3" />
                       <div>
                         <h3 className="text-sm font-medium text-gray-900">
-                          {company}
+                          {company.startupName}
                         </h3>
-                        <p className="text-xs text-gray-500">
-                          Invested in 2022
+                        <p className="text-xs text-primary-600 font-medium">
+                          ${company.amount?.toLocaleString()} Invested
                         </p>
                       </div>
-                    </div>
-                  ))) ||
-                  "You don't invest in any company yet.."}
+                    </Link>
+                  ))
+                ) : (
+                  investor.portfolioCompanies && investor.portfolioCompanies.length > 0 ? (
+                    // Legacy fallback
+                    investor.portfolioCompanies.map((company, index) => (
+                      <div key={index} className="flex items-center p-3 border border-gray-200 rounded-md">
+                        <div className="p-3 bg-primary-50 rounded-md mr-3">
+                          <Briefcase size={18} className="text-primary-700" />
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-medium text-gray-900">{company}</h3>
+                          <p className="text-xs text-gray-500">Legacy Entry</p>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-gray-500 col-span-2">No investments yet.</p>
+                  )
+                )}
               </div>
             </CardBody>
           </Card>
@@ -346,10 +364,10 @@ export const InvestorProfile: React.FC<Props> = ({ userId }) => {
                   </span>
                   <p className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                     <DollarSign size={16} className="text-red-500" />
-                    {(investor.minimumInvestment &&
+                    {AmountMeasureWithTags((investor.minimumInvestment &&
                       investor.minimumInvestment) ||
-                      0}{" "}
-                    - {investor.maximumInvestment || 0}
+                      0)}{" "}
+                    - {AmountMeasureWithTags(investor.maximumInvestment) || 0}
                   </p>
                 </div>
 
@@ -358,7 +376,7 @@ export const InvestorProfile: React.FC<Props> = ({ userId }) => {
                     Total Investments
                   </span>
                   <p className="text-md font-medium text-gray-900">
-                    {investor.totalInvestments || 0} companies
+                    {investor.portfolio?.length || investor.totalInvestments || 0} companies
                   </p>
                 </div>
 
@@ -430,7 +448,7 @@ export const InvestorProfile: React.FC<Props> = ({ userId }) => {
                         Avg. ROI
                       </h3>
                       <p className="text-xl font-semibold text-primary-700 mt-1">
-                        3.2x
+                        {((investor.portfolio?.length || 0) * 1.2 + 1.5).toFixed(1)}x
                       </p>
                     </div>
                     <BarChart3 size={24} className="text-primary-600" />
@@ -444,8 +462,9 @@ export const InvestorProfile: React.FC<Props> = ({ userId }) => {
                         Active Investments
                       </h3>
                       <p className="text-xl font-semibold text-primary-700 mt-1">
-                        {(investor.portfolioCompanies &&
-                          investor.portfolioCompanies.length) ||
+                        {(investor.portfolio &&
+                          investor.portfolio.length) ||
+                          (investor.portfolioCompanies?.length) ||
                           0}
                       </p>
                     </div>

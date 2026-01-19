@@ -82,14 +82,7 @@ export const EntrepreneurCard: React.FC<EntrepreneurCardProps> = ({
 
       {showActions && (
         <CardFooter className="border-t border-gray-100 bg-gray-50 flex justify-between">
-          <Button
-            variant="outline"
-            size="sm"
-            leftIcon={<MessageCircle size={16} />}
-            onClick={handleMessage}
-          >
-            Message
-          </Button>
+
 
           <Button
             variant="primary"
