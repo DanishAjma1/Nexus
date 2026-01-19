@@ -56,14 +56,19 @@ export const HomePage: React.FC = () => {
           axios.get(`${URL}/user/platform-stats`)
         ]);
 
-        // Recent Campaigns
-        const activeCampaigns = campaignsRes.data
+        // Recent Campaigns - Sort by createdAt descending and slice to 3
+        const activeCampaigns = (campaignsRes.data || [])
           .filter((c: any) => c.status === "active")
+          .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
           .slice(0, 3);
         setRecentCampaigns(activeCampaigns);
 
-        // Recent Fundraisers (already sorted by latest on backend)
-        setRecentFundraisers((entrepreneursRes.data.entrepreneurs || []).slice(0, 3));
+        // Recent Fundraisers - Ensure sorted by createdAt descending
+        const allEntrepreneurs = entrepreneursRes.data.entrepreneurs || [];
+        const sortedFundraisers = [...allEntrepreneurs]
+          .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+          .slice(0, 3);
+        setRecentFundraisers(sortedFundraisers);
 
         // Stats
         if (statsRes.data) {
@@ -309,7 +314,7 @@ export const HomePage: React.FC = () => {
                     Recent Campaigns
                   </h1>
                   <span className="ml-2 px-2 py-1 text-xs bg-orange-500/20 text-orange-300 rounded-full">
-                    3 Live
+                    {recentCampaigns.length} Live
                   </span>
                 </div>
 

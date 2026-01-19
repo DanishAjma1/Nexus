@@ -9,6 +9,7 @@ import { NegotiationModal } from "../../components/NegotiationModal";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import { DealPaymentModal } from "../../components/DealPaymentModal";
+import { useNavigate } from "react-router-dom";
 
 // Initialize Stripe outside component to avoid recreation
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
@@ -19,7 +20,7 @@ export const DealsPage: React.FC = () => {
   const { user } = useAuth();
   const [deals, setDeals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-
+  const navigate = useNavigate();
   // Modal states
   const [selectedDeal, setSelectedDeal] = useState<any>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -152,7 +153,7 @@ export const DealsPage: React.FC = () => {
                   )}
 
                   {deal.status === 'accepted' && (
-                    <Button variant="outline" onClick={() => window.location.href = `/messages`}>
+                    <Button variant="outline" onClick={() => navigate(`/chat/${deal.entrepreneurId?._id}`)}>
                       Chat with Founder
                     </Button>
                   )}

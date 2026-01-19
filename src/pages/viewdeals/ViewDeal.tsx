@@ -6,6 +6,7 @@ import { toast } from "react-hot-toast";
 import { useAuth } from "../../context/AuthContext";
 import { DealForm } from "../../components/DealForm";
 import { NegotiationModal } from "../../components/NegotiationModal";
+import { useNavigate } from "react-router-dom";
 
 const URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -13,7 +14,7 @@ export const ViewDeals: React.FC = () => {
   const { user } = useAuth();
   const [deals, setDeals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-
+  const navigate = useNavigate();
   // Modal states
   const [selectedDeal, setSelectedDeal] = useState<any>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -163,7 +164,7 @@ export const ViewDeals: React.FC = () => {
                   )}
 
                   {deal.status === 'accepted' && (
-                    <Button variant="outline" onClick={() => window.location.href = `/messages`}>
+                    <Button variant="outline" onClick={() => navigate(`/chat/${deal.investorId?._id}`)}>
                       Chat with Investor
                     </Button>
                   )}
