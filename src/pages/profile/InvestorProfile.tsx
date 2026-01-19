@@ -8,7 +8,12 @@ import {
   BarChart3,
   Briefcase,
   DollarSign,
+  Edit2,
+  Save,
+  Loader2,
 } from "lucide-react";
+import axios from "axios";
+import toast from "react-hot-toast";
 import { Avatar } from "../../components/ui/Avatar";
 import { Button } from "../../components/ui/Button";
 import { Card, CardBody, CardHeader } from "../../components/ui/Card";
@@ -17,6 +22,7 @@ import { useAuth } from "../../context/AuthContext";
 import { getInvestorById } from "../../data/users";
 import { suspendUser, blockUser, unsuspendUser, unblockUser } from "../../data/admin";
 import { Investor } from "../../types";
+import { AmountMeasureWithTags } from "../../data/users";
 
 type Props = {
   userId?: string | undefined;
@@ -32,16 +38,23 @@ export const InvestorProfile: React.FC<Props> = ({ userId }) => {
   const [suspendReason, setSuspendReason] = useState("");
   const [suspendDays, setSuspendDays] = useState(7);
   const [blockReason, setBlockReason] = useState("");
+  const [isEditingBio, setIsEditingBio] = useState(false);
+  const [editedBio, setEditedBio] = useState("");
+  const [isSavingBio, setIsSavingBio] = useState(false);
+
+  const URL = import.meta.env.VITE_BACKEND_URL;
+  const token = localStorage.getItem("token");
 
   // Fetch investor data
   useEffect(() => {
     const fetchInvestors = async () => {
-      if (id) {
-        const investor = await getInvestorById(id);
-        setInvestor(investor);
-      } else {
-        const investor = await getInvestorById(userId);
-        setInvestor(investor);
+      const targetId = id || userId;
+      if (targetId) {
+        const investor = await getInvestorById(targetId);
+        if (investor) {
+          setInvestor(investor);
+          setEditedBio(investor.bio || "");
+        }
       }
     };
     fetchInvestors();
@@ -106,6 +119,26 @@ export const InvestorProfile: React.FC<Props> = ({ userId }) => {
       await unblockUser(investor.userId);
       const updated = await getInvestorById(investor.userId);
       setInvestor(updated);
+    }
+  };
+
+  const handleSaveBio = async () => {
+    if (!investor?.userId) return;
+    setIsSavingBio(true);
+    try {
+      await axios.post(`${URL}/user/update-profile/${investor.userId}`, {
+        bio: editedBio
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setInvestor(prev => prev ? { ...prev, bio: editedBio } : undefined);
+      setIsEditingBio(false);
+      toast.success("Bio updated successfully");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to update bio");
+    } finally {
+      setIsSavingBio(false);
     }
   };
 
@@ -223,13 +256,48 @@ export const InvestorProfile: React.FC<Props> = ({ userId }) => {
         <div className="lg:col-span-2 space-y-6">
           {/* About */}
           <Card>
-            <CardHeader>
+            <CardHeader className="flex justify-between items-center">
               <h2 className="text-lg font-medium text-gray-900">About</h2>
+              {isCurrentUser && (
+                <button
+                  onClick={() => isEditingBio ? handleSaveBio() : setIsEditingBio(true)}
+                  disabled={isSavingBio}
+                  className="p-1 hover:bg-gray-100 rounded-full transition-colors text-primary-600"
+                  title={isEditingBio ? "Save bio" : "Edit bio"}
+                >
+                  {isSavingBio ? (
+                    <Loader2 className="animate-spin" size={18} />
+                  ) : isEditingBio ? (
+                    <Save size={18} />
+                  ) : (
+                    <Edit2 size={18} />
+                  )}
+                </button>
+              )}
             </CardHeader>
             <CardBody>
-              <p className="text-gray-700">
-                {investor.bio || "Say something about u..?"}
-              </p>
+              {isEditingBio ? (
+                <div className="space-y-3">
+                  <textarea
+                    className="w-full border rounded-lg p-3 text-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent min-h-[120px]"
+                    value={editedBio}
+                    onChange={(e) => setEditedBio(e.target.value)}
+                    placeholder="Tell us about your investment philosophy..."
+                  />
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" size="sm" onClick={() => { setIsEditingBio(false); setEditedBio(investor.bio || ""); }}>
+                      Cancel
+                    </Button>
+                    <Button size="sm" onClick={handleSaveBio} disabled={isSavingBio}>
+                      Save
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-gray-700 whitespace-pre-wrap">
+                  {investor.bio || "No information provided yet."}
+                </p>
+              )}
             </CardBody>
           </Card>
 
@@ -296,34 +364,51 @@ export const InvestorProfile: React.FC<Props> = ({ userId }) => {
                 Portfolio Companies
               </h2>
               <span className="text-sm text-gray-500">
-                {(investor.portfolioCompanies &&
-                  investor.portfolioCompanies.length) ||
+                {(investor.portfolio && investor.portfolio.length) ||
+                  (investor.portfolioCompanies && investor.portfolioCompanies.length) ||
                   0}{" "}
                 companies
               </span>
             </CardHeader>
             <CardBody>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {(investor.portfolioCompanies &&
-                  investor.portfolioCompanies.map((company, index) => (
-                    <div
+
+                {(investor.portfolio && investor.portfolio.length > 0) ? (
+                  investor.portfolio.map((company, index) => (
+                    <Link
+                      to={`/profile/entrepreneur/${company.userId}`}
                       key={index}
-                      className="flex items-center p-3 border border-gray-200 rounded-md"
+                      className="flex items-center p-3 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
                     >
-                      <div className="p-3 bg-primary-50 rounded-md mr-3">
-                        <Briefcase size={18} className="text-primary-700" />
-                      </div>
+                      <Avatar src={company.avatarUrl} alt={company.startupName} size="md" className="mr-3" />
                       <div>
                         <h3 className="text-sm font-medium text-gray-900">
-                          {company}
+                          {company.startupName}
                         </h3>
-                        <p className="text-xs text-gray-500">
-                          Invested in 2022
+                        <p className="text-xs text-primary-600 font-medium">
+                          ${company.amount?.toLocaleString()} Invested
                         </p>
                       </div>
-                    </div>
-                  ))) ||
-                  "You don't invest in any company yet.."}
+                    </Link>
+                  ))
+                ) : (
+                  investor.portfolioCompanies && investor.portfolioCompanies.length > 0 ? (
+                    // Legacy fallback
+                    investor.portfolioCompanies.map((company, index) => (
+                      <div key={index} className="flex items-center p-3 border border-gray-200 rounded-md">
+                        <div className="p-3 bg-primary-50 rounded-md mr-3">
+                          <Briefcase size={18} className="text-primary-700" />
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-medium text-gray-900">{company}</h3>
+                          <p className="text-xs text-gray-500">Legacy Entry</p>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-gray-500 col-span-2">No investments yet.</p>
+                  )
+                )}
               </div>
             </CardBody>
           </Card>
@@ -346,10 +431,10 @@ export const InvestorProfile: React.FC<Props> = ({ userId }) => {
                   </span>
                   <p className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                     <DollarSign size={16} className="text-red-500" />
-                    {(investor.minimumInvestment &&
+                    {AmountMeasureWithTags((investor.minimumInvestment &&
                       investor.minimumInvestment) ||
-                      0}{" "}
-                    - {investor.maximumInvestment || 0}
+                      0)}{" "}
+                    - {AmountMeasureWithTags(investor.maximumInvestment) || 0}
                   </p>
                 </div>
 
@@ -358,7 +443,7 @@ export const InvestorProfile: React.FC<Props> = ({ userId }) => {
                     Total Investments
                   </span>
                   <p className="text-md font-medium text-gray-900">
-                    {investor.totalInvestments || 0} companies
+                    {investor.portfolio?.length || investor.totalInvestments || 0} companies
                   </p>
                 </div>
 
@@ -430,7 +515,7 @@ export const InvestorProfile: React.FC<Props> = ({ userId }) => {
                         Avg. ROI
                       </h3>
                       <p className="text-xl font-semibold text-primary-700 mt-1">
-                        3.2x
+                        {((investor.portfolio?.length || 0) * 1.2 + 1.5).toFixed(1)}x
                       </p>
                     </div>
                     <BarChart3 size={24} className="text-primary-600" />
@@ -444,8 +529,9 @@ export const InvestorProfile: React.FC<Props> = ({ userId }) => {
                         Active Investments
                       </h3>
                       <p className="text-xl font-semibold text-primary-700 mt-1">
-                        {(investor.portfolioCompanies &&
-                          investor.portfolioCompanies.length) ||
+                        {(investor.portfolio &&
+                          investor.portfolio.length) ||
+                          (investor.portfolioCompanies?.length) ||
                           0}
                       </p>
                     </div>

@@ -187,12 +187,12 @@ export const Navbar: React.FC = () => {
             {user && <NotificationDropdown />}
             <button
               onClick={toggleMenu}
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-primary-600 hover:bg-gray-50 focus:outline-none"
+              className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-primary-600 hover:bg-gray-50 focus:outline-none transition-transform duration-300"
             >
               {isMenuOpen ? (
-                <X className="block h-6 w-6" />
+                <X className="block h-6 w-6 transform rotate-0 scale-100 transition-all duration-300" />
               ) : (
-                <Menu className="block h-6 w-6" />
+                <Menu className="block h-6 w-6 transform rotate-0 scale-100 transition-all duration-300" />
               )}
             </button>
           </div>
@@ -200,98 +200,106 @@ export const Navbar: React.FC = () => {
       </div>
 
       {/* Mobile menu */}
-      {isMenuOpen && (
-        <div className="md:hidden bg-white border-b border-gray-200 animate-fade-in">
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            {user ? (
-              <>
-                <div className="flex items-center space-x-3 px-3 py-2">
-                  <Avatar
-                    src={user.avatarUrl}
-                    alt={user.name}
-                    size="sm"
-                    status={user.isOnline ? "online" : "offline"}
-                  />
-                  <div>
-                    <p className="text-sm font-medium text-gray-800">
-                      {user.name}
-                    </p>
-                    <p className="text-xs text-gray-500 capitalize">
-                      {user.role}
-                    </p>
-                  </div>
+      <div
+        className={`md:hidden bg-white border-b border-gray-200 overflow-hidden transition-all duration-300 ease-in-out ${
+          isMenuOpen
+            ? "max-h-screen opacity-100 translate-y-0"
+            : "max-h-0 opacity-0 -translate-y-2"
+        }`}
+      >
+        <div
+          className={`px-2 pt-2 pb-3 space-y-1 sm:px-3 transition-opacity duration-300 ${
+            isMenuOpen ? "opacity-100 delay-150" : "opacity-0"
+          }`}
+        >
+          {user ? (
+            <>
+              <div className="flex items-center space-x-3 px-3 py-2">
+                <Avatar
+                  src={user.avatarUrl}
+                  alt={user.name}
+                  size="sm"
+                  status={user.isOnline ? "online" : "offline"}
+                />
+                <div>
+                  <p className="text-sm font-medium text-gray-800">
+                    {user.name}
+                  </p>
+                  <p className="text-xs text-gray-500 capitalize">
+                    {user.role}
+                  </p>
                 </div>
+              </div>
 
-                <div className="border-t border-gray-200 pt-2">
-                  {navLinks.map((link, index) => (
-                    <Link
-                      key={index}
-                      to={link.path}
-                      className="flex items-center px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-md"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      <span className="mr-3">{link.icon}</span>
-                      {link.text}
-                    </Link>
-                  ))}
-
-                  {/* Admin-only mobile links */}
-                  {adminMobileLinks.map((link, index) => (
-                    <Link
-                      key={`mobile-admin-${index}`}
-                      to={link.path}
-                      className="flex items-center px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-md"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      <span className="mr-3">{link.icon}</span>
-                      {link.text}
-                    </Link>
-                  ))}
-
+              <div className="border-t border-gray-200 pt-2">
+                {navLinks.map((link, index) => (
                   <Link
-                    to="/settings"
-                    className="flex items-center px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-md"
+                    key={index}
+                    to={link.path}
+                    className="flex items-center px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-md transition-colors duration-200"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    <Settings size={18} className="mr-3" />
-                    Settings
+                    <span className="mr-3">{link.icon}</span>
+                    {link.text}
                   </Link>
+                ))}
 
-                  <button
-                    onClick={() => {
-                      handleLogout();
-                      setIsMenuOpen(false);
-                    }}
-                    className="flex w-full items-center px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-md"
+                {/* Admin-only mobile links */}
+                {adminMobileLinks.map((link, index) => (
+                  <Link
+                    key={`mobile-admin-${index}`}
+                    to={link.path}
+                    className="flex items-center px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-md transition-colors duration-200"
+                    onClick={() => setIsMenuOpen(false)}
                   >
-                    <LogOut size={18} className="mr-3" />
-                    Logout
-                  </button>
-                </div>
-              </>
-            ) : (
-              <div className="flex flex-col space-y-2 px-3 py-2">
+                    <span className="mr-3">{link.icon}</span>
+                    {link.text}
+                  </Link>
+                ))}
+
                 <Link
-                  to="/login"
-                  className="w-full"
+                  to="/settings"
+                  className="flex items-center px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-md transition-colors duration-200"
                   onClick={() => setIsMenuOpen(false)}
                 >
-                  <Button variant="outline" fullWidth>
-                    Log in
-                  </Button>
+                  <Settings size={18} className="mr-3" />
+                  Settings
                 </Link>
-                <Link
-                  to="/register"
-                  className="w-full"
-                  onClick={() => setIsMenuOpen(false)}
+
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setIsMenuOpen(false);
+                  }}
+                  className="flex w-full items-center px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-md transition-colors duration-200"
                 >
-                  <Button fullWidth>Sign up</Button>
-                </Link>
+                  <LogOut size={18} className="mr-3" />
+                  Logout
+                </button>
               </div>
-            )}
-          </div>
+            </>
+          ) : (
+            <div className="flex flex-col space-y-2 px-3 py-2">
+              <Link
+                to="/login"
+                className="w-full"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <Button variant="outline" fullWidth>
+                  Log in
+                </Button>
+              </Link>
+              <Link
+                to="/register"
+                className="w-full"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <Button fullWidth>Sign up</Button>
+              </Link>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </nav>
   );
 };

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-hot-toast";
-import { Share2 } from "lucide-react";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import { StripeDonationForm } from "../../components/camp/StripeDonationForm";
@@ -44,6 +43,7 @@ export const CampaignsPage: React.FC = () => {
   const URL = import.meta.env.VITE_BACKEND_URL;
   const navigate = useNavigate();
   const [campaigns, setCampaigns] = useState<CampaignCardProps[]>([]);
+  const [allCampaigns, setAllCampaigns] = useState<CampaignCardProps[]>([]);
   const [filteredCampaigns, setFilteredCampaigns] = useState<CampaignCardProps[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
@@ -67,8 +67,10 @@ export const CampaignsPage: React.FC = () => {
     try {
       setLoading(true);
       const response = await axios.get(`${URL}/admin/campaigns`);
-      // Filter only active campaigns
-      const activeCampaigns = response.data.filter((campaign: CampaignCardProps) => campaign.status === "active");
+      const data = response.data || [];
+      setAllCampaigns(data);
+      // Filter only active campaigns for the main display grid
+      const activeCampaigns = data.filter((campaign: CampaignCardProps) => campaign.status === "active");
       setCampaigns(activeCampaigns);
       setFilteredCampaigns(activeCampaigns);
     } catch (error) {
@@ -210,20 +212,6 @@ export const CampaignsPage: React.FC = () => {
     );
   };
 
-  const handleDonationSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    alert(`Thank you for your donation of $${donationForm.amount} to "${donationForm.campaignTitle}"!`);
-    setShowDonationForm(false);
-    setDonationForm({
-      cardNumber: "",
-      cardHolder: "",
-      expiryDate: "",
-      cvv: "",
-      amount: 0,
-      campaignId: "",
-      campaignTitle: ""
-    });
-  };
 
   const handleAmountClick = (amount: number) => {
     setDonationForm(prev => ({ ...prev, amount }));
@@ -262,32 +250,29 @@ export const CampaignsPage: React.FC = () => {
             <p className="text-lg md:text-xl text-gray-300 mb-8">
               Discover and donate to campaigns making a real difference in people's lives. Every contribution matters.
             </p>
+          </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
-              <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-gray-800">
-                <div className="text-2xl md:text-3xl font-bold text-blue-500">{campaigns.length}</div>
-                <div className="text-sm text-gray-400">Active Campaigns</div>
-              </div>
-              <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-gray-800">
-                <div className="text-2xl md:text-3xl font-bold text-green-500">
-                  ${campaigns.reduce((sum, c) => sum + c.raisedAmount, 0).toLocaleString()}
+          {/* Stats Bar - Widened to full container */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-12 max-w-6xl mx-auto">
+            {[
+              { label: "Active Campaigns", value: campaigns.length, color: "text-blue-500" },
+              { label: "Total Campaigns", value: allCampaigns.length, color: "text-blue-500" },
+              { label: "Total Raised", value: `$${allCampaigns.reduce((sum, c) => sum + c.raisedAmount, 0).toLocaleString()}`, color: "text-green-500" },
+              { label: "Total Donors", value: `${allCampaigns.reduce((sum, c) => sum + (c.supporters?.length || 0), 0)}+`, color: "text-blue-500" },
+              { label: "Avg. Success Rate", value: `${allCampaigns.length > 0 ? Math.round((allCampaigns.filter(c => c.raisedAmount >= c.goalAmount).length / allCampaigns.length) * 100) : 0}%`, color: "text-purple-500" }
+            ].map((stat, idx) => (
+              <div
+                key={idx}
+                className="group bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-gray-800 hover:border-blue-500/50 hover:bg-white/10 transition-all duration-300 flex flex-col items-center justify-center gap-2 min-h-[120px] shadow-lg w-full"
+              >
+                <div className="text-xs md:text-sm text-gray-400 font-medium uppercase tracking-wider text-center leading-tight">
+                  {stat.label}
                 </div>
-                <div className="text-sm text-gray-400">Total Raised</div>
-              </div>
-              <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-gray-800">
-                <div className="text-2xl md:text-3xl font-bold text-blue-500">
-                  {campaigns.reduce((sum, c) => sum + (c.supporters?.length || 0), 0)}+
+                <div className={`text-2xl md:text-3xl font-bold ${stat.color} break-all text-center`}>
+                  {stat.value}
                 </div>
-                <div className="text-sm text-gray-400">Donors</div>
               </div>
-              <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-gray-800">
-                <div className="text-2xl md:text-3xl font-bold text-purple-500">
-                  {campaigns.length > 0 ? Math.round((campaigns.filter(c => c.raisedAmount >= c.goalAmount).length / campaigns.length) * 100) : 0}%
-                </div>
-                <div className="text-sm text-gray-400">Success Rate</div>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </div>

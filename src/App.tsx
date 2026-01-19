@@ -17,6 +17,8 @@ import { RegisterPage } from "./pages/auth/RegisterPage";
 
 // Dashboard Pages
 import { EntrepreneurDashboard } from "./pages/dashboard/EntrepreneurDashboard";
+import { EntrepreneurRequests } from "./pages/dashboard/EntrepreneurRequests";
+import { ManageTeam } from "./pages/dashboard/ManageTeam";
 import { InvestorDashboard } from "./pages/dashboard/InvestorDashboard";
 
 // Profile Pages
@@ -66,6 +68,8 @@ import { CommunityGuidelines } from "./pages/legal/CommunityGuidelines";
 import SendMassNotification from "./pages/admin/SendMassNotification";
 import { DashboardCampaigns } from "./pages/dashCamp/DashboardCampaigns";
 import { DashboardCampaignDetail } from "./pages/dashCamp/DashboardCampaignDetail";
+import { AdminDealsPage } from "./pages/admin/AdminDealsPage";
+import { AdminDealPayments } from "./pages/admin/AdminDealPayments";
 
 function App() {
   return (
@@ -90,6 +94,14 @@ function App() {
               {/* Dashboard Routes */}
               <Route path="/dashboard" element={<DashboardLayout />}>
                 <Route path="entrepreneur" element={<EntrepreneurDashboard />} />
+                <Route
+                  path="entrepreneur/requests"
+                  element={<EntrepreneurRequests />}
+                />
+                <Route
+                  path="entrepreneur/team"
+                  element={<ManageTeam />}
+                />
                 <Route path="investor" element={<InvestorDashboard />} />
                 <Route path="admin" element={<AdminDashboard />} />
                 <Route path="campaigns" element={<DashboardCampaigns />} />
@@ -103,11 +115,10 @@ function App() {
                 <Route path="campaigns" element={<Campaigns />} />
                 <Route path="supporters" element={<Supporters />} />
                 <Route path="suspended-blocked" element={<SuspendedBlockedUsers />} />
-                <Route
-                  path="fraud-and-risk-detection"
-                  element={<FraudAndRiskDetection />}
-                />
+                <Route path="fraud-and-risk-detection" element={<FraudAndRiskDetection />} />
                 <Route path="send-notification" element={<SendMassNotification />} />
+                <Route path="deals" element={<AdminDealsPage />} />
+                <Route path="payments" element={<AdminDealPayments />} />
               </Route>
 
               <Route path="/dashboard/admin" element={<DashboardLayout />}>

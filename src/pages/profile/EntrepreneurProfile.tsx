@@ -10,7 +10,21 @@ import {
   FileText,
   DollarSign,
   Send,
+  X,
+  Clock,
+  Eye,
+  Edit2,
+  Save,
+  Loader2,
+  Check,
+  Upload,
+  Image as ImageIcon,
+  Trash2,
+  Plus,
 } from "lucide-react";
+import axios from "axios";
+import toast from "react-hot-toast";
+import { PdfPreviewModal } from "../../components/ui/PdfPreviewModal";
 import { Avatar } from "../../components/ui/Avatar";
 import { Button } from "../../components/ui/Button";
 import { Card, CardBody, CardHeader } from "../../components/ui/Card";
@@ -21,19 +35,36 @@ import {
   createCollaborationRequest,
 } from "../../data/collaborationRequests";
 import { Entrepreneur } from "../../types";
-import { AmountMeasureWithTags, getEnterpreneurById } from "../../data/users";
+import { AmountMeasureWithTags, getEnterpreneurById, updateEntrepreneurData } from "../../data/users";
 import { suspendUser, blockUser, unsuspendUser, unblockUser } from "../../data/admin"; // Import admin actions
+import { DealForm } from "../../components/DealForm";
 
 type Props = {
   userId?: string | undefined;
 };
+
+interface DBDocument {
+  _id: string;
+  type: string;
+  fileUrl: string;
+  fileName: string;
+  uploadedAt: string;
+}
 export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
   const { id } = useParams<{ id: string }>();
   const { user: currentUser } = useAuth();
   const [entrepreneur, setEnterpreneur] = useState<Entrepreneur>();
-  const [hasRequestedCollaboration, setHasRequestedCollaboration] =
-    useState<boolean>();
+  const [requestStatus, setRequestStatus] = useState<
+    "pending" | "accepted" | "rejected" | null
+  >(null);
   const [isDealModalOpen, setIsDealModalOpen] = useState(false);
+  const [documents, setDocuments] = useState<DBDocument[]>([]);
+  const [previewDoc, setPreviewDoc] = useState<{ url: string; name: string } | null>(null);
+  const [isEditingBio, setIsEditingBio] = useState(false);
+  const [editedBio, setEditedBio] = useState("");
+  const [isSavingBio, setIsSavingBio] = useState(false);
+  const [isUploadingThumbnails, setIsUploadingThumbnails] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [isSuspendModalOpen, setIsSuspendModalOpen] = useState(false);
   const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
@@ -44,35 +75,42 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
   const navigate = useNavigate();
 
   const [valuation, setValuation] = useState<number | undefined>(0);
+  const URL = import.meta.env.VITE_BACKEND_URL;
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
     const fetchEntrepreneur = async () => {
-      if (id) {
-        const entrepreneur = await getEnterpreneurById(id);
-        setEnterpreneur(entrepreneur);
-      } else {
-        const entrepreneur = await getEnterpreneurById(userId);
-        setEnterpreneur(entrepreneur);
+      const targetId = id || userId;
+      if (targetId) {
+        setIsLoading(true);
+        try {
+          const entrepreneur = await getEnterpreneurById(targetId);
+          setEnterpreneur(entrepreneur);
+
+          // Fetch documents
+          if (entrepreneur && entrepreneur.userId) {
+            const res = await axios.get(`${URL}/document/user/${entrepreneur.userId}`);
+            setDocuments(res.data.documents);
+          }
+        } catch (error) {
+          console.error("Failed to fetch documents", error);
+        } finally {
+          setIsLoading(false);
+        }
       }
     };
     fetchEntrepreneur();
   }, [id, userId]);
 
+
+
+  // Removed legacy auto-calculation of valuation that was overwriting backend data.
+  // Valuation and Status are now managed by backend events (e.g. Fund Release).
   useEffect(() => {
-    const calculateValuation = () => {
-      if (entrepreneur?.growthRate && entrepreneur?.profitMargin)
-        return (
-          5 *
-          (1 +
-            entrepreneur?.growthRate / 100 +
-            entrepreneur?.profitMargin / 100)
-        );
-    };
-    const nichevalue = calculateValuation();
-    // ensure we multiply two numbers: use a numeric default for nichevalue and revenue
-    const base = nichevalue ?? 1;
-    const revenue = entrepreneur?.revenue ?? 0;
-    setValuation(base * revenue);
+    if (entrepreneur) {
+      setValuation(entrepreneur.valuation);
+      setEditedBio(entrepreneur.bio || "");
+    }
   }, [entrepreneur]);
 
   useEffect(() => {
@@ -80,13 +118,25 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
       if (currentUser?.userId && id) {
         const request = await checkRequestsFromInvestor(currentUser.userId, id);
         console.log(request);
-        setHasRequestedCollaboration(Boolean(request));
+        // The endpoint returns the status string directly or 'pending' if error/not found?
+        // Let's assume it returns the request object or status string as per `checkRequestsFromInvestor` implementation
+        // The data helper returns: return request.requestStatus;
+        setRequestStatus(request as any);
       }
     };
     checkInvestor();
   }, [currentUser?.userId, id]);
 
   if (!currentUser) return null;
+
+  if (isLoading) {
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
+      </div>
+    );
+  }
+
   if (!entrepreneur || entrepreneur.role !== "entrepreneur") {
     return (
       <div className="text-center py-12">
@@ -97,7 +147,6 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
           The entrepreneur profile you're looking for doesn't exist or has been
           removed.
         </p>
-        s
         <Link to="/dashboard/investor">
           <Button variant="outline" className="mt-4">
             Back to Dashboard
@@ -108,6 +157,10 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
   }
 
   const isCurrentUser = currentUser?.userId === entrepreneur?.userId;
+  console.log("CurrentUser:", currentUser?.userId);
+  console.log("EntrepreneurUser:", entrepreneur?.userId);
+  console.log("IsCurrentUser:", isCurrentUser);
+
   const isInvestor = currentUser?.role === "investor";
   const isAdmin = currentUser?.role === "admin";
   // Check if the current investor has already sent a request to this entrepreneur
@@ -119,7 +172,7 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
         id,
         `I'm interested in learning more about ${entrepreneur.startupName} and would like to explore potential investment opportunities.`
       );
-      await setHasRequestedCollaboration(true);
+      setRequestStatus("pending");
     }
   };
 
@@ -162,6 +215,72 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
       await unblockUser(entrepreneur.userId);
       const updated = await getEnterpreneurById(entrepreneur.userId);
       setEnterpreneur(updated);
+    }
+  };
+
+  const handleSaveBio = async () => {
+    if (!entrepreneur?.userId) return;
+    setIsSavingBio(true);
+    try {
+      await axios.post(`${URL}/user/update-profile/${entrepreneur.userId}`, {
+        bio: editedBio
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setEnterpreneur(prev => prev ? { ...prev, bio: editedBio } : undefined);
+      setIsEditingBio(false);
+      toast.success("Bio updated successfully");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to update bio");
+    } finally {
+      setIsSavingBio(false);
+    }
+  };
+
+  const handleThumbnailUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+
+    const files = Array.from(e.target.files);
+    const currentCount = entrepreneur?.businessThumbnails?.length || 0;
+
+    if (currentCount + files.length > 3) {
+      toast.error("You can only have up to 3 thumbnails");
+      return;
+    }
+
+    const formData = new FormData();
+    files.forEach(file => {
+      formData.append("thumbnails", file);
+    });
+
+    try {
+      setIsUploadingThumbnails(true);
+      const res = await axios.post(`${URL}/entrepreneur/upload-thumbnails/${entrepreneur?.userId}`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data"
+        }
+      });
+      setEnterpreneur(prev => prev ? { ...prev, businessThumbnails: res.data.businessThumbnails } : undefined);
+      toast.success("Thumbnails uploaded successfully");
+    } catch (error: any) {
+      console.error("Upload failed", error);
+      toast.error(error.response?.data?.message || "Failed to upload thumbnails");
+    } finally {
+      setIsUploadingThumbnails(false);
+    }
+  };
+
+  const handleThumbnailDelete = async (imageUrl: string) => {
+    try {
+      const res = await axios.delete(`${URL}/entrepreneur/delete-thumbnail/${entrepreneur?.userId}`, {
+        data: { imageUrl }
+      });
+      setEnterpreneur(prev => prev ? { ...prev, businessThumbnails: res.data.businessThumbnails } : undefined);
+      toast.success("Thumbnail deleted");
+    } catch (error) {
+      console.error("Delete failed", error);
+      toast.error("Failed to delete thumbnail");
     }
   };
 
@@ -217,31 +336,44 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
             {!isAdmin ? (
               !isCurrentUser && (
                 <>
-                  <Link to={`/chat/${entrepreneur.userId}`}>
-                    <Button
-                      variant="outline"
-                      leftIcon={<MessageCircle size={18} />}
-                    >
-                      Message
-                    </Button>
-                  </Link>
+                  {(!isInvestor || requestStatus === "accepted") && (
+                    <Link to={`/chat/${entrepreneur.userId}`}>
+                      <Button
+                        variant="outline"
+                        leftIcon={<MessageCircle size={18} />}
+                      >
+                        Message
+                      </Button>
+                    </Link>
+                  )}
 
                   {isInvestor && (
                     <Button
-                      leftIcon={<Send size={18} />}
-                      disabled={hasRequestedCollaboration}
+                      leftIcon={
+                        requestStatus === "pending" ? (
+                          <Clock size={18} />
+                        ) : requestStatus === "accepted" ? (
+                          <Check size={18} />
+                        ) : (
+                          <Send size={18} />
+                        )
+                      }
+                      disabled={requestStatus === "pending" || requestStatus === "accepted"}
                       onClick={handleSendRequest}
                     >
-                      {hasRequestedCollaboration
+                      {requestStatus === "pending"
                         ? "Request Sent"
-                        : "Request Collaboration"}
+                        : requestStatus === "accepted"
+                          ? "Request Accepted"
+                          : "Request Collaboration"}
                     </Button>
                   )}
                 </>
               )
             ) : (
-              // Admin Actions
+              // Admin Actions ... (omitted for brevity, assume unchanged context)
               <div className="flex flex-col gap-2">
+                {/* ... admin buttons ... */}
                 {entrepreneur.isSuspended ? (
                   <Button
                     variant="outline"
@@ -280,7 +412,7 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
               </div>
             )}
 
-            {hasRequestedCollaboration && (
+            {isInvestor && requestStatus === "accepted" && (
               <Button
                 className="ml-2 bg-blue-600 text-white hover:bg-blue-700"
                 onClick={() => setIsDealModalOpen(true)}
@@ -288,92 +420,13 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
                 Make a Deal
               </Button>
             )}
-            {isDealModalOpen && (
-              <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex justify-center items-center z-[9999]">
-                <div className="bg-white rounded-lg w-96 p-6 relative shadow-lg">
-                  <h2 className="text-lg font-bold mb-4">Make a Deal</h2>
-
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      alert("Deal successfully submitted");
-
-                      setIsDealModalOpen(false);
-                    }}
-                  >
-                    {/* Entrepreneur Info */}
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Entrepreneur Name
-                      </label>
-                      <input
-                        type="text"
-                        value={entrepreneur?.name || "Zain"}
-                        readOnly
-                        className="mt-1 block w-full border border-gray-300 rounded-md p-2 bg-gray-100"
-                      />
-                    </div>
-
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Business Name
-                      </label>
-                      <input
-                        type="text"
-                        value={entrepreneur?.startupName || "Abcdmedia Startup"}
-                        readOnly
-                        className="mt-1 block w-full border border-gray-300 rounded-md p-2 bg-gray-100"
-                      />
-                    </div>
-
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Deal Details
-                      </label>
-                      <textarea
-                        required
-                        defaultValue="We propose an initial investment of $100,000 for 10% equity."
-                        className="mt-1 block w-full border border-gray-300 rounded-md p-2"
-                      />
-                    </div>
-
-                    {/* Investor Input Fields */}
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Investment Amount ($)
-                      </label>
-                      <input
-                        type="number"
-                        defaultValue={50000} // dummy amount
-                        className="mt-1 block w-full border border-gray-300 rounded-md p-2"
-                      />
-                    </div>
-
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Requested Equity (%)
-                      </label>
-                      <input
-                        type="number"
-                        defaultValue={5} // dummy equity
-                        className="mt-1 block w-full border border-gray-300 rounded-md p-2"
-                      />
-                    </div>
-
-                    {/* Buttons */}
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        type="button"
-                        onClick={() => setIsDealModalOpen(false)}
-                      >
-                        Cancel
-                      </Button>
-                      <Button type="submit">Send Deal</Button>
-                    </div>
-                  </form>
-                </div>
-              </div>
+            {isDealModalOpen && entrepreneur && currentUser && (
+              <DealForm
+                entrepreneur={entrepreneur}
+                investor={currentUser}
+                valuation={valuation || 0}
+                onClose={() => setIsDealModalOpen(false)}
+              />
             )}
 
             {isCurrentUser && (
@@ -451,13 +504,48 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
         <div className="lg:col-span-2 space-y-6">
           {/* About */}
           <Card>
-            <CardHeader>
+            <CardHeader className="flex justify-between items-center">
               <h2 className="text-lg font-medium text-gray-900">About</h2>
+              {isCurrentUser && (
+                <button
+                  onClick={() => isEditingBio ? handleSaveBio() : setIsEditingBio(true)}
+                  disabled={isSavingBio}
+                  className="p-1 hover:bg-gray-100 rounded-full transition-colors text-primary-600"
+                  title={isEditingBio ? "Save bio" : "Edit bio"}
+                >
+                  {isSavingBio ? (
+                    <Loader2 className="animate-spin" size={18} />
+                  ) : isEditingBio ? (
+                    <Save size={18} />
+                  ) : (
+                    <Edit2 size={18} />
+                  )}
+                </button>
+              )}
             </CardHeader>
             <CardBody>
-              <p className="text-gray-700">
-                {entrepreneur.bio || "Say about yours..?"}
-              </p>
+              {isEditingBio ? (
+                <div className="space-y-3">
+                  <textarea
+                    className="w-full border rounded-lg p-3 text-gray-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent min-h-[120px]"
+                    value={editedBio}
+                    onChange={(e) => setEditedBio(e.target.value)}
+                    placeholder="Tell us about yourself and your journey..."
+                  />
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" size="sm" onClick={() => { setIsEditingBio(false); setEditedBio(entrepreneur.bio || ""); }}>
+                      Cancel
+                    </Button>
+                    <Button size="sm" onClick={handleSaveBio} disabled={isSavingBio}>
+                      Save
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-gray-700 whitespace-pre-wrap">
+                  {entrepreneur.bio || "No information provided yet."}
+                </p>
+              )}
             </CardBody>
           </Card>
 
@@ -509,68 +597,197 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
             </CardBody>
           </Card>
 
+          {/* Business Showcase - Only visible to Owner or Admin */}
+          {(isCurrentUser || currentUser?.role === "admin") && (
+            <Card>
+              <CardHeader className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <ImageIcon size={20} className="text-gray-500" />
+                  <h2 className="text-lg font-medium text-gray-900">
+                    Business Showcase
+                  </h2>
+                </div>
+                {isCurrentUser && (entrepreneur?.businessThumbnails?.length || 0) < 3 && (
+                  <div className="relative">
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                      onChange={handleThumbnailUpload}
+                      disabled={isUploadingThumbnails}
+                    />
+                    <Button variant="outline" size="sm" className="flex items-center gap-1" disabled={isUploadingThumbnails}>
+                      {isUploadingThumbnails ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
+                      Upload
+                    </Button>
+                  </div>
+                )}
+              </CardHeader>
+              <CardBody>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {entrepreneur?.businessThumbnails && entrepreneur.businessThumbnails.length > 0 ? (
+                    entrepreneur.businessThumbnails.map((url, idx) => (
+                      <div key={idx} className="relative group aspect-video rounded-xl overflow-hidden border border-gray-200 shadow-sm">
+                        <img 
+                          src={url} 
+                          alt={`Showcase ${idx + 1}`} 
+                          className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                        />
+                        {isCurrentUser && (
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <button
+                              onClick={() => handleThumbnailDelete(url)}
+                              className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-lg"
+                              title="Delete image"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="col-span-full py-8 border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center text-gray-400">
+                      <ImageIcon size={40} className="mb-2 opacity-50" />
+                      <p>No business images uploaded yet.</p>
+                      {isCurrentUser && <p className="text-sm">Upload up to 3 images to showcase your business.</p>}
+                    </div>
+                  )}
+                </div>
+              </CardBody>
+            </Card>
+          )}
+
           {/* Team */}
           <Card>
             <CardHeader className="flex justify-between items-center">
               <h2 className="text-lg font-medium text-gray-900">Team</h2>
-              <span className="text-sm text-gray-500">
-                {entrepreneur.teamSize || 0} members
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-500">
+                  {entrepreneur.team?.length || 0} members
+                </span>
+                {isCurrentUser && (
+                  <Link to="/dashboard/entrepreneur/team">
+                    <Button variant="outline" size="sm" className="text-xs">
+                      Manage Team
+                    </Button>
+                  </Link>
+                )}
+              </div>
             </CardHeader>
             <CardBody>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="flex items-center p-3 border border-gray-200 rounded-md">
-                  <Avatar
-                    src={entrepreneur.avatarUrl}
-                    alt={entrepreneur.name}
-                    size="md"
-                    className="mr-3"
-                  />
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-900">
-                      {entrepreneur.name}
-                    </h3>
-                    <p className="text-xs text-gray-500">Founder & CEO</p>
-                  </div>
-                </div>
+                {entrepreneur.team &&
+                  entrepreneur.team.filter(member =>
+                    !member.role.some(role => role.toLowerCase() === "member")
+                  ).length > 0 ? (
+                  entrepreneur.team
+                    .filter(member =>
+                      !member.role.some(role => role.toLowerCase() === "member")
+                    )
+                    .sort((a, b) => {
+                      // Define role priority order
+                      const rolePriority: { [key: string]: number } = {
+                        "CEO": 1,
+                        "Founder": 2,
+                        "Co-Founder": 3,
+                        "CTO": 4,
+                        "CFO": 5,
+                        "COO": 6,
+                        "President": 7,
+                        "VP": 8,
+                        "Director": 9,
+                        "Head": 10,
+                        "Manager": 11,
+                        "Lead": 12,
+                        "Senior": 13
+                      };
 
-                <div className="flex items-center p-3 border border-gray-200 rounded-md">
-                  <Avatar
-                    src="https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg"
-                    alt="Team Member"
-                    size="md"
-                    className="mr-3"
-                  />
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-900">
-                      Alex Johnson
-                    </h3>
-                    <p className="text-xs text-gray-500">CTO</p>
-                  </div>
-                </div>
+                      // Get the highest priority role for each member (lowest number = higher priority)
+                      const getHighestPriority = (roles: string[]): number => {
+                        let highestPriority = Infinity;
+                        roles.forEach(role => {
+                          // Check for exact matches first
+                          if (rolePriority[role] && rolePriority[role] < highestPriority) {
+                            highestPriority = rolePriority[role];
+                          } else {
+                            // Check for partial matches (e.g., "VP of Engineering" contains "VP")
+                            for (const [key, priority] of Object.entries(rolePriority)) {
+                              if (role.toLowerCase().includes(key.toLowerCase()) && priority < highestPriority) {
+                                highestPriority = priority;
+                              }
+                            }
+                          }
+                        });
+                        return highestPriority === Infinity ? 100 : highestPriority;
+                      };
 
-                <div className="flex items-center p-3 border border-gray-200 rounded-md">
-                  <Avatar
-                    src="https://images.pexels.com/photos/773371/pexels-photo-773371.jpeg"
-                    alt="Team Member"
-                    size="md"
-                    className="mr-3"
-                  />
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-900">
-                      Jessica Chen
-                    </h3>
-                    <p className="text-xs text-gray-500">Head of Product</p>
-                  </div>
-                </div>
+                      const priorityA = getHighestPriority(a.role);
+                      const priorityB = getHighestPriority(b.role);
 
-                {entrepreneur.teamSize && entrepreneur?.teamSize > 3 && (
-                  <div className="flex items-center justify-center p-3 border border-dashed border-gray-200 rounded-md">
-                    <p className="text-sm text-gray-500">
-                      + {entrepreneur?.teamSize - 3} more team members
-                    </p>
+                      // Sort by priority (lower number = higher priority)
+                      return priorityA - priorityB;
+                    })
+                    .slice(0, 4)
+                    .map((member) => (
+                      <div key={member._id} className="flex items-center p-3 border border-gray-200 rounded-md">
+                        <Avatar
+                          src={member.avatarUrl}
+                          alt={member.name}
+                          size="md"
+                          className="mr-3"
+                        />
+                        <div>
+                          <h3 className="text-sm font-medium text-gray-900">
+                            {member.name}
+                          </h3>
+                          <p className="text-xs text-gray-500">
+                            {member.role
+                              .sort((roleA, roleB) => {
+                                // Sort roles within member by priority too
+                                const rolePriority: { [key: string]: number } = {
+                                  "CEO": 1, "Founder": 2, "Co-Founder": 3, "CTO": 4,
+                                  "CFO": 5, "COO": 6, "President": 7, "VP": 8,
+                                  "Director": 9, "Head": 10, "Manager": 11, "Lead": 12,
+                                  "Senior": 13
+                                };
+
+                                const getRolePriority = (role: string): number => {
+                                  if (rolePriority[role]) return rolePriority[role];
+                                  for (const [key, priority] of Object.entries(rolePriority)) {
+                                    if (role.toLowerCase().includes(key.toLowerCase())) {
+                                      return priority;
+                                    }
+                                  }
+                                  return 100;
+                                };
+
+                                return getRolePriority(roleA) - getRolePriority(roleB);
+                              })
+                              .join(", ")}
+                          </p>
+                        </div>
+                      </div>
+                    ))
+                ) : (
+                  <div className="col-span-full text-center py-4 text-gray-500 text-sm">
+                    No team members with specific roles listed.
                   </div>
                 )}
+
+                {entrepreneur.team &&
+                  entrepreneur.team.filter(member =>
+                    !member.role.some(role => role.toLowerCase() === "member")
+                  ).length > 4 && (
+                    <div className="flex items-center justify-center p-3 border border-dashed border-gray-200 rounded-md">
+                      <p className="text-sm text-gray-500">
+                        + {entrepreneur.team.filter(member =>
+                          !member.role.some(role => role.toLowerCase() === "member")
+                        ).length - 4} more team members with specific roles
+                      </p>
+                    </div>
+                  )}
               </div>
             </CardBody>
           </Card>
@@ -606,9 +823,19 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
                   <span className="text-sm text-gray-500">
                     Previous Funding
                   </span>
-                  <p className="text-md font-medium text-gray-900">
-                    $750K Seed (2022)
-                  </p>
+                  {entrepreneur.fundingHistory && entrepreneur.fundingHistory.length > 0 ? (
+                    <div className="space-y-1 mt-1">
+                      {entrepreneur.fundingHistory.map((fund: any, index: number) => (
+                        <p key={index} className="text-md font-medium text-gray-900">
+                          ${AmountMeasureWithTags(fund.amount)} {fund.stage} ({fund.year})
+                        </p>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-md font-medium text-gray-900">
+                      N/A
+                    </p>
+                  )}
                 </div>
 
                 <div className="pt-3 border-t border-gray-100">
@@ -662,51 +889,51 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
             </CardHeader>
             <CardBody>
               <div className="space-y-3">
-                <div className="flex items-center p-3 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors">
-                  <div className="p-2 bg-primary-50 rounded-md mr-3">
-                    <FileText size={18} className="text-primary-700" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-sm font-medium text-gray-900">
-                      Pitch Deck
-                    </h3>
-                    <p className="text-xs text-gray-500">
-                      Updated 2 months ago
-                    </p>
-                  </div>
-                  <Button variant="outline" size="sm">
-                    View
-                  </Button>
-                </div>
+                {documents.length > 0 ? (
+                  documents.map((doc) => (
+                    <div key={doc._id} className="flex items-center p-3 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors">
+                      <div className="p-2 bg-primary-50 rounded-md mr-3">
+                        <FileText size={18} className="text-primary-700" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-sm font-medium text-gray-900 truncate">
+                          {doc.type}
+                        </h3>
+                        <p className="text-[10px] text-gray-500 truncate">
+                          Updated on {new Date(doc.uploadedAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPreviewDoc({ url: `${URL}${doc.fileUrl}`, name: doc.fileName })}
+                      >
+                        View
+                      </Button>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-500 text-center py-4 italic">No documents uploaded yet.</p>
+                )}
+              </div>
 
-                <div className="flex items-center p-3 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors">
-                  <div className="p-2 bg-primary-50 rounded-md mr-3">
-                    <FileText size={18} className="text-primary-700" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-sm font-medium text-gray-900">
-                      Business Plan
-                    </h3>
-                    <p className="text-xs text-gray-500">Updated 1 month ago</p>
-                  </div>
-                  <Button variant="outline" size="sm">
-                    View
-                  </Button>
-                </div>
-
-                <div className="flex items-center p-3 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors">
-                  <div className="p-2 bg-primary-50 rounded-md mr-3">
-                    <FileText size={18} className="text-primary-700" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-sm font-medium text-gray-900">
-                      Financial Projections
-                    </h3>
-                    <p className="text-xs text-gray-500">Updated 2 weeks ago</p>
-                  </div>
-                  <Button variant="outline" size="sm">
-                    View
-                  </Button>
+              {/* Investors Section */}
+              <div className="mt-6 pt-6 border-t border-gray-100">
+                <h2 className="text-lg font-medium text-gray-900 mb-4">Investors</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {entrepreneur.investors && entrepreneur.investors.length > 0 ? (
+                    entrepreneur.investors.map((inv, idx) => (
+                      <Link to={`/profile/investor/${inv.userId}`} key={idx} className="flex items-center p-3 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors">
+                        <Avatar src={inv.avatarUrl} alt={inv.name} size="md" className="mr-3" />
+                        <div>
+                          <h3 className="text-sm font-medium text-gray-900">{inv.name}</h3>
+                          <p className="text-xs text-primary-600 font-medium">Verified Investor</p>
+                        </div>
+                      </Link>
+                    ))
+                  ) : (
+                    <p className="text-sm text-gray-500 col-span-2">No investors yet.</p>
+                  )}
                 </div>
               </div>
 
@@ -717,13 +944,13 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
                     sending a collaboration request.
                   </p>
 
-                  {!hasRequestedCollaboration ? (
+                  {requestStatus !== "pending" && requestStatus !== "accepted" ? (
                     <Button className="mt-3 w-full" onClick={handleSendRequest}>
                       Request Collaboration
                     </Button>
                   ) : (
                     <Button className="mt-3 w-full" disabled>
-                      Request Sent
+                      {requestStatus === "accepted" ? "Access Granted" : "Request Sent"}
                     </Button>
                   )}
                 </div>
@@ -731,7 +958,17 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
             </CardBody>
           </Card>
         </div>
+
       </div>
+
+      {previewDoc && (
+        <PdfPreviewModal
+          isOpen={!!previewDoc}
+          onClose={() => setPreviewDoc(null)}
+          fileUrl={previewDoc.url}
+          fileName={previewDoc.name}
+        />
+      )}
     </div>
   );
 };

@@ -11,6 +11,7 @@ export const EntrepreneursPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIndustries, setSelectedIndustries] = useState<string[]>([]);
   const [selectedFundingRange, setSelectedFundingRange] = useState<string[]>([]);
+  const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
   const { user } = useAuth();
   // Get unique industries and funding ranges
   const [entrepreneurs, setEnterprenuers] = useState<Entrepreneur[]>([]);
@@ -23,37 +24,44 @@ export const EntrepreneursPage: React.FC = () => {
       }
     }
     fetchData();
-  }, []);
-  const allIndustries = Array.from(new Set(entrepreneurs.map(e => e.industry)));
+  }, [user]);
+
+  const allIndustries = Array.from(new Set(entrepreneurs.map(e => e.industry || 'Other').filter(Boolean)));
+  // Filter out undefined/null locations and get unique ones
+  const allLocations = Array.from(new Set(entrepreneurs.map(e => e.location).filter(Boolean)));
+
   const fundingRanges = ['< $500K', '$500K - $1M', '$1M - $5M', '> $5M'];
 
   // Filter entrepreneurs based on search and filters
   const filteredEntrepreneurs = entrepreneurs.filter(entrepreneur => {
     const matchesSearch = searchQuery === '' ||
       entrepreneur.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      entrepreneur.startupName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      entrepreneur.industry.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      entrepreneur.pitchSummary.toLowerCase().includes(searchQuery.toLowerCase());
+      (entrepreneur.startupName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (entrepreneur.industry || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (entrepreneur.pitchSummary || '').toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesIndustry = selectedIndustries.length === 0 ||
-      selectedIndustries.includes(entrepreneur.industry);
+      selectedIndustries.includes(entrepreneur.industry || 'Other');
+
+    const matchesLocation = selectedLocations.length === 0 ||
+      selectedLocations.includes(entrepreneur.location);
 
     // Simple funding range filter based on the amount string
     const matchesFunding = selectedFundingRange.length === 0 ||
       selectedFundingRange.some(range => {
-        const amount = parseInt(entrepreneur.fundingNeeded.replace(/[^0-9]/g, ''));
+        const amount = entrepreneur.fundingNeeded || 0; // It's already a number
         switch (range) {
-          case '< $500K': return amount < 500;
-          case '$500K - $1M': return amount >= 500 && amount <= 1000;
-          case '$1M - $5M': return amount > 1000 && amount <= 5000;
-          case '> $5M': return amount > 5000;
+          case '< $500K': return amount < 500000;
+          case '$500K - $1M': return amount >= 500000 && amount <= 1000000;
+          case '$1M - $5M': return amount > 1000000 && amount <= 5000000;
+          case '> $5M': return amount > 5000000;
           default: return true;
         }
       });
 
     const isApproved = entrepreneur.approvalStatus === 'approved';
 
-    return matchesSearch && matchesIndustry && matchesFunding && isApproved;
+    return matchesSearch && matchesIndustry && matchesFunding && matchesLocation && isApproved;
   });
 
   const toggleIndustry = (industry: string) => {
@@ -69,6 +77,14 @@ export const EntrepreneursPage: React.FC = () => {
       prev.includes(range)
         ? prev.filter(r => r !== range)
         : [...prev, range]
+    );
+  };
+
+  const toggleLocation = (location: string) => {
+    setSelectedLocations(prev =>
+      prev.includes(location)
+        ? prev.filter(l => l !== location)
+        : [...prev, location]
     );
   };
 
@@ -102,6 +118,7 @@ export const EntrepreneursPage: React.FC = () => {
                       {industry}
                     </button>
                   ))}
+                  {allIndustries.length === 0 && <p className="text-xs text-gray-500">No industries found.</p>}
                 </div>
               </div>
 
@@ -125,19 +142,24 @@ export const EntrepreneursPage: React.FC = () => {
 
               <div>
                 <h3 className="text-sm font-medium text-gray-900 mb-2">Location</h3>
-                <div className="space-y-2">
-                  <button className="flex items-center w-full text-left px-3 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-50">
-                    <MapPin size={16} className="mr-2" />
-                    San Francisco, CA
-                  </button>
-                  <button className="flex items-center w-full text-left px-3 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-50">
-                    <MapPin size={16} className="mr-2" />
-                    New York, NY
-                  </button>
-                  <button className="flex items-center w-full text-left px-3 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-50">
-                    <MapPin size={16} className="mr-2" />
-                    Boston, MA
-                  </button>
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {allLocations.length > 0 ? (
+                    allLocations.map(location => (
+                      <button
+                        key={location}
+                        onClick={() => toggleLocation(location)}
+                        className={`flex items-center w-full text-left px-3 py-2 rounded-md text-sm ${selectedLocations.includes(location)
+                          ? 'bg-primary-50 text-primary-700'
+                          : 'text-gray-700 hover:bg-gray-50'
+                          }`}
+                      >
+                        <MapPin size={16} className="mr-2 flex-shrink-0" />
+                        <span className="truncate">{location}</span>
+                      </button>
+                    ))
+                  ) : (
+                    <p className="text-xs text-gray-500 px-3">No locations found.</p>
+                  )}
                 </div>
               </div>
             </CardBody>
@@ -166,7 +188,7 @@ export const EntrepreneursPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {filteredEntrepreneurs.map(entrepreneur => (
               <EntrepreneurCard
-                key={entrepreneur._id}
+                key={entrepreneur.userId}
                 entrepreneur={entrepreneur}
               />
             ))}

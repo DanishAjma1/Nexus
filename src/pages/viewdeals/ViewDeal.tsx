@@ -1,42 +1,71 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import { Card, CardBody, CardHeader } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { toast } from "react-hot-toast";
+import { useAuth } from "../../context/AuthContext";
+import { DealForm } from "../../components/DealForm";
+import { NegotiationModal } from "../../components/NegotiationModal";
+import { useNavigate } from "react-router-dom";
+
+const URL = import.meta.env.VITE_BACKEND_URL;
 
 export const ViewDeals: React.FC = () => {
-  // Dummy static deals data
-  const [deals, setDeals] = useState([
-    {
-      _id: "1",
-      investorName: "John Doe",
-      investorEmail: "john@example.com",
-      businessName: "Acme Startup",
-      amount: 50000,
-      equity: 5,
-      message: "We want to invest in your startup.",
-      status: "pending",
-    },
-    {
-      _id: "2",
-      investorName: "Jane Smith",
-      investorEmail: "jane@example.com",
-      businessName: "Acme Startup",
-      amount: 100000,
-      equity: 10,
-      message: "We are interested in funding your growth.",
-      status: "pending",
-    },
-  ]);
+  const { user } = useAuth();
+  const [deals, setDeals] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  // Modal states
+  const [selectedDeal, setSelectedDeal] = useState<any>(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isNegotiationModalOpen, setIsNegotiationModalOpen] = useState(false);
 
-  const handleDealStatus = (
-    dealId: string,
-    status: "accepted" | "rejected"
-  ) => {
-    setDeals((prev) =>
-      prev.map((d) => (d._id === dealId ? { ...d, status } : d))
-    );
-    toast.success(`Deal ${status}`);
+  useEffect(() => {
+    fetchDeals();
+  }, [user]);
+
+  const fetchDeals = async () => {
+    if (!user?.userId) return;
+    try {
+      setLoading(true);
+      const res = await axios.get(`${URL}/deal/get-deals/${user.userId}`);
+      setDeals(res.data);
+    } catch (error) {
+      console.error("Error fetching deals:", error);
+      toast.error("Failed to load deals.");
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const handleDealStatus = async (
+    dealId: string,
+    action: "accept" | "reject"
+  ) => {
+    try {
+      await axios.put(`${URL}/deal/update-deal/${dealId}`, {
+        action,
+        role: "entrepreneur",
+      });
+      toast.success(`Deal ${action === 'accept' ? 'accepted' : 'rejected'}!`);
+      fetchDeals(); // Refresh list
+    } catch (error) {
+      console.error(`Error ${action}ing deal:`, error);
+      toast.error(`Failed to ${action} deal.`);
+    }
+  };
+
+  const openViewModal = (deal: any) => {
+    setSelectedDeal(deal);
+    setIsViewModalOpen(true);
+  };
+
+  const openNegotiationModal = (deal: any) => {
+    setSelectedDeal(deal);
+    setIsNegotiationModalOpen(true);
+  };
+
+  if (loading) return <div className="p-4">Loading deals...</div>;
 
   return (
     <div className="space-y-6 animate-fade-in p-4">
@@ -51,56 +80,123 @@ export const ViewDeals: React.FC = () => {
               <CardHeader className="flex justify-between items-center">
                 <div>
                   <h3 className="text-lg font-medium text-gray-900">
-                    {deal.investorName}
+                    {deal.investorId?.name || "Investor"}
                   </h3>
-                  <p className="text-sm text-gray-500">{deal.investorEmail}</p>
+                  <p className="text-sm text-gray-500">{deal.investorId?.email}</p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Sent {new Date(deal.createdAt).toLocaleDateString()}
+                  </p>
                 </div>
                 <span
-                  className={`text-sm font-medium px-2 py-0.5 rounded-full ${
-                    deal.status === "pending"
-                      ? "bg-yellow-100 text-yellow-800"
-                      : deal.status === "accepted"
+                  className={`text-sm font-medium px-2 py-0.5 rounded-full ${deal.status === "pending"
+                    ? "bg-yellow-100 text-yellow-800"
+                    : deal.status === "accepted"
                       ? "bg-green-100 text-green-800"
-                      : "bg-red-100 text-red-800"
-                  }`}
+                      : deal.status === "negotiating"
+                        ? "bg-blue-100 text-blue-800"
+                        : "bg-red-100 text-red-800"
+                    }`}
                 >
-                  {deal.status}
+                  {deal.status.charAt(0).toUpperCase() + deal.status.slice(1)}
                 </span>
+                {deal.paymentStatus === 'funds_released' && (
+                  <span className="text-sm font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-800 ml-2 border border-green-200">
+                    Payment Approved
+                  </span>
+                )}
               </CardHeader>
               <CardBody className="space-y-2">
                 <p>
-                  <strong>Business:</strong> {deal.businessName}
+                  <strong>Startup:</strong> {deal.entrepreneurId?.startupName}
                 </p>
                 <p>
-                  <strong>Investment Amount:</strong> ${deal.amount}
+                  <strong>Investment Amount:</strong> ${deal.investmentAmount?.toLocaleString()}
                 </p>
                 <p>
-                  <strong>Requested Equity:</strong> {deal.equity}%
+                  <strong>Valuation (Post-Money):</strong> ${deal.postMoneyValuation?.toLocaleString()}
                 </p>
                 <p>
-                  <strong>Message:</strong> {deal.message}
+                  <strong>Equity Offered:</strong> {deal.equityOffered}%
+                </p>
+                <p>
+                  <strong>Type:</strong> {deal.investmentType}
                 </p>
 
-                {deal.status === "pending" && (
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => handleDealStatus(deal._id, "accepted")}
-                    >
-                      Accept
+                <div className="flex flex-wrap gap-2 mt-4 pt-2 border-t">
+                  <Button
+                    variant="secondary"
+                    onClick={() => openViewModal(deal)}
+                  >
+                    See Full Deal
+                  </Button>
+
+                  {/* Only show actions if pending or negotiating (and last action wasn't us) */}
+                  {(deal.status === "pending" || deal.status === "negotiating") && (
+                    <>
+                      {/* If negotiating and last action was US (entrepreneur), we act as 'waiting' */}
+                      {deal.status === 'negotiating' && deal.lastActionBy === 'entrepreneur' ? (
+                        <span className="text-sm text-gray-500 italic flex items-center">Waiting for investor response...</span>
+                      ) : (
+                        <>
+                          <Button
+                            variant="outline"
+                            onClick={() => openNegotiationModal(deal)}
+                          >
+                            Negotiate
+                          </Button>
+                          <Button
+                            variant="outline"
+                            className="border-green-600 text-green-600 hover:bg-green-50"
+                            onClick={() => handleDealStatus(deal._id, "accept")}
+                          >
+                            Accept
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            className="text-red-600 hover:bg-red-50"
+                            onClick={() => handleDealStatus(deal._id, "reject")}
+                          >
+                            Reject
+                          </Button>
+                        </>
+                      )}
+                    </>
+                  )}
+
+                  {deal.status === 'accepted' && (
+                    <Button variant="outline" onClick={() => navigate(`/chat/${deal.investorId?._id}`)}>
+                      Chat with Investor
                     </Button>
-                    <Button
-                      variant="ghost"
-                      onClick={() => handleDealStatus(deal._id, "rejected")}
-                    >
-                      Reject
-                    </Button>
-                  </div>
-                )}
+                  )}
+                </div>
               </CardBody>
             </Card>
           ))}
         </div>
+      )}
+
+      {/* View Modal (Read Only) */}
+      {isViewModalOpen && selectedDeal && (
+        <DealForm
+          entrepreneur={selectedDeal.entrepreneurId}
+          investor={selectedDeal.investorId}
+          valuation={selectedDeal.preMoneyValuation}
+          onClose={() => setIsViewModalOpen(false)}
+          readOnly={true}
+          initialData={selectedDeal}
+        />
+      )}
+
+      {/* Negotiation Modal */}
+      {isNegotiationModalOpen && selectedDeal && (
+        <NegotiationModal
+          deal={selectedDeal}
+          onClose={() => {
+            setIsNegotiationModalOpen(false);
+            fetchDeals();
+          }}
+          role="entrepreneur"
+        />
       )}
     </div>
   );

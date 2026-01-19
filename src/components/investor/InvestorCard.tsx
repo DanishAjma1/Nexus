@@ -6,7 +6,7 @@ import { Card, CardBody, CardFooter } from "../ui/Card";
 import { Avatar } from "../ui/Avatar";
 import { Badge } from "../ui/Badge";
 import { Button } from "../ui/Button";
-
+import { AmountMeasureWithTags} from "../../data/users";
 interface InvestorCardProps {
   investor: Investor;
   showActions?: boolean;
@@ -89,7 +89,7 @@ export const InvestorCard: React.FC<InvestorCardProps> = ({
           <div>
             <span className="text-xs text-gray-500">Investment Range</span>
             <p className="text-sm font-medium text-gray-900">
-              {investor.minimumInvestment} - {investor.maximumInvestment}
+              {AmountMeasureWithTags(investor.minimumInvestment)} - {AmountMeasureWithTags(investor.maximumInvestment)}
             </p>
           </div>
         </div>

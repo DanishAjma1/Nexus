@@ -14,6 +14,13 @@ export interface User {
   isSuspended?: boolean;
 }
 
+export interface TeamMember {
+  _id?: string;
+  name: string;
+  role: string[];
+  avatarUrl: string;
+}
+
 export interface Entrepreneur extends User {
   startupName: string | undefined;
   pitchSummary: string | undefined;
@@ -21,15 +28,34 @@ export interface Entrepreneur extends User {
   industry: string | undefined;
   foundedYear: number | undefined;
   teamSize: number | undefined;
+  team?: TeamMember[];
   revenue: string | undefined;
   profitMargin: number | undefined;
   growthRate: number | undefined;
   marketOpportunity: string | undefined;
   advantage: string | undefined;
+  valuation?: number;
+  preSeedStatus?: 'pending' | 'in-progress' | 'completed';
+  seedStatus?: 'pending' | 'in-progress' | 'completed';
+  seriesAStatus?: 'pending' | 'in-progress' | 'completed';
+  fundingHistory?: {
+    amount: number;
+    stage: string;
+    year: number;
+    date: Date;
+  }[];
+  businessThumbnails?: string[];
+  investors?: {
+    name: string;
+    avatarUrl: string;
+    userId: string;
+  }[];
+  totalRaised?: number;
 }
 
 export interface Investor extends User {
   investmentInterests: string[] | undefined;
+  investmentStage: string[] | undefined;
   portfolioCompanies: string[] | undefined;
   totalInvestments: number | undefined;
   minimumInvestment: number | undefined;
@@ -38,6 +64,13 @@ export interface Investor extends User {
   successfullExits: number | undefined;
   minTimline: number | undefined;
   maxTimline: number | undefined;
+  portfolio?: {
+    startupName: string;
+    avatarUrl: string;
+    amount: number;
+    entrepreneurId: string;
+    userId: string;
+  }[];
 }
 
 export interface Message {

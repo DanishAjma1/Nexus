@@ -79,6 +79,7 @@ export const UserApprovals: React.FC = () => {
     show: false,
     userId: null
   });
+  const [emailStatus, setEmailStatus] = useState<{ [key: string]: { status: 'verifying' | 'exists' | 'not_exists' | 'error', reason?: string } }>({});
   const URL = import.meta.env.VITE_BACKEND_URL;
   const token = localStorage.getItem("token");
 
@@ -116,6 +117,36 @@ export const UserApprovals: React.FC = () => {
   useEffect(() => {
     fetchApprovalData();
   }, []);
+
+  const verifyEmail = async (email: string) => {
+    if (emailStatus[email]) return;
+
+    setEmailStatus(prev => ({ ...prev, [email]: { status: 'verifying' } }));
+    try {
+      const res = await axios.get(`${URL}/admin/verify-email/${email}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setEmailStatus(prev => ({
+        ...prev,
+        [email]: {
+          status: res.data.exists ? 'exists' : 'not_exists',
+          reason: res.data.reason
+        }
+      }));
+    } catch (error) {
+      setEmailStatus(prev => ({ ...prev, [email]: { status: 'error' } }));
+    }
+  };
+
+  useEffect(() => {
+    // Verify emails for all pending users
+    const allPending = [...pendingUsers.entrepreneurs, ...pendingUsers.investors];
+    allPending.forEach(user => {
+      if (!emailStatus[user.email]) {
+        verifyEmail(user.email);
+      }
+    });
+  }, [pendingUsers]);
 
   // Approve user
   const handleApprove = async (userId: string) => {
@@ -219,6 +250,14 @@ export const UserApprovals: React.FC = () => {
             <p className="text-sm text-gray-500 flex items-center mt-1">
               <Mail className="w-4 h-4 mr-2" />
               {user.email}
+              {emailStatus[user.email]?.status === 'not_exists' && (
+                <span
+                  title={emailStatus[user.email]?.reason}
+                  className="ml-2 px-2 py-0.5 text-[10px] font-bold bg-red-100 text-red-600 rounded-full border border-red-200 animate-pulse cursor-help"
+                >
+                  {emailStatus[user.email]?.reason === 'Disposable email' ? 'Fake Disposable' : 'Invalid/Fake Email'}
+                </span>
+              )}
             </p>
             <p className="text-sm text-gray-500 flex items-center mt-1">
               <Calendar className="w-4 h-4 mr-2" />

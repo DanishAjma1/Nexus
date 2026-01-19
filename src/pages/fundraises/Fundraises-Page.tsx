@@ -1,390 +1,405 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Navbar } from "../../components/home/Navbar";
 import { Button } from "../../components/ui/Button";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import axios from "axios";
+import { Entrepreneur } from "../../types";
+import { 
+  Loader2, 
+  ChevronLeft, 
+  ChevronRight, 
+  MapPin, 
+  Users, 
+  Target, 
+  Layers, 
+  TrendingUp, 
+  Building2, 
+  Clock, 
+  Percent,
+  Sparkles,
+  Filter,
+  Zap,
+  ArrowRight,
+  ArrowLeft
+} from "lucide-react";
 
 interface BusinessCardProps {
-  id: number;
-  name: string;
-  description: string;
-  industry: string;
-  fundingGoal: number;
-  fundsRaised: number;
-  equityOffered: number;
-  valuation: number;
-  image: string;
-  location: string;
-  foundedYear: number;
-  teamSize: number;
-  stage: "Seed" | "Series A" | "Series B" | "Series C";
-  investors: number;
+  entrepreneur: Entrepreneur;
 }
 
-interface InvestmentModalData {
-  businessId: number;
-  businessName: string;
-  investmentAmount: number;
-  equityPercentage: number;
-  estimatedReturn: number;
-}
+// Entrepreneurs display page with filters and showcase slider
 
 export const FundraisePage: React.FC = () => {
   const navigate = useNavigate();
-  const [selectedBusiness, setSelectedBusiness] = useState<BusinessCardProps | null>(null);
-  const [showInvestmentModal, setShowInvestmentModal] = useState(false);
-  const [investmentData, setInvestmentData] = useState<InvestmentModalData>({
-    businessId: 0,
-    businessName: "",
-    investmentAmount: 0,
-    equityPercentage: 0,
-    estimatedReturn: 0
+  const { user: currentUser } = useAuth();
+  const [entrepreneurs, setEntrepreneurs] = useState<Entrepreneur[]>([]);
+  const [filteredEntrepreneurs, setFilteredEntrepreneurs] = useState<Entrepreneur[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedIndustry, setSelectedIndustry] = useState<string>("All Industries");
+  const [selectedStage, setSelectedStage] = useState<string>("All Stages");
+  const [platformStats, setPlatformStats] = useState({
+    totalInvested: 0,
+    totalInvestors: 0,
+    activeDeals: 0
   });
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // In real app, get from auth context
+  const [currentPage, setCurrentPage] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(6); // 6 items for 2 rows of 3
 
-  // Sample business data
-  const businesses: BusinessCardProps[] = [
-    {
-      id: 1,
-      name: "Quantum AI",
-      description: "Building quantum computing solutions for drug discovery and material science. Proprietary algorithms reduce simulation time by 90%.",
-      industry: "Deep Tech",
-      fundingGoal: 5000000,
-      fundsRaised: 2500000,
-      equityOffered: 15,
-      valuation: 33333333,
-      image: "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=800",
-      location: "San Francisco, CA",
-      foundedYear: 2021,
-      teamSize: 18,
-      stage: "Series A",
-      investors: 45
-    },
-    {
-      id: 2,
-      name: "NeuroTech",
-      description: "Non-invasive brain-computer interface for treating neurological disorders. FDA approval pending for clinical trials.",
-      industry: "HealthTech",
-      fundingGoal: 3000000,
-      fundsRaised: 1800000,
-      equityOffered: 12,
-      valuation: 25000000,
-      image: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=800",
-      location: "Boston, MA",
-      foundedYear: 2020,
-      teamSize: 12,
-      stage: "Seed",
-      investors: 32
-    },
-    {
-      id: 3,
-      name: "Green Energy Solutions",
-      description: "Revolutionary solar panel technology with 40% higher efficiency using perovskite materials. Manufacturing plant ready for scale.",
-      industry: "Clean Energy",
-      fundingGoal: 8000000,
-      fundsRaised: 5500000,
-      equityOffered: 20,
-      valuation: 40000000,
-      image: "https://images.unsplash.com-1559757172-5c350d0d3c56?w=800",
-      location: "Austin, TX",
-      foundedYear: 2019,
-      teamSize: 24,
-      stage: "Series B",
-      investors: 78
-    },
-    {
-      id: 4,
-      name: "AgriTech Robotics",
-      description: "Autonomous farming robots that reduce water usage by 60% and increase crop yield by 35%. Currently deployed in 50+ farms.",
-      industry: "AgriTech",
-      fundingGoal: 4000000,
-      fundsRaised: 2200000,
-      equityOffered: 10,
-      valuation: 40000000,
-      image: "https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=800",
-      location: "Chicago, IL",
-      foundedYear: 2020,
-      teamSize: 16,
-      stage: "Series A",
-      investors: 41
-    },
-    {
-      id: 5,
-      name: "Space Logistics",
-      description: "Orbital delivery systems for small satellite deployment. Contracted with SpaceX and NASA for upcoming missions.",
-      industry: "Aerospace",
-      fundingGoal: 12000000,
-      fundsRaised: 8500000,
-      equityOffered: 18,
-      valuation: 66666666,
-      image: "https://images.unsplash.com/photo-1446776653964-20c1d3a81b06?w=800",
-      location: "Los Angeles, CA",
-      foundedYear: 2018,
-      teamSize: 42,
-      stage: "Series C",
-      investors: 112
-    },
-    {
-      id: 6,
-      name: "BioPrint Innovations",
-      description: "3D bioprinting human tissues for pharmaceutical testing. Partnership with top 10 pharma companies secured.",
-      industry: "Biotech",
-      fundingGoal: 6000000,
-      fundsRaised: 3200000,
-      equityOffered: 14,
-      valuation: 42857142,
-      image: "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800",
-      location: "San Diego, CA",
-      foundedYear: 2021,
-      teamSize: 22,
-      stage: "Series A",
-      investors: 56
+  const URL = import.meta.env.VITE_BACKEND_URL;
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const [entRes, statsRes] = await Promise.all([
+          axios.get(`${URL}/entrepreneur/get-entrepreneurs`),
+          axios.get(`${URL}/user/platform-stats`)
+        ]);
+
+        setEntrepreneurs(entRes.data.entrepreneurs || []);
+        setFilteredEntrepreneurs(entRes.data.entrepreneurs || []);
+
+        if (statsRes.data) {
+          setPlatformStats(statsRes.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, [URL]);
+
+  useEffect(() => {
+    let filtered = [...entrepreneurs];
+
+    if (selectedIndustry !== "All Industries") {
+      filtered = filtered.filter(ent => ent.industry === selectedIndustry);
     }
-  ];
 
-  const BusinessCard: React.FC<BusinessCardProps> = ({
-    id,
-    name,
-    description,
-    industry,
-    fundingGoal,
-    fundsRaised,
-    equityOffered,
-    valuation,
-    image,
-    location,
-    foundedYear,
-    teamSize,
-    stage,
-    investors
-  }) => {
-    const progress = (fundsRaised / fundingGoal) * 100;
-    
+    if (selectedStage !== "All Stages") {
+      filtered = filtered.filter(ent => {
+        if (selectedStage === "Pre-Seed") return ent.preSeedStatus === "completed" || ent.preSeedStatus === "in-progress";
+        if (selectedStage === "Seed") return ent.seedStatus === "completed" || ent.seedStatus === "in-progress";
+        if (selectedStage === "Series A") return ent.seriesAStatus === "completed" || ent.seriesAStatus === "in-progress";
+        return true;
+      });
+    }
+
+    setFilteredEntrepreneurs(filtered);
+    setCurrentPage(0); // Reset to first page when filters change
+  }, [selectedIndustry, selectedStage, entrepreneurs]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredEntrepreneurs.length / itemsPerPage);
+  const paginatedEntrepreneurs = filteredEntrepreneurs.slice(
+    currentPage * itemsPerPage,
+    (currentPage + 1) * itemsPerPage
+  );
+
+  const nextPage = () => {
+    if (currentPage < totalPages - 1) {
+      setCurrentPage(prev => prev + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const prevPage = () => {
+    if (currentPage > 0) {
+      setCurrentPage(prev => prev - 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Adjust items per page based on screen size
+  useEffect(() => {
+    const updateItemsPerPage = () => {
+      if (window.innerWidth >= 1280) {
+        setItemsPerPage(6); // 2 rows of 3 for xl screens
+      } else if (window.innerWidth >= 1024) {
+        setItemsPerPage(4); // 2 rows of 2 for lg screens
+      } else if (window.innerWidth >= 768) {
+        setItemsPerPage(4); // 2 rows of 2 for md screens
+      } else {
+        setItemsPerPage(6); // 6 rows of 1 for mobile
+      }
+    };
+
+    updateItemsPerPage();
+    window.addEventListener('resize', updateItemsPerPage);
+    return () => window.removeEventListener('resize', updateItemsPerPage);
+  }, []);
+
+  const industries = ["All Industries", ...new Set(entrepreneurs.map(ent => ent.industry).filter(Boolean) as string[])];
+  const stages = ["All Stages", "Pre-Seed", "Seed", "Series A"];
+
+  const BusinessCard: React.FC<BusinessCardProps> = ({ entrepreneur }) => {
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const images = entrepreneur.businessThumbnails && entrepreneur.businessThumbnails.length > 0
+      ? entrepreneur.businessThumbnails
+      : [typeof entrepreneur.avatarUrl === 'string' ? entrepreneur.avatarUrl : "/placeholder-startup.jpg"];
+
+    useEffect(() => {
+      if (images.length <= 1) return;
+      const interval = setInterval(() => {
+        setCurrentImageIndex((prev) => (prev + 1) % images.length);
+      }, 3000);
+      return () => clearInterval(interval);
+    }, [images.length]);
+
+    const nextImage = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      setCurrentImageIndex((prev) => (prev + 1) % images.length);
+    };
+
+    const prevImage = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+    };
+
+    const getActiveStage = () => {
+      if (entrepreneur.seriesAStatus === "completed" || entrepreneur.seriesAStatus === "in-progress") return "Series A";
+      if (entrepreneur.seedStatus === "completed" || entrepreneur.seedStatus === "in-progress") return "Seed";
+      if (entrepreneur.preSeedStatus === "completed" || entrepreneur.preSeedStatus === "in-progress") return "Pre-Seed";
+      return "Concept";
+    };
+
+    const stage = getActiveStage();
+
     const getStageColor = (stage: string) => {
       switch (stage) {
-        case "Seed": return "bg-blue-500";
-        case "Series A": return "bg-green-500";
-        case "Series B": return "bg-yellow-500";
-        case "Series C": return "bg-purple-500";
-        default: return "bg-gray-500";
+        case "Pre-Seed": return "bg-gradient-to-r from-blue-400 to-blue-500";
+        case "Seed": return "bg-gradient-to-r from-blue-600 to-blue-700";
+        case "Series A": return "bg-gradient-to-r from-emerald-500 to-emerald-600";
+        default: return "bg-gradient-to-r from-gray-500 to-gray-600";
       }
     };
 
-    const handleInvestClick = () => {
-      if (!isLoggedIn) {
-        // Redirect to login page
-        navigate("/login");
-        return;
-      }
-      
-      setSelectedBusiness({ 
-        id, name, description, industry, fundingGoal, fundsRaised, 
-        equityOffered, valuation, image, location, foundedYear, 
-        teamSize, stage, investors 
-      });
-      
-      setInvestmentData(prev => ({
-        ...prev,
-        businessId: id,
-        businessName: name,
-        investmentAmount: Math.max(10000, Math.ceil((fundingGoal - fundsRaised) * 0.01)),
-        equityPercentage: equityOffered,
-        estimatedReturn: Math.ceil(valuation * 0.25) // Simplified calculation
-      }));
-      
-      setShowInvestmentModal(true);
-    };
+    const fundingProgress = Math.round(((entrepreneur.totalRaised || 0) / (entrepreneur.fundingNeeded || 1)) * 100);
 
     return (
-      <div className="group relative bg-gradient-to-br from-gray-900 to-black rounded-2xl overflow-hidden border border-gray-800 hover:border-blue-500/50 transition-all duration-300 shadow-xl hover:shadow-2xl hover:shadow-blue-500/10">
+      <div className="group relative bg-gradient-to-br from-gray-900 via-gray-900 to-black rounded-2xl overflow-hidden border border-gray-800 hover:border-blue-500/50 transition-all duration-300 shadow-xl hover:shadow-2xl hover:shadow-blue-500/20 transform hover:-translate-y-1">
+        {/* Glow Effect */}
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        
         {/* Stage Badge */}
         <div className="absolute top-4 left-4 z-10">
-          <span className={`px-3 py-1 text-xs font-semibold ${getStageColor(stage)} text-white rounded-full shadow-lg`}>
+          <span className={`px-4 py-1.5 text-[11px] uppercase tracking-wider font-bold ${getStageColor(stage)} text-white rounded-full shadow-lg shadow-blue-500/20 flex items-center gap-1.5`}>
+            <Zap size={12} />
             {stage}
           </span>
         </div>
-        
+
         {/* Industry Badge */}
         <div className="absolute top-4 right-4 z-10">
-          <span className="px-3 py-1 text-xs font-semibold bg-gray-900/80 backdrop-blur-sm text-white rounded-full border border-gray-700">
-            🏢 {industry}
+          <span className="px-3 py-1.5 text-[11px] uppercase tracking-wider font-bold bg-gray-900/90 backdrop-blur-sm text-gray-300 rounded-full border border-gray-700 shadow-lg">
+            {entrepreneur.industry || "General"}
           </span>
         </div>
-        
-        {/* Business Image */}
-        <div className="relative h-48 overflow-hidden">
-          <img 
-            src={image} 
-            alt={name}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-        </div>
-        
-        {/* Business Content */}
-        <div className="p-6">
-          <div className="mb-4">
-            <div className="flex items-start justify-between mb-2">
-              <h3 className="text-xl font-bold text-white line-clamp-1">
-                {name}
-              </h3>
-              <span className="text-sm text-gray-400">📍 {location}</span>
-            </div>
-            
-            <p className="text-sm text-gray-400 mb-3 line-clamp-2">
-              {description}
-            </p>
-            
-            {/* Business Stats */}
-            <div className="grid grid-cols-2 gap-3 mb-4 text-xs">
-              <div className="flex items-center text-gray-500">
-                <span className="mr-2">📅</span>
-                <span>Founded {foundedYear}</span>
+
+        {/* Image Slider */}
+        <div className="relative h-52 overflow-hidden">
+          {images.map((img, idx) => (
+            <img
+              key={idx}
+              src={img}
+              alt={entrepreneur.startupName}
+              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${idx === currentImageIndex ? 'opacity-100' : 'opacity-0'}`}
+            />
+          ))}
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-80" />
+
+          {images.length > 1 && (
+            <>
+              <button onClick={prevImage} className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/70 text-white backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-black/90 hover:scale-110">
+                <ChevronLeft size={20} />
+              </button>
+              <button onClick={nextImage} className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/70 text-white backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-black/90 hover:scale-110">
+                <ChevronRight size={20} />
+              </button>
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
+                {images.map((_, idx) => (
+                  <div key={idx} className={`w-2 h-2 rounded-full transition-all duration-300 ${idx === currentImageIndex ? 'bg-blue-500 w-4 shadow-md shadow-blue-500/50' : 'bg-white/60'}`} />
+                ))}
               </div>
-              <div className="flex items-center text-gray-500">
-                <span className="mr-2">👥</span>
-                <span>{teamSize} team members</span>
-              </div>
-              <div className="flex items-center text-gray-500">
-                <span className="mr-2">🏦</span>
-                <span>${(valuation/1000000).toFixed(1)}M valuation</span>
-              </div>
-              <div className="flex items-center text-gray-500">
-                <span className="mr-2">🤝</span>
-                <span>{investors} investors</span>
-              </div>
-            </div>
-          </div>
-          
-          {/* Funding Progress */}
-          <div className="mb-4">
-            <div className="flex justify-between text-sm mb-2">
-              <span className="text-blue-400 font-semibold">
-                ${(fundsRaised/1000000).toFixed(1)}M raised
-              </span>
-              <span className="text-gray-400">
-                of ${(fundingGoal/1000000).toFixed(1)}M goal
-              </span>
-            </div>
-            <div className="w-full bg-gray-800 rounded-full h-2.5">
-              <div 
-                className="bg-gradient-to-r from-blue-500 to-cyan-400 h-2.5 rounded-full transition-all duration-500"
-                style={{ width: `${Math.min(progress, 100)}%` }}
-              />
-            </div>
-            <div className="flex justify-between text-xs text-gray-500 mt-1">
-              <span>{progress.toFixed(1)}% funded</span>
-              <span className="text-orange-400">🏷️ {equityOffered}% equity offered</span>
-            </div>
-          </div>
-          
-          {/* Action Button */}
-          <Button 
-            onClick={handleInvestClick}
-            className="w-full py-3 bg-gradient-to-r from-blue-500 to-cyan-600 text-white font-semibold rounded-lg hover:from-blue-600 hover:to-cyan-700 transition-all duration-300 transform hover:-translate-y-0.5 shadow-lg hover:shadow-blue-500/30"
-          >
-            💼 Invest Now
-          </Button>
-          
-          {/* Login Prompt for non-logged in users */}
-          {!isLoggedIn && (
-            <p className="text-xs text-center text-gray-500 mt-2">
-              Login required to invest
-            </p>
+            </>
           )}
+        </div>
+
+        {/* Content */}
+        <div className="p-7">
+          <div className="mb-6">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex-1 min-w-0 mr-4">
+                <h3 className="text-xl font-bold text-white truncate mb-1">
+                  {entrepreneur.startupName || "Unnamed Startup"}
+                </h3>
+                <div className="flex items-center text-xs text-gray-400">
+                  <MapPin size={12} className="mr-1.5 text-blue-500 flex-shrink-0" />
+                  <span className="truncate">{entrepreneur.location || "Location not specified"}</span>
+                </div>
+              </div>
+              <div className="flex-shrink-0">
+                <div className="flex items-center gap-1 px-3 py-1.5 bg-gray-900/80 backdrop-blur-sm rounded-lg border border-gray-700">
+                  <TrendingUp size={14} className="text-emerald-400" />
+                  <span className="text-sm font-semibold text-emerald-400">
+                    ${((entrepreneur.valuation || 0) / 1000000).toFixed(1)}M
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <p className="text-sm text-gray-400 mb-6 line-clamp-2 min-h-[44px] leading-relaxed">
+              {entrepreneur.pitchSummary || "No description provided."}
+            </p>
+
+            {/* Stats Grid */}
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              <div className="flex items-center gap-3 p-3 bg-gray-900/50 rounded-lg border border-gray-800">
+                <div className="p-2 bg-blue-500/10 rounded-lg">
+                  <Users size={16} className="text-blue-500" />
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-white">{entrepreneur.teamSize || 0}</div>
+                  <div className="text-xs text-gray-400">Team</div>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3 p-3 bg-gray-900/50 rounded-lg border border-gray-800">
+                <div className="p-2 bg-emerald-500/10 rounded-lg">
+                  <Building2 size={16} className="text-emerald-500" />
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-white">{entrepreneur.foundedYear || "N/A"}</div>
+                  <div className="text-xs text-gray-400">Founded</div>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3 p-3 bg-gray-900/50 rounded-lg border border-gray-800">
+                <div className="p-2 bg-purple-500/10 rounded-lg">
+                  <Target size={16} className="text-purple-500" />
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-white">
+                    ${(entrepreneur.fundingNeeded || 0).toLocaleString()}
+                  </div>
+                  <div className="text-xs text-gray-400">Target</div>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3 p-3 bg-gray-900/50 rounded-lg border border-gray-800">
+                <div className="p-2 bg-amber-500/10 rounded-lg">
+                  <Layers size={16} className="text-amber-500" />
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-white">
+                    ${(entrepreneur.totalRaised || 0).toLocaleString()}
+                  </div>
+                  <div className="text-xs text-gray-400">Raised</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Funding Progress */}
+            <div className="space-y-3 mb-6">
+              <div className="flex justify-between items-center">
+                <div className="text-xs uppercase tracking-wider font-bold text-blue-400">
+                  Funding Progress
+                </div>
+                <div className="text-sm font-bold text-white">
+                  {fundingProgress}%
+                </div>
+              </div>
+              <div className="relative">
+                <div className="h-2 w-full bg-gray-800 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-blue-500 via-blue-600 to-cyan-400 transition-all duration-1000 rounded-full"
+                    style={{ width: `${Math.min(fundingProgress, 100)}%` }}
+                  />
+                </div>
+                <div className="flex justify-between text-xs text-gray-500 mt-2">
+                  <span>${(entrepreneur.totalRaised || 0).toLocaleString()} raised</span>
+                  <span>${(entrepreneur.fundingNeeded || 0).toLocaleString()} goal</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <Link to={`/login`}>
+            <Button className="w-full py-3.5 bg-gradient-to-r from-blue-500 via-blue-600 to-cyan-600 text-white font-semibold rounded-lg hover:from-blue-600 hover:via-blue-700 hover:to-cyan-700 transition-all duration-300 shadow-lg hover:shadow-blue-500/30 transform hover:-translate-y-0.5">
+              Login As Investor To Contact
+            </Button>
+          </Link>
         </div>
       </div>
     );
   };
 
-  const handleInvestmentSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    alert(`Investment of $${investmentData.investmentAmount.toLocaleString()} submitted for ${investmentData.businessName}!`);
-    setShowInvestmentModal(false);
-    setInvestmentData({
-      businessId: 0,
-      businessName: "",
-      investmentAmount: 0,
-      equityPercentage: 0,
-      estimatedReturn: 0
-    });
-  };
-
-  const handleAmountChange = (amount: number) => {
-    const equity = (amount / selectedBusiness!.valuation) * 100;
-    const estimatedReturn = amount * 2.5; // Simplified ROI calculation
-    
-    setInvestmentData(prev => ({
-      ...prev,
-      investmentAmount: amount,
-      equityPercentage: parseFloat(equity.toFixed(2)),
-      estimatedReturn: Math.ceil(estimatedReturn)
-    }));
-  };
-
   const handleCloseModal = () => {
-    setShowInvestmentModal(false);
-    setSelectedBusiness(null);
-    setInvestmentData({
-      businessId: 0,
-      businessName: "",
-      investmentAmount: 0,
-      equityPercentage: 0,
-      estimatedReturn: 0
-    });
+    // Unused
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
       <Navbar />
-      
+
       {/* Hero Section */}
-      <div className="relative overflow-hidden py-12 md:py-20">
+      <div className="relative overflow-hidden py-16 md:py-24">
         <div className="absolute inset-0">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
+          <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
         </div>
-        
+
         <div className="relative container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto">
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              Invest in the <span className="bg-gradient-to-r from-blue-500 to-cyan-300 bg-clip-text text-transparent">Future</span> of Business
+          <div className="text-center max-w-4xl mx-auto">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 backdrop-blur-sm rounded-full border border-blue-500/20 mb-6">
+              <Sparkles size={16} className="text-blue-400" />
+              <span className="text-sm font-semibold text-blue-400">Invest in Innovation</span>
+            </div>
+            
+            <h1 className="text-5xl md:text-6xl font-bold text-white mb-6">
+              Invest in the <span className="bg-gradient-to-r from-blue-500 via-cyan-400 to-blue-500 bg-clip-text text-transparent animate-gradient">Future</span> of Business
             </h1>
-            <p className="text-lg md:text-xl text-gray-300 mb-8">
-              Discover high-growth startups and innovative businesses seeking investment. 
+            <p className="text-xl md:text-2xl text-gray-300 mb-10 leading-relaxed">
+              Discover high-growth startups and innovative businesses seeking investment.
               Become a part of their journey and share in their success.
             </p>
-            
+
             {/* Authentication Status */}
-            <div className="inline-block bg-gradient-to-r from-gray-900 to-black rounded-xl p-4 border border-gray-800 mb-8">
-              <div className="flex items-center justify-center gap-4">
-                {isLoggedIn ? (
+            <div className="inline-block bg-gradient-to-r from-gray-900/80 to-black/80 backdrop-blur-sm rounded-2xl p-6 border border-gray-800 shadow-2xl mb-12">
+              <div className="flex items-center justify-center gap-6">
+                {currentUser ? (
                   <>
-                    <div className="flex items-center">
-                      <div className="w-3 h-3 bg-green-500 rounded-full mr-2 animate-pulse" />
-                      <span className="text-green-400 font-semibold">Ready to Invest</span>
+                    <div className="flex items-center gap-3">
+                      <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
+                      <span className="text-green-400 font-semibold text-lg">Active Investor</span>
                     </div>
-                    <Button 
-                      onClick={() => setIsLoggedIn(false)}
-                      className="px-4 py-2 text-sm bg-transparent border border-gray-700 text-gray-400 rounded-lg hover:bg-white/10"
-                    >
-                      Logout
+                    <Button className="px-6 py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold rounded-lg">
+                      View Dashboard
                     </Button>
                   </>
                 ) : (
                   <>
-                    <div className="flex items-center">
-                      <div className="w-3 h-3 bg-yellow-500 rounded-full mr-2" />
-                      <span className="text-yellow-400 font-semibold">Login Required to Invest</span>
+                    <div className="flex items-center gap-3">
+                      <div className="w-3 h-3 bg-yellow-500 rounded-full animate-pulse" />
+                      <span className="text-yellow-400 font-semibold text-lg">Join as an Investor</span>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-3">
                       <Link to="/login">
-                        <Button className="px-4 py-2 text-sm bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg">
+                        <Button className="px-6 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300">
                           Login
                         </Button>
                       </Link>
                       <Link to="/register">
-                        <Button className="px-4 py-2 text-sm bg-transparent border border-gray-700 text-gray-400 rounded-lg hover:bg-white/10">
-                          Sign Up
+                        <Button className="px-6 py-2.5 bg-gradient-to-r from-gray-800 to-gray-900 text-white font-semibold rounded-lg border border-gray-700 hover:bg-gray-800 transition-all duration-300">
+                          Register
                         </Button>
                       </Link>
                     </div>
@@ -392,24 +407,37 @@ export const FundraisePage: React.FC = () => {
                 )}
               </div>
             </div>
-            
+
             {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
-              <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-gray-800">
-                <div className="text-2xl md:text-3xl font-bold text-blue-500">{businesses.length}+</div>
-                <div className="text-sm text-gray-400">Active Deals</div>
+            <div className="flex flex-wrap justify-center gap-6 mb-16">
+              <div className="flex-1 min-w-[240px] max-w-[320px] bg-white/5 backdrop-blur-sm rounded-2xl p-8 border border-gray-800 shadow-xl hover:shadow-blue-500/10 transition-all duration-300">
+                <div className="flex items-center justify-center gap-3 mb-3">
+                  <div className="p-3 bg-blue-500/10 rounded-xl">
+                    <Building2 size={24} className="text-blue-500" />
+                  </div>
+                  <div className="text-3xl md:text-4xl font-bold text-blue-500">{platformStats.activeDeals || entrepreneurs.length}+</div>
+                </div>
+                <div className="text-lg text-gray-300 font-medium">Active Deals</div>
               </div>
-              <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-gray-800">
-                <div className="text-2xl md:text-3xl font-bold text-green-500">$42M+</div>
-                <div className="text-sm text-gray-400">Total Invested</div>
+              <div className="flex-1 min-w-[240px] max-w-[320px] bg-white/5 backdrop-blur-sm rounded-2xl p-8 border border-gray-800 shadow-xl hover:shadow-green-500/10 transition-all duration-300">
+                <div className="flex items-center justify-center gap-3 mb-3">
+                  <div className="p-3 bg-green-500/10 rounded-xl">
+                    <TrendingUp size={24} className="text-green-500" />
+                  </div>
+                  <div className="text-3xl md:text-4xl font-bold text-green-500">
+                    ${(platformStats.totalInvested / 1000000).toFixed(1)}M+
+                  </div>
+                </div>
+                <div className="text-lg text-gray-300 font-medium">Total Invested</div>
               </div>
-              <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-gray-800">
-                <div className="text-2xl md:text-3xl font-bold text-purple-500">364+</div>
-                <div className="text-sm text-gray-400">Investors</div>
-              </div>
-              <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-gray-800">
-                <div className="text-2xl md:text-3xl font-bold text-orange-500">3.2x</div>
-                <div className="text-sm text-gray-400">Avg. ROI</div>
+              <div className="flex-1 min-w-[240px] max-w-[320px] bg-white/5 backdrop-blur-sm rounded-2xl p-8 border border-gray-800 shadow-xl hover:shadow-purple-500/10 transition-all duration-300">
+                <div className="flex items-center justify-center gap-3 mb-3">
+                  <div className="p-3 bg-purple-500/10 rounded-xl">
+                    <Users size={24} className="text-purple-500" />
+                  </div>
+                  <div className="text-3xl md:text-4xl font-bold text-purple-500">{platformStats.totalInvestors}+</div>
+                </div>
+                <div className="text-lg text-gray-300 font-medium">Investors</div>
               </div>
             </div>
           </div>
@@ -417,76 +445,245 @@ export const FundraisePage: React.FC = () => {
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 pb-24">
         {/* Filter Tabs */}
-        <div className="mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex flex-wrap gap-2">
-              <button className="px-4 py-2 bg-blue-500 text-white rounded-full font-semibold">
-                All Industries
-              </button>
-              {["Deep Tech", "HealthTech", "Clean Energy", "AgriTech", "Aerospace", "Biotech"].map((ind) => (
-                <button
-                  key={ind}
-                  className="px-4 py-2 bg-white/5 text-gray-300 hover:text-white rounded-full font-medium hover:bg-white/10 transition-colors"
-                >
-                  {ind}
-                </button>
-              ))}
+        <div className="mb-12">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <div>
+              <h2 className="text-3xl font-bold text-white mb-3">Explore Opportunities</h2>
+              <p className="text-gray-400">Filter by industry and funding stage to find perfect matches</p>
             </div>
             
-            {/* Stage Filter */}
-            <div className="flex flex-wrap gap-2">
-              <span className="text-gray-400 text-sm font-medium mr-2">Stage:</span>
-              {["Seed", "Series A", "Series B", "Series C"].map((stage) => (
-                <button
-                  key={stage}
-                  className="px-3 py-1 bg-white/5 text-gray-300 hover:text-white rounded-full text-sm hover:bg-white/10 transition-colors"
-                >
-                  {stage}
-                </button>
-              ))}
+            <div className="flex items-center gap-3">
+              <Filter size={20} className="text-blue-500" />
+              <div className="flex flex-col sm:flex-row gap-4">
+                {/* Industry Filter */}
+                <div className="flex flex-col gap-2">
+                  <span className="text-gray-300 text-sm font-medium">Industry</span>
+                  <div className="flex flex-wrap gap-2">
+                    {industries.slice(0, 5).map((ind) => (
+                      <button
+                        key={ind}
+                        onClick={() => setSelectedIndustry(ind)}
+                        className={`px-4 py-2 rounded-lg font-medium transition-all ${selectedIndustry === ind
+                          ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/30"
+                          : "bg-gray-900 text-gray-300 hover:text-white hover:bg-gray-800 border border-gray-800"
+                          }`}
+                      >
+                        {ind}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Stage Filter */}
+                <div className="flex flex-col gap-2">
+                  <span className="text-gray-300 text-sm font-medium">Stage</span>
+                  <div className="flex flex-wrap gap-2">
+                    {stages.map((stage) => (
+                      <button
+                        key={stage}
+                        onClick={() => setSelectedStage(stage)}
+                        className={`px-4 py-2 rounded-lg font-medium transition-all ${selectedStage === stage
+                          ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/30"
+                          : "bg-gray-900 text-gray-300 hover:text-white hover:bg-gray-800 border border-gray-800"
+                          }`}
+                      >
+                        {stage}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Businesses Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-          {businesses.map((business) => (
-            <BusinessCard key={business.id} {...business} />
-          ))}
+        {/* Results Summary */}
+        <div className="flex justify-between items-center mb-8">
+          <div className="text-gray-400">
+            Showing <span className="text-white font-semibold">{filteredEntrepreneurs.length}</span> opportunities
+            {selectedIndustry !== "All Industries" && ` in ${selectedIndustry}`}
+            {selectedStage !== "All Stages" && ` at ${selectedStage} stage`}
+          </div>
+          <div className="text-sm text-gray-500">
+            Page <span className="text-white font-semibold">{currentPage + 1}</span> of <span className="text-white font-semibold">{totalPages}</span>
+          </div>
         </div>
 
+        {/* Businesses Grid */}
+        {isLoading ? (
+          <div className="flex h-96 items-center justify-center">
+            <div className="text-center">
+              <Loader2 className="h-16 w-16 animate-spin text-blue-500 mx-auto mb-6" />
+              <p className="text-gray-400 text-lg">Loading investment opportunities...</p>
+            </div>
+          </div>
+        ) : filteredEntrepreneurs.length > 0 ? (
+          <>
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 justify-items-center max-w-[1800px] mx-auto mb-12">
+              {paginatedEntrepreneurs.map((ent) => (
+                <div key={ent.userId || ent._id} className="w-full max-w-[500px]">
+                  <BusinessCard entrepreneur={ent} />
+                </div>
+              ))}
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-6 mb-16 pt-8 border-t border-gray-800/50">
+                {/* Page Info */}
+                <div className="text-gray-400 text-sm">
+                  Showing <span className="text-white font-semibold">
+                    {Math.min((currentPage * itemsPerPage) + 1, filteredEntrepreneurs.length)}-{Math.min((currentPage + 1) * itemsPerPage, filteredEntrepreneurs.length)}
+                  </span> of <span className="text-white font-semibold">{filteredEntrepreneurs.length}</span> opportunities
+                </div>
+
+                {/* Pagination Buttons */}
+                <div className="flex items-center gap-4">
+                  {/* Previous Button */}
+                  <button
+                    onClick={prevPage}
+                    disabled={currentPage === 0}
+                    className="flex items-center gap-2 px-5 py-2.5 bg-gray-900/50 backdrop-blur-sm border border-gray-800 text-gray-300 rounded-xl hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+                  >
+                    <ArrowLeft size={18} />
+                    Previous
+                  </button>
+
+                  {/* Page Numbers */}
+                  <div className="flex items-center gap-2">
+                    {Array.from({ length: Math.min(5, totalPages) }).map((_, idx) => {
+                      // Show 5 page numbers around current page
+                      let pageNum;
+                      if (totalPages <= 5) {
+                        pageNum = idx;
+                      } else if (currentPage <= 2) {
+                        pageNum = idx;
+                      } else if (currentPage >= totalPages - 3) {
+                        pageNum = totalPages - 5 + idx;
+                      } else {
+                        pageNum = currentPage - 2 + idx;
+                      }
+
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => goToPage(pageNum)}
+                          className={`w-10 h-10 rounded-xl font-medium transition-all flex items-center justify-center ${currentPage === pageNum
+                            ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/30"
+                            : "bg-gray-900 text-gray-400 hover:text-white hover:bg-gray-800 border border-gray-800"
+                            }`}
+                        >
+                          {pageNum + 1}
+                        </button>
+                      );
+                    })}
+
+                    {totalPages > 5 && (
+                      <>
+                        <span className="text-gray-600 mx-1">...</span>
+                        <button
+                          onClick={() => goToPage(totalPages - 1)}
+                          className={`w-10 h-10 rounded-xl font-medium transition-all flex items-center justify-center ${currentPage === totalPages - 1
+                            ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/30"
+                            : "bg-gray-900 text-gray-400 hover:text-white hover:bg-gray-800 border border-gray-800"
+                            }`}
+                        >
+                          {totalPages}
+                        </button>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Next Button */}
+                  <button
+                    onClick={nextPage}
+                    disabled={currentPage >= totalPages - 1}
+                    className="flex items-center gap-2 px-5 py-2.5 bg-gray-900/50 backdrop-blur-sm border border-gray-800 text-gray-300 rounded-xl hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+                  >
+                    Next
+                    <ArrowRight size={18} />
+                  </button>
+                </div>
+
+                {/* Items Per Page Selector */}
+                <div className="flex items-center gap-3">
+                  <span className="text-gray-400 text-sm">Show:</span>
+                  <select
+                    value={itemsPerPage}
+                    onChange={(e) => {
+                      setItemsPerPage(Number(e.target.value));
+                      setCurrentPage(0);
+                    }}
+                    className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 text-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                  >
+                    <option value="3">3</option>
+                    <option value="6">6</option>
+                    <option value="9">9</option>
+                    <option value="12">12</option>
+                  </select>
+                  <span className="text-gray-400 text-sm">per page</span>
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="text-center py-24 bg-gradient-to-br from-gray-900/50 to-black/50 rounded-3xl border border-dashed border-gray-800 backdrop-blur-sm">
+            <div className="max-w-md mx-auto">
+              <div className="p-6 bg-gray-900/50 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+                <Building2 size={40} className="text-gray-600" />
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-3">No matches found</h3>
+              <p className="text-gray-400 mb-6">Try adjusting your filters to see more opportunities</p>
+              <div className="flex gap-3 justify-center">
+                <Button
+                  onClick={() => setSelectedIndustry("All Industries")}
+                  className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl"
+                >
+                  Clear Industry Filter
+                </Button>
+                <Button
+                  onClick={() => setSelectedStage("All Stages")}
+                  className="px-6 py-3 bg-gray-900 text-white rounded-xl border border-gray-800"
+                >
+                  Clear Stage Filter
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* CTA Section */}
-        <div className="text-center">
-          <div className="inline-block bg-gradient-to-r from-gray-900 to-black rounded-2xl p-8 border border-gray-800 shadow-2xl">
-            <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
-              {isLoggedIn ? "Ready to Make Your First Investment?" : "Ready to Start Investing?"}
+        <div className="text-center mt-20">
+          <div className="inline-block bg-gradient-to-br from-gray-900/80 via-black/80 to-gray-900/80 backdrop-blur-sm rounded-3xl p-12 border border-gray-800 shadow-2xl max-w-4xl">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
+              {currentUser ? "Ready to Make Your First Investment?" : "Ready to Start Investing?"}
             </h2>
-            <p className="text-gray-400 mb-6 max-w-2xl mx-auto">
-              {isLoggedIn 
+            <p className="text-gray-300 mb-8 max-w-2xl mx-auto text-lg">
+              {currentUser
                 ? "Browse our curated selection of high-potential businesses and start building your investment portfolio today."
                 : "Join our community of investors and get access to exclusive investment opportunities in innovative startups."}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              {isLoggedIn ? (
+              {currentUser ? (
                 <>
-                  <Button className="px-8 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-blue-500/30">
+                  <Button className="px-10 py-4 bg-gradient-to-r from-blue-500 via-blue-600 to-cyan-600 text-white font-semibold text-lg rounded-xl hover:from-blue-600 hover:via-blue-700 hover:to-cyan-700 transition-all duration-300 transform hover:-translate-y-1 shadow-2xl hover:shadow-blue-500/40">
                     Browse All Deals
                   </Button>
-                  <Button className="px-8 py-3 bg-transparent border border-gray-700 text-white font-semibold rounded-lg hover:bg-white/10 transition-all duration-300">
+                  <Button className="px-10 py-4 bg-gray-900/50 backdrop-blur-sm border-2 border-gray-700 text-white font-semibold text-lg rounded-xl hover:bg-gray-800/80 hover:border-gray-600 transition-all duration-300">
                     View Portfolio
                   </Button>
                 </>
               ) : (
                 <>
                   <Link to="/register">
-                    <Button className="px-8 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-blue-500/30">
+                    <Button className="px-10 py-4 bg-gradient-to-r from-blue-500 via-blue-600 to-cyan-600 text-white font-semibold text-lg rounded-xl hover:from-blue-600 hover:via-blue-700 hover:to-cyan-700 transition-all duration-300 transform hover:-translate-y-1 shadow-2xl hover:shadow-blue-500/40">
                       Create Account
                     </Button>
                   </Link>
                   <Link to="/login">
-                    <Button className="px-8 py-3 bg-transparent border border-gray-700 text-white font-semibold rounded-lg hover:bg-white/10 transition-all duration-300">
+                    <Button className="px-10 py-4 bg-gray-900/50 backdrop-blur-sm border-2 border-gray-700 text-white font-semibold text-lg rounded-xl hover:bg-gray-800/80 hover:border-gray-600 transition-all duration-300">
                       Login to Invest
                     </Button>
                   </Link>
@@ -496,188 +693,6 @@ export const FundraisePage: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {/* Investment Modal */}
-      {showInvestmentModal && selectedBusiness && isLoggedIn && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-sm animate-fadeIn overflow-y-auto">
-          <div className="relative w-full max-w-md my-4 bg-gradient-to-br from-gray-900 to-black rounded-2xl border border-gray-800 shadow-2xl overflow-hidden max-h-[90vh]">
-            {/* Header with Close Button */}
-            <div className="sticky top-0 z-20 flex items-center justify-between p-4 bg-gradient-to-r from-gray-900 to-black border-b border-gray-800">
-              <div className="flex items-center">
-                <div className="w-3 h-3 bg-blue-500 rounded-full mr-3 animate-pulse" />
-                <h3 className="text-lg font-bold text-white">
-                  Invest in {selectedBusiness.name}
-                </h3>
-              </div>
-              
-              {/* Close Button */}
-              <button
-                onClick={handleCloseModal}
-                className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white transition-all duration-200"
-                aria-label="Close"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            
-            {/* Scrollable Content */}
-            <div className="overflow-y-auto max-h-[calc(90vh-60px)]">
-              <div className="p-4 sm:p-6">
-                {/* Business Info */}
-                <div className="mb-6">
-                  <p className="text-gray-400 text-sm mb-4">
-                    {selectedBusiness.description}
-                  </p>
-                  
-                  {/* Key Metrics */}
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div className="p-3 bg-gray-900/50 rounded-lg border border-gray-800">
-                      <div className="text-xs text-gray-400 mb-1">Valuation</div>
-                      <div className="text-lg font-bold text-white">
-                        ${(selectedBusiness.valuation/1000000).toFixed(1)}M
-                      </div>
-                    </div>
-                    <div className="p-3 bg-gray-900/50 rounded-lg border border-gray-800">
-                      <div className="text-xs text-gray-400 mb-1">Equity Offered</div>
-                      <div className="text-lg font-bold text-orange-400">
-                        {selectedBusiness.equityOffered}%
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Progress Info */}
-                  <div className="p-4 bg-gray-900/50 rounded-lg border border-gray-800">
-                    <div className="flex justify-between text-sm mb-2">
-                      <span className="text-blue-400 font-semibold">
-                        ${(selectedBusiness.fundsRaised/1000000).toFixed(1)}M raised
-                      </span>
-                      <span className="text-gray-400">
-                        of ${(selectedBusiness.fundingGoal/1000000).toFixed(1)}M goal
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-800 rounded-full h-2">
-                      <div 
-                        className="bg-gradient-to-r from-blue-500 to-cyan-400 h-2 rounded-full"
-                        style={{ width: `${Math.min((selectedBusiness.fundsRaised / selectedBusiness.fundingGoal) * 100, 100)}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Investment Amount Selection */}
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-300 mb-3">
-                    Investment Amount
-                  </label>
-                  <div className="grid grid-cols-3 gap-2 mb-4">
-                    {[10000, 25000, 50000, 100000, 250000, 500000].map((amount) => (
-                      <button
-                        key={amount}
-                        type="button"
-                        onClick={() => handleAmountChange(amount)}
-                        className={`py-3 rounded-lg font-semibold transition-all text-sm sm:text-base ${
-                          investmentData.investmentAmount === amount
-                            ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg'
-                            : 'bg-white/5 text-gray-300 hover:bg-white/10'
-                        }`}
-                      >
-                        ${(amount/1000).toFixed(0)}K
-                      </button>
-                    ))}
-                  </div>
-                  
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">$</span>
-                    <input
-                      type="number"
-                      min="1000"
-                      step="1000"
-                      value={investmentData.investmentAmount || ""}
-                      onChange={(e) => handleAmountChange(parseInt(e.target.value) || 0)}
-                      className="w-full pl-8 pr-4 py-3 bg-gray-900/50 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500 transition-colors"
-                      placeholder="Enter custom amount (min $1,000)"
-                    />
-                  </div>
-                </div>
-
-                {/* Investment Summary */}
-                {investmentData.investmentAmount > 0 && (
-                  <div className="mb-6 p-4 bg-gradient-to-r from-blue-900/20 to-cyan-900/20 rounded-lg border border-blue-800/30">
-                    <h4 className="text-sm font-semibold text-white mb-3">Investment Summary</h4>
-                    <div className="space-y-3">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Investment Amount:</span>
-                        <span className="text-white font-semibold">
-                          ${investmentData.investmentAmount.toLocaleString()}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Equity Acquired:</span>
-                        <span className="text-orange-400 font-semibold">
-                          {investmentData.equityPercentage.toFixed(2)}%
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Estimated 5-Year Return:</span>
-                        <span className="text-green-400 font-semibold">
-                          ${investmentData.estimatedReturn.toLocaleString()}
-                        </span>
-                      </div>
-                      <div className="pt-3 border-t border-blue-800/30">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-300">Potential ROI:</span>
-                          <span className="text-green-400 font-bold">
-                            {((investmentData.estimatedReturn / investmentData.investmentAmount) * 100).toFixed(1)}%
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Terms Agreement */}
-                <div className="mb-6">
-                  <label className="flex items-start space-x-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      className="mt-1 w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-600 focus:ring-2"
-                      required
-                    />
-                    <span className="text-sm text-gray-300">
-                      I agree to the investment terms and understand that this is a high-risk investment. 
-                      I have read and accept the risk disclosure statement.
-                    </span>
-                  </label>
-                </div>
-
-                {/* Submit Button */}
-                <Button
-                  onClick={handleInvestmentSubmit}
-                  className="w-full py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all duration-300 transform hover:-translate-y-0.5 shadow-lg hover:shadow-green-500/30"
-                  disabled={investmentData.investmentAmount < 1000}
-                >
-                  💼 Submit Investment
-                </Button>
-                
-                {/* Disclaimer */}
-                <div className="mt-4 p-3 bg-gray-900/30 rounded-lg border border-gray-800">
-                  <div className="flex items-start gap-2 text-xs text-gray-500">
-                    <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>
-                      Investments involve risks, including loss of principal. Past performance does not guarantee future results. 
-                      Please consult with a financial advisor before making any investment decisions.
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
