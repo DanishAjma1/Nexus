@@ -56,8 +56,8 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
 
   const handleSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    if (!user) return;
-    updateProfile(user.userId, userDetails);
+    // Use currentUser.userId for all roles including admin
+    updateProfile(currentUser?.userId, userDetails);
   };
 
   return (
