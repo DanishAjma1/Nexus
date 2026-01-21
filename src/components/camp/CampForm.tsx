@@ -30,6 +30,8 @@ const CampForm: React.FC<CampFormProps> = ({ onSuccess, initialData }) => {
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [imageUrlInput, setImageUrlInput] = useState("");
+  const [isUrlModalOpen, setIsUrlModalOpen] = useState(false);
 
   useEffect(() => {
     if (initialData) {
@@ -138,6 +140,26 @@ const CampForm: React.FC<CampFormProps> = ({ onSuccess, initialData }) => {
     if (fileInputRef.current) {
       fileInputRef.current.value = ""; // reset file input
     }
+  };
+
+  const handleUrlUpload = () => {
+    if (!imageUrlInput.trim()) {
+      toast.error("Please enter a valid image URL");
+      return;
+    }
+
+    const totalImages = existingImages.length + images.length;
+    if (totalImages >= 3) {
+      toast.error("You can only have up to 3 images");
+      return;
+    }
+
+    // Add URL to existing images (will be sent as existingImages in form data)
+    setExistingImages(prev => [...prev, imageUrlInput]);
+    setPreviewUrls(prev => [...prev, imageUrlInput]);
+    toast.success("Image URL added successfully");
+    setImageUrlInput("");
+    setIsUrlModalOpen(false);
   };
 
   const validateForm = () => {
@@ -398,9 +420,20 @@ const CampForm: React.FC<CampFormProps> = ({ onSuccess, initialData }) => {
 
         {/* Images Section */}
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Images ({existingImages.length + images.length}/3) <span className="text-xs text-gray-400 font-normal">Min 1 required</span>
-          </label>
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-sm font-semibold text-gray-700">
+              Images ({existingImages.length + images.length}/3) <span className="text-xs text-gray-400 font-normal">Min 1 required</span>
+            </label>
+            {(existingImages.length + images.length) < 3 && (
+              <button
+                type="button"
+                onClick={() => setIsUrlModalOpen(true)}
+                className="text-xs px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors font-medium"
+              >
+                + Add URL
+              </button>
+            )}
+          </div>
           <div className="grid grid-cols-3 gap-3">
             {previewUrls.map((url, i) => (
               <div key={i} className="relative group aspect-square rounded-xl overflow-hidden border border-gray-200 shadow-sm bg-white">
@@ -499,6 +532,93 @@ const CampForm: React.FC<CampFormProps> = ({ onSuccess, initialData }) => {
           </button>
         </div>
       </div>
+
+      {/* URL Upload Modal */}
+      {isUrlModalOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setIsUrlModalOpen(false);
+              setImageUrlInput("");
+            }
+          }}
+        >
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-gray-900">
+                  Add Image URL
+                </h3>
+                <button
+                  onClick={() => {
+                    setIsUrlModalOpen(false);
+                    setImageUrlInput("");
+                  }}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Image URL
+                  </label>
+                  <input
+                    type="url"
+                    value={imageUrlInput}
+                    onChange={(e) => setImageUrlInput(e.target.value)}
+                    placeholder="https://example.com/image.jpg"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Enter a direct link to an image
+                  </p>
+                </div>
+
+                {imageUrlInput && (
+                  <div className="mt-4">
+                    <p className="text-sm font-medium text-gray-700 mb-2">Preview:</p>
+                    <div className="aspect-video rounded-lg overflow-hidden border border-gray-200">
+                      <img
+                        src={imageUrlInput}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect fill='%23f3f4f6' width='100' height='100'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='14' fill='%239ca3af' text-anchor='middle' dy='.3em'%3EInvalid URL%3C/text%3E%3C/svg%3E";
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsUrlModalOpen(false);
+                      setImageUrlInput("");
+                    }}
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleUrlUpload}
+                    disabled={!imageUrlInput.trim()}
+                    className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Add Image
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </form>
   );
 };

@@ -3,13 +3,17 @@ import axios from "axios";
 import { Card, CardBody, CardHeader } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { toast } from "react-hot-toast";
-import { CheckCircle, Clock } from "lucide-react";
+import { CheckCircle, Clock, X } from "lucide-react";
 
 const URL = import.meta.env.VITE_BACKEND_URL;
 
 export const AdminDealPayments: React.FC = () => {
     const [transactions, setTransactions] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; transactionId: string | null }>({
+        isOpen: false,
+        transactionId: null,
+    });
 
     useEffect(() => {
         fetchTransactions();
@@ -29,14 +33,20 @@ export const AdminDealPayments: React.FC = () => {
     };
 
     const handleReleaseFunds = async (transactionId: string) => {
-        if (!window.confirm("Are you sure you want to release these funds to the entrepreneur?")) return;
+        setConfirmModal({ isOpen: true, transactionId });
+    };
+
+    const confirmReleaseFunds = async () => {
+        if (!confirmModal.transactionId) return;
 
         try {
-            await axios.post(`${URL}/payment/admin/release-funds`, { transactionId });
+            await axios.post(`${URL}/payment/admin/release-funds`, { transactionId: confirmModal.transactionId });
             toast.success("Funds released successfully!");
+            setConfirmModal({ isOpen: false, transactionId: null });
             fetchTransactions();
         } catch (error: any) {
             toast.error(error.response?.data?.message || "Failed to release funds");
+            setConfirmModal({ isOpen: false, transactionId: null });
         }
     };
 
@@ -95,6 +105,46 @@ export const AdminDealPayments: React.FC = () => {
                             </CardBody>
                         </Card>
                     ))}
+                </div>
+            )}
+
+            {/* Confirmation Modal */}
+            {confirmModal.isOpen && (
+                <div 
+                    className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex justify-center items-center z-50"
+                    onClick={() => setConfirmModal({ isOpen: false, transactionId: null })}
+                >
+                    <div 
+                        className="bg-white rounded-lg shadow-2xl p-6 max-w-md w-full mx-4"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="flex justify-between items-start mb-4">
+                            <h3 className="text-lg font-bold text-gray-900">Confirm Fund Release</h3>
+                            <button
+                                onClick={() => setConfirmModal({ isOpen: false, transactionId: null })}
+                                className="text-gray-400 hover:text-gray-600"
+                            >
+                                <X size={24} />
+                            </button>
+                        </div>
+                        <p className="text-gray-600 mb-6">
+                            Are you sure you want to release these funds to the entrepreneur? This action cannot be undone.
+                        </p>
+                        <div className="flex gap-3 justify-end">
+                            <Button
+                                variant="outline"
+                                onClick={() => setConfirmModal({ isOpen: false, transactionId: null })}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                onClick={confirmReleaseFunds}
+                                className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                            >
+                                Confirm Release
+                            </Button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

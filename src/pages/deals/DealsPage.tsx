@@ -9,7 +9,9 @@ import { NegotiationModal } from "../../components/NegotiationModal";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import { DealPaymentModal } from "../../components/DealPaymentModal";
+import { DealReceipt } from "../../components/DealReceipt";
 import { useNavigate } from "react-router-dom";
+import { FileText } from "lucide-react";
 
 // Initialize Stripe outside component to avoid recreation
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
@@ -26,6 +28,8 @@ export const DealsPage: React.FC = () => {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isNegotiationModalOpen, setIsNegotiationModalOpen] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isAdditionalInvestmentModal, setIsAdditionalInvestmentModal] = useState(false);
+  const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
 
   useEffect(() => {
     fetchDeals();
@@ -158,20 +162,6 @@ export const DealsPage: React.FC = () => {
                     </Button>
                   )}
 
-                  {deal.negotiationHistory &&
-                    deal.negotiationHistory.length > 0 &&
-                    deal.lastActionBy === "entrepreneur" &&
-                    deal.status === "negotiating" && (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        className="w-full bg-blue-50 text-blue-600 hover:bg-blue-100"
-                        onClick={() => openNegotiationModal(deal)}
-                      >
-                        Review Counter Offer
-                      </Button>
-                    )}
-
                   {deal.status === 'accepted' && deal.paymentStatus !== 'paid' && deal.paymentStatus !== 'funds_released' && (
                     <Button
                       variant="primary"
@@ -187,9 +177,38 @@ export const DealsPage: React.FC = () => {
                   )}
 
                   {(deal.paymentStatus === 'paid' || deal.paymentStatus === 'funds_released') && (
-                    <div className="w-full text-center py-2 bg-green-50 text-green-700 font-medium rounded text-sm mt-2 border border-green-200">
-                      Payment {deal.paymentStatus === 'funds_released' ? 'Released' : 'Pending Approval'}
-                    </div>
+                    <>
+                      <div className="w-full text-center py-2 bg-green-50 text-green-700 font-medium rounded text-sm mt-2 border border-green-200">
+                        {deal.paymentStatus === 'funds_released' 
+                          ? '✓ Payment Released - Funds Received by Entrepreneur' 
+                          : 'Payment Received - Pending Admin Approval'}
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full border-indigo-600 text-indigo-600 hover:bg-indigo-50 mt-2 flex items-center justify-center gap-2"
+                        onClick={() => {
+                          setSelectedDeal(deal);
+                          setIsReceiptModalOpen(true);
+                        }}
+                      >
+                        <FileText size={16} />
+                        View Receipt
+                      </Button>
+                      {deal.paymentStatus === 'funds_released' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full border-blue-600 text-blue-600 hover:bg-blue-50 mt-2"
+                          onClick={() => {
+                            setSelectedDeal(deal);
+                            setIsAdditionalInvestmentModal(true);
+                          }}
+                        >
+                          Invest More
+                        </Button>
+                      )}
+                    </>
                   )}
                 </div>
               </CardBody>
@@ -200,14 +219,18 @@ export const DealsPage: React.FC = () => {
 
       {/* View Modal (Read Only) */}
       {isViewModalOpen && selectedDeal && (
-        <DealForm
-          entrepreneur={selectedDeal.entrepreneurId}
-          investor={selectedDeal.investorId}
-          valuation={selectedDeal.preMoneyValuation}
-          onClose={() => setIsViewModalOpen(false)}
-          readOnly={true}
-          initialData={selectedDeal}
-        />
+        <div className="fixed inset-0 z-[9999] bg-black/20 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-3xl">
+            <DealForm
+              entrepreneur={selectedDeal.entrepreneurId}
+              investor={selectedDeal.investorId}
+              valuation={selectedDeal.preMoneyValuation}
+              onClose={() => setIsViewModalOpen(false)}
+              readOnly={true}
+              initialData={selectedDeal}
+            />
+          </div>
+        </div>
       )}
 
       {/* Negotiation Modal */}
@@ -232,6 +255,26 @@ export const DealsPage: React.FC = () => {
             }}
           />
         </Elements>
+      )}
+
+      {isAdditionalInvestmentModal && selectedDeal && (
+        <Elements stripe={stripePromise}>
+          <DealPaymentModal
+            deal={{ ...selectedDeal, investmentAmount: 0 }}
+            onClose={() => setIsAdditionalInvestmentModal(false)}
+            onSuccess={() => {
+              fetchDeals();
+            }}
+            isAdditionalInvestment={true}
+          />
+        </Elements>
+      )}
+
+      {isReceiptModalOpen && selectedDeal && (
+        <DealReceipt
+          dealId={selectedDeal._id}
+          onClose={() => setIsReceiptModalOpen(false)}
+        />
       )}
     </div>
   );

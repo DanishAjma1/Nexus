@@ -65,6 +65,9 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
   const [isSavingBio, setIsSavingBio] = useState(false);
   const [isUploadingThumbnails, setIsUploadingThumbnails] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [imageUrlInput, setImageUrlInput] = useState("");
+  const [isUrlModalOpen, setIsUrlModalOpen] = useState(false);
+  const [isUploadingUrl, setIsUploadingUrl] = useState(false);
 
   const [isSuspendModalOpen, setIsSuspendModalOpen] = useState(false);
   const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
@@ -281,6 +284,35 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
     } catch (error) {
       console.error("Delete failed", error);
       toast.error("Failed to delete thumbnail");
+    }
+  };
+
+  const handleUrlUpload = async () => {
+    if (!imageUrlInput.trim()) {
+      toast.error("Please enter a valid image URL");
+      return;
+    }
+
+    const currentCount = entrepreneur?.businessThumbnails?.length || 0;
+    if (currentCount >= 3) {
+      toast.error("You can only have up to 3 thumbnails");
+      return;
+    }
+
+    try {
+      setIsUploadingUrl(true);
+      const res = await axios.post(`${URL}/entrepreneur/upload-thumbnail-url/${entrepreneur?.userId}`, {
+        imageUrl: imageUrlInput
+      });
+      setEnterpreneur(prev => prev ? { ...prev, businessThumbnails: res.data.businessThumbnails } : undefined);
+      toast.success("Image added successfully");
+      setImageUrlInput("");
+      setIsUrlModalOpen(false);
+    } catch (error: any) {
+      console.error("Upload failed", error);
+      toast.error(error.response?.data?.message || "Failed to add image");
+    } finally {
+      setIsUploadingUrl(false);
     }
   };
 
@@ -597,8 +629,8 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
             </CardBody>
           </Card>
 
-          {/* Business Showcase - Only visible to Owner or Admin */}
-          {(isCurrentUser || currentUser?.role === "admin") && (
+          {/* Business Showcase - Visible to Owner, Admin, and Investors */}
+          {(isCurrentUser || currentUser?.role === "admin" || currentUser?.role === "investor") && (
             <Card>
               <CardHeader className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
@@ -608,18 +640,30 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
                   </h2>
                 </div>
                 {isCurrentUser && (entrepreneur?.businessThumbnails?.length || 0) < 3 && (
-                  <div className="relative">
-                    <input
-                      type="file"
-                      multiple
-                      accept="image/*"
-                      className="absolute inset-0 opacity-0 cursor-pointer"
-                      onChange={handleThumbnailUpload}
+                  <div className="flex items-center gap-2">
+                    <div className="relative">
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        className="absolute inset-0 opacity-0 cursor-pointer"
+                        onChange={handleThumbnailUpload}
+                        disabled={isUploadingThumbnails}
+                      />
+                      <Button variant="outline" size="sm" className="flex items-center gap-1" disabled={isUploadingThumbnails}>
+                        {isUploadingThumbnails ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
+                        Upload File
+                      </Button>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex items-center gap-1" 
+                      onClick={() => setIsUrlModalOpen(true)}
                       disabled={isUploadingThumbnails}
-                    />
-                    <Button variant="outline" size="sm" className="flex items-center gap-1" disabled={isUploadingThumbnails}>
-                      {isUploadingThumbnails ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
-                      Upload
+                    >
+                      <Plus size={16} />
+                      Add URL
                     </Button>
                   </div>
                 )}
@@ -968,6 +1012,94 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
           fileUrl={previewDoc.url}
           fileName={previewDoc.name}
         />
+      )}
+
+      {/* URL Upload Modal */}
+      {isUrlModalOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setIsUrlModalOpen(false);
+              setImageUrlInput("");
+            }
+          }}
+        >
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-gray-900">
+                  Add Image URL
+                </h3>
+                <button
+                  onClick={() => {
+                    setIsUrlModalOpen(false);
+                    setImageUrlInput("");
+                  }}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Image URL
+                  </label>
+                  <input
+                    type="url"
+                    value={imageUrlInput}
+                    onChange={(e) => setImageUrlInput(e.target.value)}
+                    placeholder="https://example.com/image.jpg"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Enter a direct link to an image
+                  </p>
+                </div>
+
+                {imageUrlInput && (
+                  <div className="mt-4">
+                    <p className="text-sm font-medium text-gray-700 mb-2">Preview:</p>
+                    <div className="aspect-video rounded-lg overflow-hidden border border-gray-200">
+                      <img
+                        src={imageUrlInput}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect fill='%23f3f4f6' width='100' height='100'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='14' fill='%239ca3af' text-anchor='middle' dy='.3em'%3EInvalid URL%3C/text%3E%3C/svg%3E";
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex gap-3 pt-4">
+                  <Button
+                    variant="outline"
+                    fullWidth
+                    onClick={() => {
+                      setIsUrlModalOpen(false);
+                      setImageUrlInput("");
+                    }}
+                    disabled={isUploadingUrl}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="primary"
+                    fullWidth
+                    onClick={handleUrlUpload}
+                    disabled={isUploadingUrl || !imageUrlInput.trim()}
+                  >
+                    {isUploadingUrl ? "Adding..." : "Add Image"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
