@@ -10,18 +10,20 @@ interface DealPaymentModalProps {
     deal: any;
     onClose: () => void;
     onSuccess: () => void;
+    isAdditionalInvestment?: boolean;
 }
 
 export const DealPaymentModal: React.FC<DealPaymentModalProps> = ({
     deal,
     onClose,
     onSuccess,
+    isAdditionalInvestment = false,
 }) => {
     const stripe = useStripe();
     const elements = useElements();
     const { user } = useAuth();
     const [isProcessing, setIsProcessing] = useState(false);
-    const [amount, setAmount] = useState<number>(deal.investmentAmount || 0);
+    const [amount, setAmount] = useState<number | ''>(isAdditionalInvestment ? '' : (deal.investmentAmount || 0));
 
     const URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -32,8 +34,13 @@ export const DealPaymentModal: React.FC<DealPaymentModalProps> = ({
             return;
         }
 
-        if (amount < deal.investmentAmount) {
+        if (!isAdditionalInvestment && amount < deal.investmentAmount) {
             toast.error(`Amount cannot be less than the agreed investment of $${deal.investmentAmount}`);
+            return;
+        }
+
+        if (isAdditionalInvestment && amount <= 0) {
+            toast.error('Please enter a valid amount');
             return;
         }
 
@@ -47,8 +54,12 @@ export const DealPaymentModal: React.FC<DealPaymentModalProps> = ({
 
         try {
             // 1. Create Payment Intent
+            const endpoint = isAdditionalInvestment 
+                ? `${URL}/payment/create-additional-investment-intent`
+                : `${URL}/payment/create-deal-payment-intent`;
+            
             const { data: { clientSecret } } = await axios.post(
-                `${URL}/payment/create-deal-payment-intent`,
+                endpoint,
                 { dealId: deal._id, amount },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -75,13 +86,19 @@ export const DealPaymentModal: React.FC<DealPaymentModalProps> = ({
 
             if (paymentIntent.status === 'succeeded') {
                 // 3. Confirm on Backend
+                const confirmEndpoint = isAdditionalInvestment
+                    ? `${URL}/payment/confirm-additional-investment`
+                    : `${URL}/payment/confirm-deal-payment`;
+                
                 await axios.post(
-                    `${URL}/payment/confirm-deal-payment`,
+                    confirmEndpoint,
                     { paymentIntentId: paymentIntent.id, dealId: deal._id },
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
 
-                toast.success('Investment payment successful! Waiting for admin approval.');
+                toast.success(isAdditionalInvestment 
+                    ? 'Additional investment successful! Waiting for admin approval.' 
+                    : 'Investment payment successful! Waiting for admin approval.');
                 onSuccess();
                 onClose();
             }
@@ -97,7 +114,9 @@ export const DealPaymentModal: React.FC<DealPaymentModalProps> = ({
         <div className="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm flex justify-center items-center z-[9999] px-4">
             <div className="bg-white rounded-xl w-full max-w-md relative shadow-2xl">
                 <div className="flex justify-between items-center p-6 border-b">
-                    <h2 className="text-xl font-bold text-gray-900">Secure Payment</h2>
+                    <h2 className="text-xl font-bold text-gray-900">
+                        {isAdditionalInvestment ? 'Additional Investment' : 'Secure Payment'}
+                    </h2>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
                         <X size={24} />
                     </button>
@@ -111,18 +130,29 @@ export const DealPaymentModal: React.FC<DealPaymentModalProps> = ({
                         <input
                             type="number"
                             value={amount}
-                            onChange={(e) => setAmount(Number(e.target.value))}
-                            min={deal.investmentAmount}
+                            onChange={(e) => setAmount(e.target.value === '' ? '' : Number(e.target.value))}
+                            min={isAdditionalInvestment ? 1 : deal.investmentAmount}
+                            placeholder={isAdditionalInvestment ? "Enter amount" : ""}
                             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                             required
                         />
-                        <p className="text-xs text-gray-500 mt-1">
-                            Minimum allowed: ${deal.investmentAmount?.toLocaleString()}
-                        </p>
+                        {!isAdditionalInvestment && (
+                            <p className="text-xs text-gray-500 mt-1">
+                                Minimum allowed: ${deal.investmentAmount?.toLocaleString()}
+                            </p>
+                        )}
+                        {amount > 0 && (
+                            <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-center">
+                                <div className="text-xs text-gray-600 font-medium">After 5% Commission</div>
+                                <div className="text-sm font-bold text-green-700">
+                                    ${(Number(amount) * 0.95).toFixed(2)}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Test Mode Helper */}
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
+                    {/* <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
                         <p className="font-semibold mb-1">Test Mode Enabled</p>
                         <p>Use this test card to simulate a successful payment:</p>
                         <div className="flex items-center gap-2 mt-2 font-mono bg-white px-2 py-1 rounded border border-blue-100 w-fit">
@@ -133,7 +163,7 @@ export const DealPaymentModal: React.FC<DealPaymentModalProps> = ({
                             <span>CVC: Any (e.g., 123)</span>
                             <span>Zip: Any (e.g., 12345)</span>
                         </div>
-                    </div>
+                    </div> */}
 
                     <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
                         <div className="mb-2 flex justify-between text-sm text-gray-600">
@@ -166,7 +196,7 @@ export const DealPaymentModal: React.FC<DealPaymentModalProps> = ({
                             disabled={!stripe || isProcessing}
                             className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition-all"
                         >
-                            {isProcessing ? 'Processing...' : `Pay $${amount.toLocaleString()}`}
+                            {isProcessing ? 'Processing...' : `Pay $${Number(amount).toLocaleString()}`}
                         </Button>
                         <p className="text-xs text-center text-gray-500">
                             Funds will be held securely until admin approval.

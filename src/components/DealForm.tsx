@@ -182,6 +182,14 @@ export const DealForm: React.FC<DealFormProps> = ({
                                 readOnly={readOnly}
                                 className={`mt-1 w-full border border-gray-300 rounded-md p-2 ${readOnly ? "bg-gray-100 cursor-not-allowed" : "focus:ring-blue-500 focus:border-blue-500"}`}
                             />
+                            {formData.investmentAmount && (
+                                <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md text-center">
+                                    <div className="text-xs text-gray-600 font-medium">After 5% Commission</div>
+                                    <div className="text-sm font-bold text-green-700">
+                                        ${(Number(formData.investmentAmount) * 0.95).toFixed(2)}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700">

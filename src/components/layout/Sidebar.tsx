@@ -36,17 +36,18 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ to, icon, text, isCollapsed }
   return (
     <NavLink
       to={to}
+      end
       className={({ isActive }) =>
-        `flex items-center ${isCollapsed ? 'justify-center py-2 px-2' : 'py-2.5 px-4'} rounded-md transition-all duration-300 ${isActive
-          ? "bg-primary-50 text-primary-700"
+        `flex items-center gap-3 ${isCollapsed ? 'justify-center py-3 px-2' : isActive ? 'py-2.5 px-4' : 'py-2.5 px-4 mx-2'} rounded-lg transition-all duration-200 ${isActive
+          ? "bg-primary-500 text-white shadow-md"
           : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-        } ${!isCollapsed ? 'hover:translate-x-1' : ''}`
+        }`
       }
       title={isCollapsed ? text : undefined}
     >
-      <span className={`${isCollapsed ? '' : 'mr-3'} transition-all duration-300 ${!isCollapsed ? 'animate-in zoom-in duration-300' : ''}`}>{icon}</span>
+      <span className="transition-all duration-200">{icon}</span>
       {!isCollapsed && (
-        <span className="text-sm font-medium animate-in fade-in slide-in-from-left-3 duration-500">
+        <span className="text-sm font-medium truncate">
           {text}
         </span>
       )}
@@ -178,11 +179,17 @@ export const Sidebar: React.FC = () => {
           ? adminItems
           : [];
 
+  // Filter common items - admin doesn't see Help & Support
+  const filteredCommonItems = user.role === "admin" 
+    ? commonItems.filter(item => item.to !== "/help")
+    : commonItems;
+
   return (
-    <div className={`${isCollapsed ? 'w-20' : 'w-64'} bg-white h-full border-r border-gray-200 hidden md:block transition-all duration-500 ease-in-out ${isCollapsed ? 'scale-x-95' : 'scale-x-100'}`}>
+    <div className={`${isCollapsed ? 'w-20' : 'w-64'} bg-white h-full border-r border-gray-100 hidden md:block transition-all duration-400 ease-out shadow-sm`}>
       <div className="h-full flex flex-col">
-        {/* Toggle Button */}
-        <div className={`p-1 border-b border-gray-200 flex ${isCollapsed ? 'justify-center' : 'justify-end'}`}>
+        {/* Header */}
+        <div className={`p-1 border-b border-gray-100 flex ${isCollapsed ? 'justify-center' : 'justify-end'} h-16`}>
+          
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
             className="p-2 rounded-md hover:bg-primary-50 hover:text-primary-600 transition-all duration-300 transform hover:scale-110 active:scale-95 hover:rotate-12"
@@ -209,14 +216,14 @@ export const Sidebar: React.FC = () => {
             ))}
           </div>
 
-          <div className="mt-8 px-3">
+          <div className="mt-8 pt-4 border-t border-gray-100">
             {!isCollapsed && (
-              <h3 className="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                Settings
+              <h3 className="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                More
               </h3>
             )}
-            <div className={`${isCollapsed ? '' : 'mt-2'} space-y-1`}>
-              {commonItems.map((item, index) => (
+            <div className={`${isCollapsed ? 'px-2' : 'px-2'} space-y-0.5`}>
+              {filteredCommonItems.map((item, index) => (
                 <SidebarItem
                   key={index}
                   to={item.to}
@@ -230,23 +237,21 @@ export const Sidebar: React.FC = () => {
         </div>
 
         {!isCollapsed && (
-          <div className="p-4 border-t border-gray-200">
-            <div className="bg-gray-50 rounded-md p-3">
-              <p className="text-xs text-gray-600">Need assistance?</p>
-              <h4 className="text-sm font-medium text-gray-900 mt-1">
-                Contact Support
-              </h4>
-              <a
-                href="https://mail.google.com/mail/?view=cm&to=aitrustbridge@gmail.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-2 inline-flex items-center text-xs font-medium text-primary-600 hover:text-primary-500"
-              >
-                aitrustbridge@gmail.com
-              </a>
-
-
-            </div>
+          <div className="p-4 border-t border-gray-100">
+            <a
+              href="https://mail.google.com/mail/?view=cm&to=aitrustbridge@gmail.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-br from-primary-50 to-blue-50 hover:from-primary-100 hover:to-blue-100 transition-all duration-200 group cursor-pointer"
+            >
+              <div className="text-2xl">💬</div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-gray-700">Need help?</p>
+                <p className="text-xs text-gray-500 group-hover:text-gray-700 transition-colors truncate">
+                  Contact support
+                </p>
+              </div>
+            </a>
           </div>
         )}
       </div>

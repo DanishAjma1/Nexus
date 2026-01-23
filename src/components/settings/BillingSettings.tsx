@@ -3,7 +3,7 @@ import { Card, CardHeader, CardBody } from "../ui/Card";
 import { Button } from "../ui/Button";
 import { Badge } from "../ui/Badge";
 import { Input } from "../ui/Input";
-import { CreditCard, Download, X, Edit } from "lucide-react";
+import { CreditCard, X, Edit } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import axios from "axios";
 import toast from "react-hot-toast";
@@ -18,12 +18,21 @@ interface PaymentMethod {
   isDefault: boolean;
 }
 
-interface Invoice {
+interface BillingHistoryItem {
   id: string;
+  campaignName: string;
+  contributedAmount: number;
   date: string;
-  amount: number;
-  status: "paid" | "pending" | "failed";
-  description: string;
+  paymentIntentId: string;
+}
+
+interface InvestmentHistoryItem {
+  id: string;
+  startupName: string;
+  investedAmount: number;
+  date: string;
+  status: string;
+  paymentIntentId: string;
 }
 
 interface CardFormData {
@@ -39,9 +48,13 @@ export const BillingSettings: React.FC = () => {
   const { user } = useAuth();
   const URL = import.meta.env.VITE_BACKEND_URL;
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
+  const [billingHistory, setBillingHistory] = useState<BillingHistoryItem[]>([]);
+  const [investmentHistory, setInvestmentHistory] = useState<InvestmentHistoryItem[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
+  const [isFetchingBilling, setIsFetchingBilling] = useState(true);
+  const [isFetchingInvestment, setIsFetchingInvestment] = useState(true);
   const [editingCardId, setEditingCardId] = useState<string | null>(null);
   const [formData, setFormData] = useState<CardFormData>({
     cardNumber: "",
@@ -51,30 +64,6 @@ export const BillingSettings: React.FC = () => {
     expiryYear: "",
     isDefault: false,
   });
-
-  const [invoices] = useState<Invoice[]>([
-    {
-      id: "INV-001",
-      date: "2025-11-01",
-      amount: 29.99,
-      status: "paid",
-      description: "Monthly Subscription - November 2025",
-    },
-    {
-      id: "INV-002",
-      date: "2025-10-01",
-      amount: 29.99,
-      status: "paid",
-      description: "Monthly Subscription - October 2025",
-    },
-    {
-      id: "INV-003",
-      date: "2025-09-01",
-      amount: 29.99,
-      status: "paid",
-      description: "Monthly Subscription - September 2025",
-    },
-  ]);
 
   // Fetch cards from backend
   useEffect(() => {
@@ -88,9 +77,9 @@ export const BillingSettings: React.FC = () => {
           },
         });
         setPaymentMethods(response.data.cards || []);
-      } catch (error: any) {
+      } catch (error) {
         console.error("Error fetching cards:", error);
-        if (error.response?.status !== 404) {
+        if (error && typeof error === 'object' && 'response' in error && (error as { response?: { status?: number } }).response?.status !== 404) {
           toast.error("Failed to fetch cards");
         }
       } finally {
@@ -100,6 +89,64 @@ export const BillingSettings: React.FC = () => {
 
     fetchCards();
   }, [URL]);
+
+  // Fetch billing history
+  useEffect(() => {
+    const fetchBillingHistory = async () => {
+      try {
+        setIsFetchingBilling(true);
+        const token = localStorage.getItem("token");
+        const response = await axios.get(`${URL}/user/billing-history`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setBillingHistory(response.data.billingHistory || []);
+      } catch (error) {
+        console.error("Error fetching billing history:", error);
+        if (error && typeof error === 'object' && 'response' in error && (error as { response?: { status?: number } }).response?.status !== 404) {
+          toast.error("Failed to fetch billing history");
+        }
+      } finally {
+        setIsFetchingBilling(false);
+      }
+    };
+
+    if (user) {
+      fetchBillingHistory();
+    }
+  }, [URL, user]);
+
+  // Fetch investment history (only for investors)
+  useEffect(() => {
+    const fetchInvestmentHistory = async () => {
+      try {
+        setIsFetchingInvestment(true);
+        const token = localStorage.getItem("token");
+        const response = await axios.get(`${URL}/user/investment-history`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setInvestmentHistory(response.data.investmentHistory || []);
+      } catch (error) {
+        console.error("Error fetching investment history:", error);
+        // Don't show error for 403 (non-investors)
+        const errStatus = error && typeof error === 'object' && 'response' in error ? (error as { response?: { status?: number } }).response?.status : undefined;
+        if (errStatus !== 403 && errStatus !== 404) {
+          toast.error("Failed to fetch investment history");
+        }
+      } finally {
+        setIsFetchingInvestment(false);
+      }
+    };
+
+    if (user && user.role === "investor") {
+      fetchInvestmentHistory();
+    } else {
+      setIsFetchingInvestment(false);
+    }
+  }, [URL, user]);
 
   const handleSetDefault = async (id: string) => {
     try {
@@ -122,9 +169,10 @@ export const BillingSettings: React.FC = () => {
         }))
       );
       toast.success("Card set as default successfully");
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error setting default card:", error);
-      toast.error(error.response?.data?.message || "Failed to set default card");
+      const errMsg = error && typeof error === 'object' && 'response' in error ? (error as { response?: { data?: { message?: string } } }).response?.data?.message : undefined;
+      toast.error(errMsg || "Failed to set default card");
     }
   };
 
@@ -149,9 +197,10 @@ export const BillingSettings: React.FC = () => {
       });
       setEditingCardId(id);
       setIsModalOpen(true);
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error fetching card for edit:", error);
-      toast.error(error.response?.data?.message || "Failed to load card details");
+      const errMsg = error && typeof error === 'object' && 'response' in error ? (error as { response?: { data?: { message?: string } } }).response?.data?.message : undefined;
+      toast.error(errMsg || "Failed to load card details");
     } finally {
       setIsLoading(false);
     }
@@ -172,9 +221,10 @@ export const BillingSettings: React.FC = () => {
       
       setPaymentMethods((prev) => prev.filter((method) => method.id !== id));
       toast.success("Card removed successfully");
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error removing card:", error);
-      toast.error(error.response?.data?.message || "Failed to remove card");
+      const errMsg = error && typeof error === 'object' && 'response' in error ? (error as { response?: { data?: { message?: string } } }).response?.data?.message : undefined;
+      toast.error(errMsg || "Failed to remove card");
     }
   };
 
@@ -274,9 +324,10 @@ export const BillingSettings: React.FC = () => {
       });
       setEditingCardId(null);
       setIsModalOpen(false);
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error saving card:", error);
-      toast.error(error.response?.data?.message || `Failed to ${editingCardId ? "update" : "add"} card`);
+      const errMsg = error && typeof error === 'object' && 'response' in error ? (error as { response?: { data?: { message?: string } } }).response?.data?.message : undefined;
+      toast.error(errMsg || `Failed to ${editingCardId ? "update" : "add"} card`);
     } finally {
       setIsLoading(false);
     }
@@ -314,10 +365,6 @@ export const BillingSettings: React.FC = () => {
       expiryYear: "",
       isDefault: false,
     });
-  };
-
-  const handleDownloadInvoice = (invoiceId: string) => {
-    console.log("Downloading invoice:", invoiceId);
   };
 
   return (
@@ -539,41 +586,140 @@ export const BillingSettings: React.FC = () => {
       <Card>
         <CardHeader>
           <h2 className="text-lg font-medium text-gray-900">Billing History</h2>
+          <p className="text-sm text-gray-600 mt-1">
+            {user?.role === "investor" 
+              ? "All your campaign contributions and investments"
+              : "All your campaign contributions"
+            }
+          </p>
         </CardHeader>
         <CardBody>
-          <div className="space-y-3">
-            {invoices.map((invoice) => (
-              <div
-                key={invoice.id}
-                className="flex items-center justify-between p-4 border border-gray-200 rounded-lg"
-              >
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-medium text-gray-900">
-                      {invoice.id}
-                    </h3>
-                    <Badge
-                      variant={
-                        invoice.status === "paid"
-                          ? "success"
-                          : invoice.status === "pending"
-                          ? "warning"
-                          : "error"
-                      }
-                    >
-                      {invoice.status}
-                    </Badge>
+          {isFetchingBilling ? (
+            <div className="text-center py-8 text-gray-500">Loading billing history...</div>
+          ) : billingHistory.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">No billing history yet</div>
+          ) : (
+            <>
+              <div className="space-y-3">
+                {billingHistory.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between p-4 border border-gray-200 rounded-lg"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-sm font-medium text-gray-900">
+                          {item.campaignName}
+                        </h3>
+                        <Badge variant="success">Paid</Badge>
+                      </div>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Campaign Contribution
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {new Date(item.date).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-semibold text-gray-900">
+                        ${item.contributedAmount.toFixed(2)}
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-sm text-gray-600">{invoice.description}</p>
-                  <p className="text-xs text-gray-500 mt-1">{invoice.date}</p>
+                ))}
+              </div>
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <div className="flex items-center justify-between">
+                  <p className="text-base font-semibold text-gray-900">
+                    Total Campaign Contributions:
+                  </p>
+                  <p className="text-xl font-bold text-primary-600">
+                    $
+                    {billingHistory
+                      .reduce((sum, item) => sum + item.contributedAmount, 0)
+                      .toFixed(2)}
+                  </p>
                 </div>
               </div>
-            ))}
-          </div>
+            </>
+          )}
         </CardBody>
       </Card>
 
-      <Card>
+      {/* Investment History - Only for Investors */}
+      {user?.role === "investor" && (
+        <Card>
+          <CardHeader>
+            <h2 className="text-lg font-medium text-gray-900">Investment History</h2>
+            <p className="text-sm text-gray-600 mt-1">
+              All your startup investments via deals
+            </p>
+          </CardHeader>
+          <CardBody>
+            {isFetchingInvestment ? (
+              <div className="text-center py-8 text-gray-500">Loading investment history...</div>
+            ) : investmentHistory.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">No investment history yet</div>
+            ) : (
+              <>
+                <div className="space-y-3">
+                  {investmentHistory.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex items-center justify-between p-4 border border-gray-200 rounded-lg"
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-sm font-medium text-gray-900">
+                            {item.startupName}
+                          </h3>
+                          <Badge variant={item.status === "released" ? "success" : "primary"}>
+                            {item.status === "released" ? "Released" : "Paid"}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-gray-600 mt-1">
+                          Startup Investment
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {new Date(item.date).toLocaleDateString("en-US", {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          })}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-lg font-semibold text-gray-900">
+                          ${item.investedAmount.toFixed(2)}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <p className="text-base font-semibold text-gray-900">
+                      Total Startup Investments:
+                    </p>
+                    <p className="text-xl font-bold text-primary-600">
+                      $
+                      {investmentHistory
+                        .reduce((sum, item) => sum + item.investedAmount, 0)
+                        .toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
+          </CardBody>
+        </Card>
+      )}
+
+      {/* <Card>
         <CardHeader>
           <h2 className="text-lg font-medium text-gray-900">
             Billing Information
@@ -628,7 +774,7 @@ export const BillingSettings: React.FC = () => {
             </div>
           </div>
         </CardBody>
-      </Card>
+      </Card> */}
     </div>
   );
 };

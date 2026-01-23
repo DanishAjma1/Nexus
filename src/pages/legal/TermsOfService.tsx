@@ -79,7 +79,13 @@ export const TermsOfService: React.FC = () => {
             number: "3",
             title: "Platform Fees and Payments",
             icon: <Building size={20} />,
-            content: "TrustBridge AI may charge fees for certain services, including but not limited to, successful fundraising campaigns. All fees are clearly disclosed prior to use. Payments are processed through secure third-party providers."
+            content: "TrustBridge AI may charge fees for certain services, including but not limited to, successful fundraising campaigns. All fees are clearly disclosed prior to use. Payments are processed through secure third-party providers.",
+            bullets: [
+                "Platform Commission: A 5% commission is deducted from all successful deal investments and fundraising amounts paid by investors.",
+                "Net Amount to Recipient: Entrepreneurs receive 95% of the investment amount after the 5% platform commission is deducted.",
+                "Commission Timing: The commission is deducted at the time funds are released and transferred to the recipient's account.",
+                "Transparency: All commission rates and charges are clearly displayed before payment confirmation."
+            ]
         },
         {
             id: "ip",

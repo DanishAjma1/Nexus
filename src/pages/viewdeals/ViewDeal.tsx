@@ -6,7 +6,9 @@ import { toast } from "react-hot-toast";
 import { useAuth } from "../../context/AuthContext";
 import { DealForm } from "../../components/DealForm";
 import { NegotiationModal } from "../../components/NegotiationModal";
+import { DealReceipt } from "../../components/DealReceipt";
 import { useNavigate } from "react-router-dom";
+import { FileText } from "lucide-react";
 
 const URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -19,6 +21,7 @@ export const ViewDeals: React.FC = () => {
   const [selectedDeal, setSelectedDeal] = useState<any>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isNegotiationModalOpen, setIsNegotiationModalOpen] = useState(false);
+  const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
 
   useEffect(() => {
     fetchDeals();
@@ -168,6 +171,21 @@ export const ViewDeals: React.FC = () => {
                       Chat with Investor
                     </Button>
                   )}
+
+                  {(deal.paymentStatus === 'paid' || deal.paymentStatus === 'funds_released') && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="border-indigo-600 text-indigo-600 hover:bg-indigo-50 flex items-center gap-2"
+                      onClick={() => {
+                        setSelectedDeal(deal);
+                        setIsReceiptModalOpen(true);
+                      }}
+                    >
+                      <FileText size={16} />
+                      View Receipt
+                    </Button>
+                  )}
                 </div>
               </CardBody>
             </Card>
@@ -177,14 +195,18 @@ export const ViewDeals: React.FC = () => {
 
       {/* View Modal (Read Only) */}
       {isViewModalOpen && selectedDeal && (
-        <DealForm
-          entrepreneur={selectedDeal.entrepreneurId}
-          investor={selectedDeal.investorId}
-          valuation={selectedDeal.preMoneyValuation}
-          onClose={() => setIsViewModalOpen(false)}
-          readOnly={true}
-          initialData={selectedDeal}
-        />
+        <div className="fixed inset-0 z-[9999] bg-black/20 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-3xl">
+            <DealForm
+              entrepreneur={selectedDeal.entrepreneurId}
+              investor={selectedDeal.investorId}
+              valuation={selectedDeal.preMoneyValuation}
+              onClose={() => setIsViewModalOpen(false)}
+              readOnly={true}
+              initialData={selectedDeal}
+            />
+          </div>
+        </div>
       )}
 
       {/* Negotiation Modal */}
@@ -196,6 +218,13 @@ export const ViewDeals: React.FC = () => {
             fetchDeals();
           }}
           role="entrepreneur"
+        />
+      )}
+
+      {isReceiptModalOpen && selectedDeal && (
+        <DealReceipt
+          dealId={selectedDeal._id}
+          onClose={() => setIsReceiptModalOpen(false)}
         />
       )}
     </div>

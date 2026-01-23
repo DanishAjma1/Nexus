@@ -145,7 +145,7 @@ export const EntrepreneurSettings: React.FC = () => {
   return (
     <div className="p-4">
       <CardHeader className="font-medium">
-        Fill the Details as an Entrepreneur...
+        Update Profile...
       </CardHeader>
       <form className="flex flex-col items-center" onSubmit={handleUserSubmit}>
         <div className="flex flex-row w-full gap-10 my-10">

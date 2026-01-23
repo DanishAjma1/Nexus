@@ -70,6 +70,7 @@ import { DashboardCampaigns } from "./pages/dashCamp/DashboardCampaigns";
 import { DashboardCampaignDetail } from "./pages/dashCamp/DashboardCampaignDetail";
 import { AdminDealsPage } from "./pages/admin/AdminDealsPage";
 import { AdminDealPayments } from "./pages/admin/AdminDealPayments";
+import { PWAInstallPrompt } from "./components/pwa/PWAInstallPrompt";
 
 function App() {
   return (
@@ -197,6 +198,7 @@ function App() {
               />
             </Routes>
           </Router>
+          <PWAInstallPrompt />
           <Toaster position="top-right" reverseOrder={false} />
         </NotificationProvider>
       </SocketProvider>
