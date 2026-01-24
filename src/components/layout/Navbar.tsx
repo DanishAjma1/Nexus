@@ -15,6 +15,7 @@ import {
   ClipboardCheck,
   Ban,
   ChevronDown,
+  Home,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { Avatar } from "../ui/Avatar";
@@ -117,11 +118,7 @@ export const Navbar: React.FC = () => {
     navLinks = [
       {
         icon:
-          user?.role === "entrepreneur" ? (
-            <Building2 size={18} />
-          ) : (
-            <CircleDollarSign size={18} />
-          ),
+          <Home size={18} />,
         label: "Dashboard",
         path: dashboardRoute,
       },
