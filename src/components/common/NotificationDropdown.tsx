@@ -17,7 +17,17 @@ export const NotificationDropdown: React.FC = () => {
     } = useNotification();
 
     const [isOpen, setIsOpen] = useState(false);
+    const [isPulsing, setIsPulsing] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
+
+    // Trigger pulse animation when unread count changes
+    useEffect(() => {
+        if (unreadCount > 0) {
+            setIsPulsing(true);
+            const timer = setTimeout(() => setIsPulsing(false), 2000);
+            return () => clearTimeout(timer);
+        }
+    }, [unreadCount]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -35,12 +45,14 @@ export const NotificationDropdown: React.FC = () => {
         <div className="relative" ref={dropdownRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="relative p-2 text-gray-600 hover:text-primary-600 hover:bg-gray-100 rounded-full transition-colors"
+                className={`relative p-2 text-gray-600 hover:text-primary-600 hover:bg-gray-100 rounded-full transition-colors ${
+                    isPulsing ? 'animate-pulse' : ''
+                }`}
                 aria-label="Notifications"
             >
                 <Bell size={20} />
                 {unreadCount > 0 && (
-                    <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white border-2 border-white">
+                    <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white border-2 border-white animate-bounce">
                         {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                 )}
