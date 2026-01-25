@@ -347,7 +347,20 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
               </p>
 
               <div className="flex flex-wrap gap-2 justify-center sm:justify-start mt-3">
-                <Badge variant="primary">{entrepreneur.industry || "--"}</Badge>
+                {(() => {
+                  const inds = Array.isArray(entrepreneur.industry)
+                    ? entrepreneur.industry
+                    : (typeof entrepreneur.industry === "string" && entrepreneur.industry.trim())
+                      ? [entrepreneur.industry]
+                      : [];
+                  return inds.length > 0 ? (
+                    inds.map((ind, idx) => (
+                      <Badge key={idx} variant="primary">{ind}</Badge>
+                    ))
+                  ) : (
+                    <Badge variant="primary">--</Badge>
+                  );
+                })()}
                 <Badge variant="gray">
                   <MapPin size={14} className="mr-1" />
                   {entrepreneur.location || "--"}
@@ -867,19 +880,31 @@ export const EntrepreneurProfile: React.FC<Props> = ({ userId }) => {
                   <span className="text-sm text-gray-500">
                     Previous Funding
                   </span>
-                  {entrepreneur.fundingHistory && entrepreneur.fundingHistory.length > 0 ? (
-                    <div className="space-y-1 mt-1">
-                      {entrepreneur.fundingHistory.map((fund: any, index: number) => (
-                        <p key={index} className="text-md font-medium text-gray-900">
-                          ${AmountMeasureWithTags(fund.amount)} {fund.stage} ({fund.year})
-                        </p>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-md font-medium text-gray-900">
-                      N/A
-                    </p>
-                  )}
+                  {(() => {
+                    const list = Array.isArray(entrepreneur.fundingHistory)
+                      ? entrepreneur.fundingHistory
+                      : [];
+                    const sortedLatestThree = list
+                      .slice()
+                      .sort((a: any, b: any) => {
+                        const ta = a?.date ? new Date(a.date).getTime() : (typeof a?.year === "number" ? a.year : 0);
+                        const tb = b?.date ? new Date(b.date).getTime() : (typeof b?.year === "number" ? b.year : 0);
+                        return tb - ta; // Descending (latest first)
+                      })
+                      .slice(0, 3);
+
+                    return sortedLatestThree.length > 0 ? (
+                      <div className="space-y-1 mt-1">
+                        {sortedLatestThree.map((fund: any, index: number) => (
+                          <p key={index} className="text-md font-medium text-gray-900">
+                            ${AmountMeasureWithTags(fund.amount)} {fund.stage} ({fund.year ?? (fund.date ? new Date(fund.date).getFullYear() : "")})
+                          </p>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-md font-medium text-gray-900">N/A</p>
+                    );
+                  })()}
                 </div>
 
                 <div className="pt-3 border-t border-gray-100">

@@ -23,8 +23,11 @@ import {
     Calendar,
     Sparkles,
     Check,
-    Loader2
+    Loader2,
+    ChevronDown,
+    Search
 } from "lucide-react";
+import axios from "axios";
 
 type User = {
     name: string;
@@ -41,6 +44,9 @@ export const InvestorSetup: React.FC = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const [investor, setInvestor] = useState<Investor>();
+    const [industries, setIndustries] = useState<{ _id: string; name: string; isCustom: boolean }[]>([]);
+    const [showIndustryDropdown, setShowIndustryDropdown] = useState(false);
+    const [industryQuery, setIndustryQuery] = useState("");
     const initialInvestorData = useMemo(
         () => ({
             userId: investor?.userId || user?.userId,
@@ -69,6 +75,18 @@ export const InvestorSetup: React.FC = () => {
         };
         fetchInvestors();
     }, [user]);
+
+    useEffect(() => {
+        const fetchIndustries = async () => {
+            try {
+                const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/industry/get-all`);
+                setIndustries(res.data || []);
+            } catch (error) {
+                console.error("Failed to load industries", error);
+            }
+        };
+        fetchIndustries();
+    }, []);
 
     useEffect(() => {
         setInvestorFormData(initialInvestorData);
@@ -248,30 +266,93 @@ export const InvestorSetup: React.FC = () => {
                                 ({investorFormData.investmentInterests.length}/5)
                             </span>
                         </label>
-                        <div className="flex gap-3">
-                            <div className="flex-1 relative group">
-                                <input
-                                    type="text"
-                                    name="interest"
-                                    value={investorFormData.interest}
-                                    onChange={handleInvestorChange}
-                                    placeholder="e.g., AI, Healthcare, Renewable Energy"
-                                    disabled={investorFormData.investmentInterests.length >= 5}
-                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all placeholder-gray-400 disabled:opacity-50 group-hover:border-blue-300"
-                                />
-                                <div className="absolute inset-0 rounded-xl border-2 border-transparent group-focus-within:border-blue-400 pointer-events-none"></div>
-                            </div>
+
+                        {/* Selected industries as chips */}
+                        <div className="flex flex-wrap gap-3 mb-2">
+                            {investorFormData.investmentInterests.length > 0 ? (
+                                investorFormData.investmentInterests.map((item, idx) => (
+                                    <div
+                                        key={idx}
+                                        className="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-2 rounded-xl border border-blue-100"
+                                    >
+                                        <span className="text-blue-700 font-medium">{item}</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => removeInterest(idx)}
+                                            className="text-blue-400 hover:text-blue-600 transition-colors"
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                ))
+                            ) : (
+                                <span className="text-sm text-gray-400">No industries selected</span>
+                            )}
+                        </div>
+
+                        {/* Dropdown trigger */}
+                        <div className="relative">
                             <button
                                 type="button"
-                                onClick={handleInterests}
-                                disabled={!investorFormData.interest || investorFormData.investmentInterests.length >= 5}
-                                className="px-6 py-3 bg-blue-50 text-blue-600 font-medium rounded-xl hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all border border-blue-200"
+                                onClick={() => setShowIndustryDropdown((s) => !s)}
+                                className="w-full md:w-auto px-4 py-3 bg-white border border-gray-300 rounded-xl hover:border-blue-500 focus:ring-2 focus:ring-blue-500 text-left flex items-center justify-between"
                             >
-                                <div className="flex items-center space-x-2">
-                                    <Plus className="w-5 h-5" />
-                                    <span>Add</span>
-                                </div>
+                                <span className="text-gray-700">Select industries</span>
+                                <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${showIndustryDropdown ? 'rotate-180' : ''}`} />
                             </button>
+
+                            {/* Dropdown menu */}
+                            {showIndustryDropdown && (
+                                <div className="absolute z-50 mt-2 w-full bg-white border border-gray-200 rounded-xl shadow-lg p-3 max-h-72 overflow-y-auto">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Search size={16} className="text-gray-400" />
+                                        <input
+                                            type="text"
+                                            value={industryQuery}
+                                            onChange={(e) => setIndustryQuery(e.target.value)}
+                                            placeholder="Search industries..."
+                                            className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        />
+                                    </div>
+                                    {(industries || []).filter((i) => i.name.toLowerCase().includes(industryQuery.toLowerCase())).map((i) => {
+                                        const name = i.name;
+                                        const isSelected = investorFormData.investmentInterests.includes(name);
+                                        const canAddMore = investorFormData.investmentInterests.length < 5;
+                                        return (
+                                            <button
+                                                key={i._id}
+                                                type="button"
+                                                onClick={() => {
+                                                    if (isSelected) {
+                                                        setInvestorFormData(prev => ({
+                                                            ...prev,
+                                                            investmentInterests: prev.investmentInterests.filter(ind => ind !== name)
+                                                        }));
+                                                    } else if (canAddMore) {
+                                                        setInvestorFormData(prev => ({
+                                                            ...prev,
+                                                            investmentInterests: [...prev.investmentInterests, name]
+                                                        }));
+                                                    }
+                                                }}
+                                                className={`w-full text-left px-3 py-2 rounded-lg flex items-center justify-between hover:bg-gray-50 ${isSelected ? 'bg-blue-50 text-blue-700' : 'text-gray-700'}`}
+                                            >
+                                                <span>{name}</span>
+                                                {isSelected && <Check className="w-4 h-4" />}
+                                            </button>
+                                        );
+                                    })}
+                                    <div className="mt-2 flex justify-end">
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowIndustryDropdown(false)}
+                                            className="text-xs text-gray-600 hover:text-gray-800 underline"
+                                        >
+                                            Close
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
 

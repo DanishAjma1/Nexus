@@ -6,6 +6,7 @@ import { EntrepreneurCard } from '../../components/entrepreneur/EntrepreneurCard
 import { useAuth } from '../../context/AuthContext';
 import { getEnterprenuerFromDb } from '../../data/users';
 import { Entrepreneur } from '../../types';
+import axios from 'axios';
 
 export const EntrepreneursPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -26,7 +27,21 @@ export const EntrepreneursPage: React.FC = () => {
     fetchData();
   }, [user]);
 
-  const allIndustries = Array.from(new Set(entrepreneurs.map(e => e.industry || 'Other').filter(Boolean)));
+  // Industries from backend (DB)
+  const [industries, setIndustries] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchIndustries = async () => {
+      try {
+        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/industry/get-all`);
+        const names = Array.isArray(res.data) ? res.data.map((i: any) => i.name) : [];
+        setIndustries(Array.from(new Set(names)).sort((a, b) => a.localeCompare(b)));
+      } catch (error) {
+        console.error('Failed to fetch industries', error);
+      }
+    };
+    fetchIndustries();
+  }, []);
   // Filter out undefined/null locations and get unique ones
   const allLocations = Array.from(new Set(entrepreneurs.map(e => e.location).filter(Boolean)));
 
@@ -34,14 +49,20 @@ export const EntrepreneursPage: React.FC = () => {
 
   // Filter entrepreneurs based on search and filters
   const filteredEntrepreneurs = entrepreneurs.filter(entrepreneur => {
+    const indList = Array.isArray(entrepreneur.industry)
+      ? (entrepreneur.industry as string[])
+      : (typeof entrepreneur.industry === 'string' && entrepreneur.industry)
+        ? [entrepreneur.industry as string]
+        : [];
+
     const matchesSearch = searchQuery === '' ||
       entrepreneur.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (entrepreneur.startupName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (entrepreneur.industry || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      indList.some(ind => ind.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (entrepreneur.pitchSummary || '').toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesIndustry = selectedIndustries.length === 0 ||
-      selectedIndustries.includes(entrepreneur.industry || 'Other');
+      indList.some(ind => selectedIndustries.includes(ind));
 
     const matchesLocation = selectedLocations.length === 0 ||
       selectedLocations.includes(entrepreneur.location);
@@ -106,7 +127,7 @@ export const EntrepreneursPage: React.FC = () => {
               <div>
                 <h3 className="text-sm font-medium text-gray-900 mb-2">Industry</h3>
                 <div className="space-y-2">
-                  {allIndustries.map(industry => (
+                  {industries.map(industry => (
                     <button
                       key={industry}
                       onClick={() => toggleIndustry(industry)}
@@ -118,7 +139,7 @@ export const EntrepreneursPage: React.FC = () => {
                       {industry}
                     </button>
                   ))}
-                  {allIndustries.length === 0 && <p className="text-xs text-gray-500">No industries found.</p>}
+                  {industries.length === 0 && <p className="text-xs text-gray-500">No industries found.</p>}
                 </div>
               </div>
 

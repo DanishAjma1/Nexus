@@ -55,7 +55,20 @@ export const EntrepreneurCard: React.FC<EntrepreneurCardProps> = ({
             <p className="text-sm text-gray-500 mb-2">{entrepreneur.startupName}</p>
 
             <div className="flex flex-wrap gap-2 mb-3">
-              <Badge variant="primary" size="sm">{entrepreneur.industry}</Badge>
+              {(() => {
+                const inds = Array.isArray(entrepreneur.industry)
+                  ? (entrepreneur.industry as string[])
+                  : (typeof entrepreneur.industry === 'string' && entrepreneur.industry.trim())
+                    ? [entrepreneur.industry as string]
+                    : [];
+                return inds.length > 0 ? (
+                  inds.map((ind, idx) => (
+                    <Badge key={idx} variant="primary" size="sm">{ind}</Badge>
+                  ))
+                ) : (
+                  <Badge variant="primary" size="sm">--</Badge>
+                );
+              })()}
               <Badge variant="gray" size="sm">{entrepreneur.teamSize}</Badge>
               <Badge variant="accent" size="sm">Founded {entrepreneur.foundedYear}</Badge>
             </div>

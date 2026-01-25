@@ -25,7 +25,7 @@ export interface Entrepreneur extends User {
   startupName: string | undefined;
   pitchSummary: string | undefined;
   fundingNeeded: number | undefined;
-  industry: string | undefined;
+  industry: string[] | undefined;
   foundedYear: number | undefined;
   teamSize: number | undefined;
   team?: TeamMember[];

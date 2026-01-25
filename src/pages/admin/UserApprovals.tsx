@@ -30,7 +30,7 @@ interface PendingUser {
   rejectionReason?: string;
   details?: {
     startupName?: string;
-    industry?: string;
+    industry?: string[];
     fundingNeeded?: number;
     pitchSummary?: string;
     investmentInterests?: string[];
@@ -299,12 +299,29 @@ export const UserApprovals: React.FC = () => {
                     </div>
                   </div>
                 )}
-                {user.details.industry && (
-                  <div>
-                    <p className="text-xs text-gray-500">Industry</p>
-                    <p className="font-medium text-gray-900">{user.details.industry}</p>
-                  </div>
-                )}
+                {(() => {
+                  const inds = Array.isArray(user.details.industry)
+                    ? user.details.industry
+                    : (typeof user.details.industry === "string" && user.details.industry.trim())
+                      ? [user.details.industry]
+                      : [];
+                  if (inds.length === 0) return null;
+                  return (
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1.5">Industries</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {inds.map((ind, idx) => (
+                          <span
+                            key={idx}
+                            className="inline-flex items-center px-2.5 py-1 bg-green-50 text-green-700 rounded-lg text-xs font-medium border border-green-200"
+                          >
+                            {ind}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
                 {user.details.fundingNeeded && (
                   <div>
                     <p className="text-xs text-gray-500">Funding Needed</p>
