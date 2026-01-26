@@ -45,7 +45,14 @@ export const AdminDealPayments: React.FC = () => {
             setConfirmModal({ isOpen: false, transactionId: null });
             fetchTransactions();
         } catch (error: any) {
-            toast.error(error.response?.data?.message || "Failed to release funds");
+            const msg = error.response?.data?.message || "Failed to release funds";
+            const isKycBlock = error.response?.status === 400 && msg.toLowerCase().includes("kyc");
+
+            if (isKycBlock) {
+                toast.error("Entrepreneur KYC not verified. They were notified to complete it.");
+            } else {
+                toast.error(msg);
+            }
             setConfirmModal({ isOpen: false, transactionId: null });
         }
     };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import {
   Menu,
@@ -14,6 +14,8 @@ import {
   Settings,
   ClipboardCheck,
   Ban,
+  ChevronDown,
+  Home,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { Avatar } from "../ui/Avatar";
@@ -22,16 +24,34 @@ import { NotificationDropdown } from "../common/NotificationDropdown";
 
 export const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const profileMenuRef = useRef<HTMLDivElement>(null);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
   // Auto-close menu on route change
   useEffect(() => {
     setIsMenuOpen(false);
+    setIsProfileMenuOpen(false);
   }, [location.pathname]);
+
+  // Close profile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        profileMenuRef.current &&
+        !profileMenuRef.current.contains(event.target as Node)
+      ) {
+        setIsProfileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -50,43 +70,46 @@ export const Navbar: React.FC = () => {
 
   // Determine profile route by role
   const profileRoute = user ? `/profile/${user.role}/${user.userId}` : "/login";
+  const editProfileRoute = user
+    ? `/settings`
+    : "/login";
 
   // Navigation links by role
-  let navLinks: { icon: JSX.Element; text: string; path: string }[] = [];
-  let adminMobileLinks: { icon: JSX.Element; text: string; path: string }[] = [];
+  let navLinks: { icon: JSX.Element; label: string; path: string }[] = [];
+  let adminMobileLinks: { icon: JSX.Element; label: string; path: string }[] = [];
 
   if (user?.role === "admin") {
     navLinks = [
       {
         icon: <Shield size={18} />,
-        text: "Admin Dashboard",
+        label: "Dashboard",
         path: dashboardRoute,
       },
       {
         icon: <Briefcase size={18} />,
-        text: "Manage Users",
+        label: "Users",
         path: "/admin/all-users",
       },
       {
         icon: <CircleDollarSign size={18} />,
-        text: "Campaigns",
+        label: "Campaigns",
         path: "/admin/campaigns",
       },
       {
         icon: <UsersRoundIcon size={18} />,
-        text: "Supporters",
+        label: "Supporters",
         path: "/admin/Supporters",
       },
     ];
     adminMobileLinks = [
       {
         icon: <ClipboardCheck size={18} />,
-        text: "Account Approvals",
+        label: "Approvals",
         path: "/dashboard/admin/approvals",
       },
       {
         icon: <Ban size={18} />,
-        text: "Suspended & Blocked",
+        label: "Suspended/Blocked",
         path: "/admin/suspended-blocked",
       },
     ];
@@ -95,20 +118,16 @@ export const Navbar: React.FC = () => {
     navLinks = [
       {
         icon:
-          user?.role === "entrepreneur" ? (
-            <Building2 size={18} />
-          ) : (
-            <CircleDollarSign size={18} />
-          ),
-        text: "Dashboard",
+          <Home size={18} />,
+        label: "Dashboard",
         path: dashboardRoute,
       },
       {
         icon: <MessageCircle size={18} />,
-        text: "Messages",
+        label: "Messages",
         path: "/messages",
       },
-      { icon: <User size={18} />, text: "Profile", path: profileRoute },
+      { icon: <User size={18} />, label: "Profile", path: profileRoute },
     ];
   }
 
@@ -136,39 +155,74 @@ export const Navbar: React.FC = () => {
           {/* Desktop navigation */}
           <div className="hidden md:flex md:items-center md:ml-6">
             {user ? (
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-3">
                 {navLinks.map((link, index) => (
                   <Link
                     key={index}
                     to={link.path}
-                    className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-md transition-colors duration-200"
+                    title={link.label}
+                    aria-label={link.label}
+                    className="inline-flex items-center justify-center w-10 h-10 text-gray-700 hover:text-primary-600 hover:bg-gray-100 rounded-full transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-200"
                   >
-                    <span className="mr-2">{link.icon}</span>
-                    {link.text}
+                    {link.icon}
+                    <span className="sr-only">{link.label}</span>
                   </Link>
                 ))}
+
+                {/* Subtle divider between nav actions and profile cluster */}
+                <span className="hidden md:block h-6 w-px bg-gray-200" aria-hidden="true" />
+
                 {user && <NotificationDropdown />}
-                <Button
-                  variant="ghost"
-                  onClick={handleLogout}
-                  leftIcon={<LogOut size={18} />}
-                >
-                  Logout
-                </Button>
-                <Link
-                  to={profileRoute}
-                  className="flex items-center space-x-2 ml-2"
-                >
-                  <Avatar
-                    src={user.avatarUrl}
-                    alt={user.name}
-                    size="sm"
-                    status={user.isOnline ? "online" : "offline"}
-                  />
-                  <span className="text-sm font-medium text-gray-700">
-                    {user.name}
-                  </span>
-                </Link>
+
+                {/* Profile dropdown */}
+                <div className="relative" ref={profileMenuRef}>
+                  <button
+                    onClick={() => setIsProfileMenuOpen((prev) => !prev)}
+                    className="inline-flex items-center gap-2 h-10 px-3 rounded-full border border-gray-200 bg-white hover:bg-gray-50 hover:border-primary-200 shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-200"
+                    aria-label="Profile menu"
+                    aria-haspopup="menu"
+                    aria-expanded={isProfileMenuOpen}
+                  >
+                    <Avatar
+                      src={user.avatarUrl}
+                      alt={user.name}
+                      size="sm"
+                      status={user.isOnline ? "online" : "offline"}
+                    />
+                    <span className="text-sm font-medium text-gray-800 whitespace-nowrap">
+                      {user.name}
+                    </span>
+                    <ChevronDown
+                      size={16}
+                      className={`text-gray-500 transition-transform ${
+                        isProfileMenuOpen ? "rotate-180" : "rotate-0"
+                      }`}
+                    />
+                  </button>
+
+                  {isProfileMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-44 rounded-lg border border-gray-100 bg-white shadow-lg z-50 py-1">
+                      <Link
+                        to={editProfileRoute}
+                        onClick={() => setIsProfileMenuOpen(false)}
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                      >
+                        <User size={16} />
+                        <span>Edit Profile</span>
+                      </Link>
+                      <button
+                        onClick={() => {
+                          handleLogout();
+                          setIsProfileMenuOpen(false);
+                        }}
+                        className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 text-left"
+                      >
+                        <LogOut size={16} />
+                        <span>Logout</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             ) : (
               <div className="flex items-center space-x-4">
@@ -240,7 +294,7 @@ export const Navbar: React.FC = () => {
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <span className="mr-3">{link.icon}</span>
-                    {link.text}
+                    {link.label}
                   </Link>
                 ))}
 
@@ -253,7 +307,7 @@ export const Navbar: React.FC = () => {
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <span className="mr-3">{link.icon}</span>
-                    {link.text}
+                    {link.label}
                   </Link>
                 ))}
 

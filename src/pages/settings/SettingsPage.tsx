@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from "react";
-import { User, Lock, Palette, CreditCard } from "lucide-react";
+import { User, Lock, Palette, CreditCard, ShieldCheck } from "lucide-react";
 import { Card, CardHeader, CardBody } from "../../components/ui/Card";
 import { useAuth } from "../../context/AuthContext";
 import { getEnterpreneurById, getInvestorById } from "../../data/users";
@@ -9,8 +9,9 @@ import { ProfileSettings } from "../../components/settings/ProfileSettings";
 import { SecuritySettings } from "../../components/settings/SecuritySettings";
 import { AppearanceSettings } from "../../components/settings/AppearanceSettings";
 import { BillingSettings } from "../../components/settings/BillingSettings";
+import { LegalInfoUpload } from "../../components/settings/LegalInfoUpload";
 
-type SettingsTab = "profile" | "security" | "appearance" | "billing";
+type SettingsTab = "profile" | "security" | "appearance" | "billing" | "legal";
 
 export const SettingsPage: React.FC = () => {
   const { user: currentUser } = useAuth();
@@ -35,10 +36,11 @@ export const SettingsPage: React.FC = () => {
     { id: "security" as SettingsTab, label: "Security", icon: Lock },
     { id: "appearance" as SettingsTab, label: "Appearance", icon: Palette },
     { id: "billing" as SettingsTab, label: "Billing", icon: CreditCard },
+    { id: "legal" as SettingsTab, label: "Legal", icon: ShieldCheck },
   ];
   const filteredNavItems =
     currentUser?.role === "admin"
-      ? navItems.filter((item) => item.id !== "billing")
+      ? navItems.filter((item) => item.id !== "billing" && item.id !== "legal")
       : navItems;
 
   const renderContent = () => {
@@ -51,6 +53,8 @@ export const SettingsPage: React.FC = () => {
         return <AppearanceSettings />;
       case "billing":
         return <BillingSettings />;
+      case "legal":
+        return <LegalInfoUpload />;
       default:
         return <ProfileSettings user={user} currentUser={currentUser} />;
     }
@@ -100,7 +104,7 @@ export const SettingsPage: React.FC = () => {
           <Card className="mb-4">
             <CardBody className="p-2">
               <nav className="flex justify-around items-center">
-                {navItems.map((item) => {
+                {filteredNavItems.map((item) => {
                   const Icon = item.icon;
                   const isActive = activeTab === item.id;
                   return (

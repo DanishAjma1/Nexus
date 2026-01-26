@@ -23,8 +23,12 @@ import {
     Save,
     Sparkles,
     Check,
-    Loader2
+    Loader2,
+    X,
+    Plus,
+    ChevronDown
 } from "lucide-react";
+import axios from "axios";
 
 type User = {
     name: string;
@@ -41,6 +45,10 @@ export const EntrepreneurSetup: React.FC = () => {
     const [entrepreneur, setEnterpreneur] = useState<Entrepreneur>();
     const isEditMode = checkIfSettingPage && entrepreneur;
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [industries, setIndustries] = useState<{ _id: string; name: string; isCustom: boolean; }[]>([]);
+    const [showIndustryDropdown, setShowIndustryDropdown] = useState(false);
+    const [customIndustry, setCustomIndustry] = useState("");
+    const [isAddingCustom, setIsAddingCustom] = useState(false);
 
     useEffect(() => {
         const fetchEntrepreneur = async () => {
@@ -51,6 +59,19 @@ export const EntrepreneurSetup: React.FC = () => {
         };
         fetchEntrepreneur();
     }, [user]);
+
+    useEffect(() => {
+        const fetchIndustries = async () => {
+            try {
+                const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/industry/get-all`);
+                setIndustries(response.data);
+            } catch (error) {
+                console.error("Failed to fetch industries:", error);
+                toast.error("Failed to load industries");
+            }
+        };
+        fetchIndustries();
+    }, []);
 
     const initialData = useMemo(
         () => ({
@@ -241,21 +262,194 @@ export const EntrepreneurSetup: React.FC = () => {
                             </div>
                         </div>
 
-                        <div className="space-y-2">
+                        <div className="space-y-2 md:col-span-2">
                             <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
                                 <Globe className="w-4 h-4" />
-                                <span>Industry</span>
+                                <span>Industry (Select multiple or add custom)</span>
                             </label>
-                            <div className="relative group">
-                                <input
-                                    type="text"
-                                    name="industry"
-                                    value={formData.industry || ""}
-                                    onChange={handleUserChange}
-                                    placeholder="e.g., FinTech, HealthTech, SaaS"
-                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:bg-white transition-all placeholder-gray-400 group-hover:border-green-300"
-                                />
-                                <div className="absolute inset-0 rounded-xl border-2 border-transparent group-focus-within:border-green-400 pointer-events-none"></div>
+                            <div className="relative">
+                                {/* Selected Industries */}
+                                <div className="flex flex-wrap gap-2 mb-2">
+                                    {(formData.industry && formData.industry.length > 0) ? formData.industry.map((ind, idx) => (
+                                        <span key={idx} className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-50 text-green-700 rounded-lg text-sm font-medium border border-green-200">
+                                            {ind}
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const newIndustries = formData.industry?.filter((_, i) => i !== idx) || [];
+                                                    setFormData(prev => ({ ...prev, industry: newIndustries }));
+                                                }}
+                                                className="ml-1 hover:bg-green-200 rounded-full p-0.5 transition-colors"
+                                            >
+                                                <X className="w-3.5 h-3.5" />
+                                            </button>
+                                        </span>
+                                    )) : (
+                                        <span className="text-sm text-gray-400">No industries selected</span>
+                                    )}
+                                </div>
+
+                                {/* Dropdown Button */}
+                                <button
+                                    type="button"
+                                    onClick={() => setShowIndustryDropdown(!showIndustryDropdown)}
+                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl hover:border-green-300 focus:ring-2 focus:ring-green-500 focus:bg-white transition-all text-left flex items-center justify-between"
+                                >
+                                    <span className="text-gray-600">Select or add industry</span>
+                                    <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${showIndustryDropdown ? 'rotate-180' : ''}`} />
+                                </button>
+
+                                {/* Dropdown Menu */}
+                                {showIndustryDropdown && (
+                                    <div className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg max-h-64 overflow-y-auto">
+                                        {/* Custom Industry Input */}
+                                        <div className="p-3 border-b border-gray-200 bg-gray-50">
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="text"
+                                                    value={customIndustry}
+                                                    onChange={(e) => setCustomIndustry(e.target.value)}
+                                                    placeholder="Add custom industry..."
+                                                    className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+                                                    onKeyPress={async (e) => {
+                                                        if (e.key === 'Enter' && customIndustry.trim()) {
+                                                            e.preventDefault();
+                                                            const trimmed = customIndustry.trim();
+                                                            // Check if already exists in dropdown
+                                                            const existsInList = industries.some(ind => ind.name.toLowerCase() === trimmed.toLowerCase());
+                                                            // Check if already selected
+                                                            const alreadySelected = formData.industry?.some(ind => ind.toLowerCase() === trimmed.toLowerCase());
+                                                            
+                                                            if (alreadySelected) {
+                                                                toast.error('Industry already selected');
+                                                                return;
+                                                            }
+
+                                                            if (!existsInList) {
+                                                                // Add to database
+                                                                try {
+                                                                    setIsAddingCustom(true);
+                                                                    const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/industry/add-custom`, {
+                                                                        name: trimmed,
+                                                                        userId: user?.userId
+                                                                    });
+                                                                    // Add to local industries list
+                                                                    setIndustries(prev => [...prev, response.data]);
+                                                                    toast.success('Custom industry added');
+                                                                } catch (error: any) {
+                                                                    if (error.response?.data?.message === 'Industry already exists') {
+                                                                        toast.error('Industry already exists in database');
+                                                                    } else {
+                                                                        toast.error('Failed to add custom industry');
+                                                                    }
+                                                                    console.error(error);
+                                                                } finally {
+                                                                    setIsAddingCustom(false);
+                                                                }
+                                                            }
+                                                            
+                                                            // Add to selected
+                                                            const currentIndustries = formData.industry || [];
+                                                            setFormData(prev => ({
+                                                                ...prev,
+                                                                industry: [...currentIndustries, trimmed]
+                                                            }));
+                                                            setCustomIndustry('');
+                                                        }
+                                                    }}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    disabled={!customIndustry.trim() || isAddingCustom}
+                                                    onClick={async () => {
+                                                        const trimmed = customIndustry.trim();
+                                                        if (!trimmed) return;
+
+                                                        const existsInList = industries.some(ind => ind.name.toLowerCase() === trimmed.toLowerCase());
+                                                        const alreadySelected = formData.industry?.some(ind => ind.toLowerCase() === trimmed.toLowerCase());
+                                                        
+                                                        if (alreadySelected) {
+                                                            toast.error('Industry already selected');
+                                                            return;
+                                                        }
+
+                                                        if (!existsInList) {
+                                                            try {
+                                                                setIsAddingCustom(true);
+                                                                const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/industry/add-custom`, {
+                                                                    name: trimmed,
+                                                                    userId: user?.userId
+                                                                });
+                                                                setIndustries(prev => [...prev, response.data]);
+                                                                toast.success('Custom industry added');
+                                                            } catch (error: any) {
+                                                                if (error.response?.data?.message === 'Industry already exists') {
+                                                                    toast.error('Industry already exists in database');
+                                                                } else {
+                                                                    toast.error('Failed to add custom industry');
+                                                                }
+                                                                console.error(error);
+                                                            } finally {
+                                                                setIsAddingCustom(false);
+                                                            }
+                                                        }
+                                                        
+                                                        const currentIndustries = formData.industry || [];
+                                                        setFormData(prev => ({
+                                                            ...prev,
+                                                            industry: [...currentIndustries, trimmed]
+                                                        }));
+                                                        setCustomIndustry('');
+                                                    }}
+                                                    className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 text-sm"
+                                                >
+                                                    {isAddingCustom ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                                                    Add
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* Industry Options */}
+                                        <div className="max-h-48 overflow-y-auto">
+                                            {industries.map((industry) => {
+                                                const isSelected = formData.industry?.includes(industry.name);
+                                                return (
+                                                    <button
+                                                        key={industry._id}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const currentIndustries = formData.industry || [];
+                                                            if (isSelected) {
+                                                                // Remove from selection
+                                                                setFormData(prev => ({
+                                                                    ...prev,
+                                                                    industry: currentIndustries.filter(ind => ind !== industry.name)
+                                                                }));
+                                                            } else {
+                                                                // Add to selection
+                                                                setFormData(prev => ({
+                                                                    ...prev,
+                                                                    industry: [...currentIndustries, industry.name]
+                                                                }));
+                                                            }
+                                                        }}
+                                                        className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors flex items-center justify-between ${
+                                                            isSelected ? 'bg-green-50 text-green-700' : 'text-gray-700'
+                                                        }`}
+                                                    >
+                                                        <span className="flex items-center gap-2">
+                                                            {industry.name}
+                                                            {industry.isCustom && (
+                                                                <span className="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded">Custom</span>
+                                                            )}
+                                                        </span>
+                                                        {isSelected && <Check className="w-4 h-4" />}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
 

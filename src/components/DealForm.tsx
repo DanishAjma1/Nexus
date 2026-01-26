@@ -184,9 +184,9 @@ export const DealForm: React.FC<DealFormProps> = ({
                             />
                             {formData.investmentAmount && (
                                 <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md text-center">
-                                    <div className="text-xs text-gray-600 font-medium">After 5% Commission</div>
+                                    <div className="text-xs text-gray-600 font-medium">After 2% Commission</div>
                                     <div className="text-sm font-bold text-green-700">
-                                        ${(Number(formData.investmentAmount) * 0.95).toFixed(2)}
+                                        ${(Number(formData.investmentAmount) * 0.98).toFixed(2)}
                                     </div>
                                 </div>
                             )}

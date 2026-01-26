@@ -18,24 +18,27 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     if (user) {
       //  connect socket after login
-      // const s = io(import.meta.env.VITE_BACKEND_URL, {
-      //   withCredentials: true,
-      //   transports: ["websocket", "polling"],
-      // });
+      const s = io(import.meta.env.VITE_BACKEND_URL, {
+        withCredentials: true,
+        transports: ["websocket", "polling"],
+      });
 
-      // s.on("connect", () => {
-      //   console.log("Connected to socket:", s.id);
-      //   // tell backend this userId is online
-      //   s.emit("join", user.userId);
-      // });
+      s.on("connect", () => {
+        console.log("Connected to socket:", s.id);
+        // tell backend this userId is online
+        s.emit("join", user.userId);
+      });
 
-      // setSocket(s);
+      s.on("disconnect", () => {
+        console.log("Socket disconnected");
+      });
+
+      setSocket(s);
 
       // cleanup on unmount or logout
       return () => {
-        // s.disconnect();
+        s.disconnect();
         setSocket(null);
-        console.log(" Socket disconnected");
       };
     }
   }, [user]);

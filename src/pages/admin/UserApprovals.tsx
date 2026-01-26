@@ -28,9 +28,16 @@ interface PendingUser {
   approvalStatus?: string;
   approvalDate?: string;
   rejectionReason?: string;
+  kycStatus?: {
+    status?: "unsubmitted" | "pending" | "verified" | "rejected";
+    note?: string;
+    reviewedAt?: string;
+    reviewedBy?: string;
+  };
+  avatarUrl?: string;
   details?: {
     startupName?: string;
-    industry?: string;
+    industry?: string[];
     fundingNeeded?: number;
     pitchSummary?: string;
     investmentInterests?: string[];
@@ -72,6 +79,11 @@ export const UserApprovals: React.FC = () => {
   const [showRejectModal, setShowRejectModal] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<PendingUser | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showLegalModal, setShowLegalModal] = useState(false);
+  const [legalDocs, setLegalDocs] = useState<any[]>([]);
+  const [legalLoading, setLegalLoading] = useState(false);
+  const [kycNote, setKycNote] = useState("");
+  const [kycUpdating, setKycUpdating] = useState(false);
   // Add loading states for approval and rejection buttons
   const [approvingUsers, setApprovingUsers] = useState<{ [key: string]: boolean }>({});
   const [rejectingUsers, setRejectingUsers] = useState<{ [key: string]: boolean }>({});
@@ -200,6 +212,50 @@ export const UserApprovals: React.FC = () => {
     }
   };
 
+  // Legal docs / KYC helpers
+  const fetchLegalDocs = async (userId: string) => {
+    try {
+      setLegalLoading(true);
+      const res = await axios.get(`${URL}/admin/kyc/documents/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setLegalDocs(res.data.documents || []);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to load legal documents");
+      setLegalDocs([]);
+    } finally {
+      setLegalLoading(false);
+    }
+  };
+
+  const openLegalModal = async (user: PendingUser) => {
+    setSelectedUser(user);
+    setShowLegalModal(true);
+    setKycNote(user.kycStatus?.note || "");
+    await fetchLegalDocs(user._id);
+  };
+
+  const updateKycStatus = async (status: "verified" | "rejected" | "pending" | "unsubmitted") => {
+    if (!selectedUser) return;
+    try {
+      setKycUpdating(true);
+      await axios.post(
+        `${URL}/admin/kyc/status/${selectedUser._id}`,
+        { status, note: kycNote },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success(`KYC marked as ${status}`);
+      setShowLegalModal(false);
+      setKycUpdating(false);
+      fetchApprovalData();
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to update KYC status");
+      setKycUpdating(false);
+    }
+  };
+
   // Delete rejected user
   const handleDeleteRejected = (userId: string) => {
     setDeleteModal({ show: true, userId });
@@ -299,12 +355,29 @@ export const UserApprovals: React.FC = () => {
                     </div>
                   </div>
                 )}
-                {user.details.industry && (
-                  <div>
-                    <p className="text-xs text-gray-500">Industry</p>
-                    <p className="font-medium text-gray-900">{user.details.industry}</p>
-                  </div>
-                )}
+                {(() => {
+                  const inds = Array.isArray(user.details.industry)
+                    ? user.details.industry
+                    : (typeof user.details.industry === "string" && user.details.industry.trim())
+                      ? [user.details.industry]
+                      : [];
+                  if (inds.length === 0) return null;
+                  return (
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1.5">Industries</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {inds.map((ind, idx) => (
+                          <span
+                            key={idx}
+                            className="inline-flex items-center px-2.5 py-1 bg-green-50 text-green-700 rounded-lg text-xs font-medium border border-green-200"
+                          >
+                            {ind}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
                 {user.details.fundingNeeded && (
                   <div>
                     <p className="text-xs text-gray-500">Funding Needed</p>
@@ -496,6 +569,33 @@ export const UserApprovals: React.FC = () => {
         </Card>
       </div>
     );
+
+        <div className="flex gap-2 pt-3 border-t border-gray-100 mt-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setSelectedUser(user);
+              openLegalModal(user);
+            }}
+          >
+            <Eye className="w-4 h-4 mr-2" />
+            Legal Docs
+          </Button>
+          {user.kycStatus?.status && (
+            <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${
+              user.kycStatus.status === "verified"
+                ? "bg-green-50 text-green-700 border-green-200"
+                : user.kycStatus.status === "pending"
+                ? "bg-yellow-50 text-yellow-700 border-yellow-200"
+                : user.kycStatus.status === "rejected"
+                ? "bg-red-50 text-red-700 border-red-200"
+                : "bg-gray-50 text-gray-600 border-gray-200"
+            }`}>
+              KYC: {user.kycStatus.status}
+            </span>
+          )}
+        </div>
   };
 
   const DetailModal = ({ user }: { user: PendingUser | null }) => {
@@ -583,6 +683,119 @@ export const UserApprovals: React.FC = () => {
             >
               Dismiss
             </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  };
+
+  const LegalDocsModal = ({ user }: { user: PendingUser }) => {
+    const idDoc = legalDocs.find((d) => d.type === "Government ID (CNIC/Passport)");
+    const selfieDoc = legalDocs.find((d) => d.type === "Selfie Photo");
+    const fullUrl = (doc?: any) => {
+      if (!doc) return "#";
+      return doc.fileUrl?.startsWith("http") ? doc.fileUrl : `${URL}${doc.fileUrl}`;
+    };
+
+    return (
+      <div
+        className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) setShowLegalModal(false);
+        }}
+      >
+        <Card className="w-full max-w-3xl bg-white shadow-2xl overflow-hidden">
+          <CardHeader className="flex items-center justify-between border-b px-6 py-4">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Legal Documents</h2>
+              <p className="text-sm text-gray-600">Review and verify identity documents</p>
+            </div>
+            <button onClick={() => setShowLegalModal(false)} className="text-gray-400 hover:text-gray-600">
+              <X className="w-6 h-6" />
+            </button>
+          </CardHeader>
+
+          <div className="px-6 py-5 space-y-5">
+            <div className="flex items-center gap-4">
+              <img
+                src={user.avatarUrl || "https://ui-avatars.com/api/?name=" + encodeURIComponent(user.name)}
+                alt={user.name}
+                className="w-14 h-14 rounded-full object-cover border"
+              />
+              <div>
+                <p className="text-lg font-semibold text-gray-900">{user.name}</p>
+                <p className="text-sm text-gray-600">{user.email}</p>
+                <p className="text-xs text-gray-500">KYC Status: {user.kycStatus?.status || "unsubmitted"}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[{ title: "Government ID (CNIC/Passport)", doc: idDoc }, { title: "Selfie Photo", doc: selfieDoc }].map(({ title, doc }) => (
+                <div key={title} className="border rounded-lg p-4 bg-gray-50 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">{title}</p>
+                      <p className="text-xs text-gray-600">{doc ? "Uploaded" : "Not provided"}</p>
+                    </div>
+                    {doc && (
+                      <a
+                        href={fullUrl(doc)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-sm text-primary-700 font-semibold hover:underline"
+                      >
+                        View
+                      </a>
+                    )}
+                  </div>
+                  {doc ? (
+                    <div className="text-xs text-gray-600">
+                      <p className="font-medium">{doc.fileName}</p>
+                      <p>Uploaded {new Date(doc.uploadedAt).toLocaleString()}</p>
+                    </div>
+                  ) : (
+                    <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-2">No file uploaded.</div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-gray-800">Admin Notes</label>
+              <textarea
+                className="w-full border rounded-md p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                rows={3}
+                value={kycNote}
+                onChange={(e) => setKycNote(e.target.value)}
+                placeholder="Optional notes for this verification"
+              />
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <Button
+                onClick={() => updateKycStatus("verified")}
+                disabled={kycUpdating || legalLoading}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                {kycUpdating ? "Saving..." : "Mark Verified"}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => updateKycStatus("rejected")}
+                disabled={kycUpdating || legalLoading}
+              >
+                Mark Rejected
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => updateKycStatus("pending")}
+                disabled={kycUpdating || legalLoading}
+              >
+                Reset to Pending
+              </Button>
+            </div>
+
+            {legalLoading && <p className="text-xs text-gray-500">Loading documents...</p>}
           </div>
         </Card>
       </div>
@@ -748,6 +961,7 @@ export const UserApprovals: React.FC = () => {
       {/* Modals */}
       {showRejectModal && <RejectionModal userId={showRejectModal} />}
       {showDetailModal && <DetailModal user={selectedUser} />}
+      {showLegalModal && selectedUser && <LegalDocsModal user={selectedUser} />}
       <ConfirmationModal
         isOpen={deleteModal.show}
         title="Delete Rejected User"
