@@ -3,7 +3,7 @@ import toast from "react-hot-toast";
 import { ThreeDotsButton } from "../../components/ui/ThreeDotsButton";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
-import { SearchIcon, X } from "lucide-react";
+import { SearchIcon, X, ShieldCheck, Eye } from "lucide-react";
 import { User } from "../../types";
 import { formatDistanceToNow } from "date-fns";
 import { StartupIndustryChart } from "../../components/admin/StartupIndustryChart";
@@ -16,8 +16,15 @@ import { ConfirmationModal } from "../../components/ui/ConfirmationModal";
 
 export const Users: React.FC = () => {
   const URL = import.meta.env.VITE_BACKEND_URL;
-  const [users, setUsers] = useState<User[]>([]);
-  const [searchedusers, setSearchedUsers] = useState<User[]>([]);
+  type KycStatus = {
+    status?: "unsubmitted" | "pending" | "verified" | "rejected";
+    note?: string;
+    reviewedAt?: string;
+    reviewedBy?: string;
+  };
+  type KycUser = User & { kycStatus?: KycStatus; avatarUrl?: string };
+  const [users, setUsers] = useState<KycUser[]>([]);
+  const [searchedusers, setSearchedUsers] = useState<KycUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
   const [index, setIndex] = useState<number | null>(null);
@@ -28,6 +35,14 @@ export const Users: React.FC = () => {
   const [suspensionReason, setSuspensionReason] = useState<string>("");
   const [suspensionDays, setSuspensionDays] = useState<string>("7");
   const [blockReason, setBlockReason] = useState<string>("");
+
+  const [showLegalModal, setShowLegalModal] = useState(false);
+  const [legalDocs, setLegalDocs] = useState<any[]>([]);
+  const [legalLoading, setLegalLoading] = useState(false);
+  const [hasLegalDocs, setHasLegalDocs] = useState(false);
+  const [kycNote, setKycNote] = useState("");
+  const [kycUpdating, setKycUpdating] = useState(false);
+  const [selectedKycUser, setSelectedKycUser] = useState<KycUser | null>(null);
 
   const [startupGrowthChartData, setStartupGrowthChartData] = useState([]);
   const [industryGrowthChartData, setIndustryGrowthChartData] = useState([]);
@@ -92,6 +107,73 @@ export const Users: React.FC = () => {
         }
       },
     });
+  };
+
+  const fetchLegalDocs = async (userId: string) => {
+    try {
+      setLegalLoading(true);
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${URL}/admin/kyc/documents/${userId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!res.ok) throw new Error("Failed to load documents");
+      const data = await res.json();
+      const docs = data.documents || [];
+      setLegalDocs(docs);
+      setHasLegalDocs(docs.length > 0);
+      return docs;
+    } catch (error) {
+      console.error(error);
+      toast.error("Unable to fetch legal documents");
+      setLegalDocs([]);
+      setHasLegalDocs(false);
+    } finally {
+      setLegalLoading(false);
+    }
+    return [];
+  };
+
+  const updateKycStatus = async (status: "verified" | "rejected" | "pending" | "unsubmitted") => {
+    if (!selectedKycUser) return;
+    try {
+      setKycUpdating(true);
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${URL}/admin/kyc/status/${selectedKycUser._id}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status, note: kycNote }),
+      });
+      if (!res.ok) throw new Error("Failed to update KYC");
+      toast.success(`KYC marked as ${status}`);
+      setShowLegalModal(false);
+      setSelectedKycUser(null);
+      fetchUsers();
+    } catch (error) {
+      console.error(error);
+      toast.error("Could not update KYC status");
+    } finally {
+      setKycUpdating(false);
+    }
+  };
+
+  const openLegalModal = async (user: KycUser) => {
+    setSelectedKycUser(user);
+    setKycNote(user.kycStatus?.note || "");
+
+    // Do not open if the user has not submitted any KYC documents
+    const docs = await fetchLegalDocs(user._id);
+    if (!docs.length) {
+      setSelectedKycUser(null);
+      toast.error("User has not submitted KYC documents yet.");
+      return;
+    }
+
+    setShowLegalModal(true);
   };
 
   const suspendUser = async () => {
@@ -180,7 +262,7 @@ export const Users: React.FC = () => {
       const res = await fetch(
         `${import.meta.env.VITE_BACKEND_URL}/admin/get-users`
       );
-      const data: User[] = await res.json();
+      const data: KycUser[] = await res.json();
       const approvedUsers = data.filter(u => u.approvalStatus === 'approved');
       setUsers(approvedUsers);
     } catch (error) {
@@ -249,6 +331,21 @@ export const Users: React.FC = () => {
           </td>
           <td className="px-4 py-2">{user.email}</td>
           <td className="px-4 py-2">{user.role}</td>
+          <td className="px-4 py-2">
+            <span
+              className={`px-2 py-1 text-xs rounded-full border font-semibold ${
+                user.kycStatus?.status === "verified"
+                  ? "bg-green-50 text-green-700 border-green-200"
+                  : user.kycStatus?.status === "pending"
+                  ? "bg-yellow-50 text-yellow-700 border-yellow-200"
+                  : user.kycStatus?.status === "rejected"
+                  ? "bg-red-50 text-red-700 border-red-200"
+                  : "bg-gray-50 text-gray-600 border-gray-200"
+              }`}
+            >
+              {`KYC: ${user.kycStatus?.status || "unsubmitted"}`}
+            </span>
+          </td>
           <td className="px-4 py-2">{user.location}</td>
           <td className={`px-4 py-2 `}>
             <span
@@ -330,6 +427,18 @@ export const Users: React.FC = () => {
                     Block
                   </Button>
                 )}
+
+                <Button
+                  variant="ghost"
+                  className="text-xs hover:text-green-600 focus:text-white focus:bg-green-600"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowDialog(false);
+                    openLegalModal(user);
+                  }}
+                >
+                  KYC Review
+                </Button>
               </div>
             )}
           </td>
@@ -502,6 +611,7 @@ export const Users: React.FC = () => {
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Email</th>
               <th className="px-4 py-3">Role</th>
+              <th className="px-4 py-3">KYC</th>
               <th className="px-4 py-3">Location</th>
               <th className="px-4 py-3">Is Online</th>
               <th className="px-4 py-3">When Registered</th>
@@ -636,6 +746,146 @@ export const Users: React.FC = () => {
               >
                 Cancel
               </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* KYC / Legal Docs Modal */}
+      {showLegalModal && selectedKycUser && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowLegalModal(false);
+          }}
+        >
+          <div className="bg-white rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.25)] w-full max-w-5xl overflow-hidden border border-gray-100">
+            <div className="flex items-center justify-between px-6 py-4 border-b bg-gray-50">
+              <div className="space-y-1">
+                <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                  <ShieldCheck className="w-5 h-5 text-primary-600" /> Legal Verification
+                </h2>
+                <p className="text-sm text-gray-600">Review ID and selfie before marking KYC.</p>
+              </div>
+              <button onClick={() => setShowLegalModal(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="px-6 py-5 space-y-5 bg-gradient-to-b from-white to-slate-50">
+              <div className="flex items-center gap-4">
+                <img
+                  src={selectedKycUser.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedKycUser.name)}`}
+                  alt={selectedKycUser.name}
+                  className="w-14 h-14 rounded-full object-cover border"
+                />
+                <div className="space-y-0.5">
+                  <p className="text-lg font-semibold text-gray-900">{selectedKycUser.name}</p>
+                  <p className="text-sm text-gray-600">{selectedKycUser.email}</p>
+                  <span
+                    className={`inline-flex items-center px-2.5 py-1 text-[11px] font-semibold rounded-full border ${
+                      selectedKycUser.kycStatus?.status === "verified"
+                        ? "bg-green-50 text-green-700 border-green-200"
+                        : selectedKycUser.kycStatus?.status === "pending"
+                        ? "bg-yellow-50 text-yellow-700 border-yellow-200"
+                        : selectedKycUser.kycStatus?.status === "rejected"
+                        ? "bg-red-50 text-red-700 border-red-200"
+                        : "bg-gray-50 text-gray-600 border-gray-200"
+                    }`}
+                  >
+                    {`KYC: ${selectedKycUser.kycStatus?.status || "unsubmitted"}`}
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {[{ title: "Government ID (CNIC/Passport)", type: "Government ID (CNIC/Passport)" }, { title: "Selfie Photo", type: "Selfie Photo" }].map((item) => {
+                  const doc = legalDocs.find((d) => d.type === item.type);
+                  const href = doc?.fileUrl?.startsWith("http") ? doc.fileUrl : doc ? `${URL}${doc.fileUrl}` : "#";
+                  return (
+                    <div key={item.type} className="rounded-xl border border-gray-200 bg-white shadow-sm p-4 flex flex-col gap-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900">{item.title}</p>
+                          <p className="text-xs text-gray-500">{doc ? "Uploaded" : "Not provided"}</p>
+                        </div>
+                        {doc && (
+                          <a
+                            href={href}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-xs font-semibold text-primary-700 hover:underline"
+                          >
+                            Open
+                          </a>
+                        )}
+                      </div>
+                      {doc ? (
+                        <>
+                          <div className="text-xs text-gray-600 space-y-1">
+                            <p className="font-medium break-all">{doc.fileName}</p>
+                            <p>Uploaded {new Date(doc.uploadedAt).toLocaleString()}</p>
+                          </div>
+                          <div className="rounded-lg border border-gray-200 bg-gray-50 overflow-hidden">
+                            {doc.fileUrl?.match(/\.pdf($|\?)/i) || doc.fileName?.toLowerCase().endsWith(".pdf") ? (
+                              <object data={href} type="application/pdf" className="w-full h-56">PDF preview unavailable</object>
+                            ) : (
+                              <img src={href} alt={item.title} className="w-full h-56 object-contain bg-white" />
+                            )}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-2">No file uploaded.</div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-800">Admin Notes</label>
+                <textarea
+                  className="w-full border rounded-md p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  rows={3}
+                  value={kycNote}
+                  onChange={(e) => setKycNote(e.target.value)}
+                  placeholder="Optional notes for this verification"
+                />
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                {selectedKycUser.kycStatus?.status === "rejected" || selectedKycUser.kycStatus?.status === "verified" ? (
+                  <Button variant="outline" onClick={() => setShowLegalModal(false)}>
+                    Close
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      onClick={() => updateKycStatus("verified")}
+                      disabled={kycUpdating || legalLoading || !hasLegalDocs}
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      {kycUpdating ? "Saving..." : "Mark Verified"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => updateKycStatus("rejected")}
+                      disabled={kycUpdating || legalLoading || !hasLegalDocs}
+                    >
+                      Mark Rejected
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => updateKycStatus("pending")}
+                      disabled={kycUpdating || legalLoading || !hasLegalDocs}
+                    >
+                      Reset to Pending
+                    </Button>
+                  </>
+                )}
+              </div>
+
+              {legalLoading && <p className="text-xs text-gray-500">Loading documents...</p>}
             </div>
           </div>
         </div>

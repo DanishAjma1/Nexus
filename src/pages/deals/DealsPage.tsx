@@ -77,6 +77,14 @@ export const DealsPage: React.FC = () => {
     setIsNegotiationModalOpen(true);
   };
 
+  const ensureKycVerified = () => {
+    if (user?.kycStatus?.status !== "verified") {
+      toast.error("Please complete and verify KYC before making a payment.");
+      return false;
+    }
+    return true;
+  };
+
   if (loading) return <div className="p-4">Loading deals...</div>;
 
   return (
@@ -168,6 +176,7 @@ export const DealsPage: React.FC = () => {
                       size="sm"
                       className="w-full bg-green-600 hover:bg-green-700 mt-2"
                       onClick={() => {
+                        if (!ensureKycVerified()) return;
                         setSelectedDeal(deal);
                         setIsPaymentModalOpen(true);
                       }}
@@ -201,6 +210,7 @@ export const DealsPage: React.FC = () => {
                           size="sm"
                           className="w-full border-blue-600 text-blue-600 hover:bg-blue-50 mt-2"
                           onClick={() => {
+                            if (!ensureKycVerified()) return;
                             setSelectedDeal(deal);
                             setIsAdditionalInvestmentModal(true);
                           }}

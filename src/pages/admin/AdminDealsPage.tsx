@@ -12,6 +12,8 @@ export const AdminDealsPage: React.FC = () => {
     const [deals, setDeals] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
     const [selectedDeal, setSelectedDeal] = useState<any>(null);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
@@ -37,13 +39,25 @@ export const AdminDealsPage: React.FC = () => {
         setIsViewModalOpen(true);
     };
 
+    const startDateObj = startDate ? new Date(startDate) : null;
+    const endDateObj = endDate ? new Date(endDate) : null;
+    if (endDateObj) endDateObj.setHours(23, 59, 59, 999);
+
     const filteredDeals = deals.filter((deal) => {
         const term = searchTerm.toLowerCase();
+        const createdAt = deal.createdAt ? new Date(deal.createdAt) : null;
+
+        const matchesDate = !createdAt
+            ? !(startDateObj || endDateObj)
+            : (!startDateObj || createdAt >= startDateObj) && (!endDateObj || createdAt <= endDateObj);
+
         return (
-            deal.investorId?.name?.toLowerCase().includes(term) ||
-            deal.entrepreneurId?.name?.toLowerCase().includes(term) ||
-            deal.entrepreneurId?.startupName?.toLowerCase().includes(term) ||
-            deal.status?.toLowerCase().includes(term)
+            (
+                deal.investorId?.name?.toLowerCase().includes(term) ||
+                deal.entrepreneurId?.name?.toLowerCase().includes(term) ||
+                deal.entrepreneurId?.startupName?.toLowerCase().includes(term) ||
+                deal.status?.toLowerCase().includes(term)
+            ) && matchesDate
         );
     });
 
@@ -53,14 +67,30 @@ export const AdminDealsPage: React.FC = () => {
         <div className="space-y-6 animate-fade-in p-4">
             <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-bold text-gray-900">All Deal Records</h1>
-                <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                <div className="flex flex-wrap items-center gap-3">
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                        <input
+                            type="text"
+                            placeholder="Search deals..."
+                            className="pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
                     <input
-                        type="text"
-                        placeholder="Search deals..."
-                        className="pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
+                        type="date"
+                        className="px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        aria-label="Start date"
+                    />
+                    <input
+                        type="date"
+                        className="px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        aria-label="End date"
                     />
                 </div>
             </div>
